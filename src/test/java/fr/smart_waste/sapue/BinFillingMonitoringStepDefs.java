@@ -6,7 +6,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-public class StepDefsBinFillingMonitoring {
+public class BinFillingMonitoringStepDefs {
     @Given("the TCP server is running on port {int}")
     public void theTCPServerIsRunningOnPort(int arg0) {
         // caca :3
