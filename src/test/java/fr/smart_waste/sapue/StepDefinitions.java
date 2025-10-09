@@ -1,4 +1,4 @@
-package groupe;
+package fr.smart_waste.sapue;
 
 import io.cucumber.java.en.*;
 

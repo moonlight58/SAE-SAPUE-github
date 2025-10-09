@@ -1,4 +1,4 @@
-package groupe;
+package fr.smart_waste.sapue;
 
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -10,8 +10,8 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 @Suite
 @IncludeEngines("cucumber")
-@SelectPackages("groupe")
+@SelectPackages("fr.smart_waste.sapue")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "groupe")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "fr.smart_waste.sapue")
 public class RunCucumberTest {
 }
