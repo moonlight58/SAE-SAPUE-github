@@ -59,7 +59,7 @@ Feature: TCP server manages connections and data centralization
     When the server receives "SEND_WEIGHT binId=BIN001 weight=45.5"
     Then the server attempts to contact Node API
     And the attempt fails
-    Then the server switches to direct MongoDB access
+    And the server switches to direct MongoDB access
     And the server stores data using POJO objects
     And the server sends "OK" to the microcontroller
 

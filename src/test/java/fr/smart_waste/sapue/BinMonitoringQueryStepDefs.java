@@ -94,7 +94,7 @@ public class BinMonitoringQueryStepDefs {
     public void theAttemptFails() {
     }
 
-    @Then("the server switches to direct MongoDB access")
+    @And("the server switches to direct MongoDB access")
     public void theServerSwitchesToDirectMongoDBAccess() {
     }
 
