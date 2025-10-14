@@ -5,7 +5,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-public class BinMonitoringQueryStepDefs {
+public class BinMonitoringClientStepDefs {
     @Given("le système central est en cours d'exécution")
     public void leSystemeCentralEstEnCoursDExecution() {
     }
