@@ -1,4 +1,5 @@
 # language: en
+#
 Feature: Les poubelles intelligentes envoient des données au système central
   En tant qu'opérateur de gestion des déchets
   Je veux que le système central reçoive et stocke les données des poubelles intelligentes
