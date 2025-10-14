@@ -86,9 +86,6 @@
                 <version>3.5.2</version>
                 <configuration>
                     <properties>
-                        <!-- Work around. Surefire does not include enough
-                             information to disambiguate between different
-                             examples and scenarios. -->
                         <configurationParameters>
                             cucumber.junit-platform.naming-strategy=surefire
                         </configurationParameters>
