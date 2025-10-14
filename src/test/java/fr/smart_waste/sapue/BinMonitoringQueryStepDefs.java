@@ -102,10 +102,6 @@ public class BinMonitoringQueryStepDefs {
     public void theServerStoresDataUsingPOJOObjects() {
     }
 
-    @Then("the server queries Node API via GET \\/api\\/bins\\/BIN{int}\\/config")
-    public void theServerQueriesNodeAPIViaGETApiBinsBINConfig(int arg0) {
-    }
-
     @And("the server receives configuration data")
     public void theServerReceivesConfigurationData() {
     }
