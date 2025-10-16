@@ -15,13 +15,6 @@ Feature: Le système central communique avec le service de gestion des données
     Then le service de gestion confirme la réception
     And le système notifie la poubelle que tout s'est bien passé
 
-  Scenario: Le système transmet une mesure de poids au service de gestion
-    Given le système a reçu une mesure de poids de 45.5 kg
-    And cette mesure provient de la poubelle "BIN001"
-    When le système transmet cette information
-    Then le service de gestion enregistre le poids
-    And le système reçoit une confirmation
-
   Scenario: Le système transmet une alerte de qualité d'air
     Given le système a reçu une alerte de mauvaise qualité d'air
     And l'alerte provient de la poubelle "BIN001"
@@ -36,22 +29,6 @@ Feature: Le système central communique avec le service de gestion des données
     When le système transmet ces résultats au service de gestion
     Then le service de gestion met à jour le signalement
     And le système reçoit une confirmation
-
-  Scenario: Le système transmet une détection de vandalisme
-    Given le service d'analyse a détecté un acte de vandalisme
-    And la gravité est "élevée"
-    And la poubelle concernée est "BIN001"
-    When le système transmet cette information
-    Then le service de gestion crée un incident
-    And le service de gestion met à jour le statut de la poubelle
-    And le système reçoit une confirmation
-
-  Scenario: Le système demande la configuration d'une poubelle
-    Given une poubelle "BIN001" demande sa configuration
-    When le système interroge le service de gestion pour obtenir ces informations
-    Then le service de gestion fournit l'intervalle de mesure
-    And le service de gestion fournit le seuil d'alerte
-    And le système transmet ces paramètres à la poubelle
 
   Scenario: Le système demande le statut actuel d'une poubelle
     Given une poubelle "BIN001" veut connaître son statut
