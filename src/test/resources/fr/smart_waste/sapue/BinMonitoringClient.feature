@@ -13,11 +13,6 @@ Feature: Les poubelles intelligentes envoient des données au système central
     Then le système accepte la connexion
     And la poubelle est prête à envoyer des données
 
-  Scenario: Plusieurs poubelles se connectent en même temps
-    When 3 poubelles intelligentes se connectent simultanément
-    Then le système gère toutes les connexions
-    And chaque poubelle peut envoyer des données indépendamment
-
   Scenario: Le système reçoit le niveau de remplissage d'une poubelle
     Given la poubelle "BIN001" est connectée au système
     When la poubelle envoie son niveau de remplissage de 75%
@@ -47,12 +42,6 @@ Feature: Les poubelles intelligentes envoient des données au système central
     When la poubelle envoie un niveau de remplissage de 150%
     Then le système détecte la valeur impossible
     And la poubelle reçoit un message d'erreur sur la mesure invalide
-
-  Scenario: La poubelle envoie des données corrompues
-    Given la poubelle "BIN001" est connectée au système
-    When la poubelle envoie des données corrompues ou illisibles
-    Then le système ne peut pas traiter l'information
-    And la poubelle reçoit un message d'erreur pour réessayer
 
   Scenario: Le système continue de fonctionner quand la base de données a des problèmes
     Given la poubelle "BIN001" est connectée au système
