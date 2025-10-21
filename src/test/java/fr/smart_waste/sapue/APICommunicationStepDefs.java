@@ -4,6 +4,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.assertj.core.api.Assert;
 
 
 public class APICommunicationStepDefs {
@@ -29,22 +30,6 @@ public class APICommunicationStepDefs {
 
     @And("le système notifie la poubelle que tout s'est bien passé")
     public void leSystemeNotifieLaPoubelleQueToutSEstBienPasse() {
-    }
-
-    @Given("le système a reçu une mesure de poids de {double} kg")
-    public void leSystemeARecuUneMesureDePoidsDeKg(int arg0, int arg1) {
-    }
-
-    @And("cette mesure provient de la poubelle {string}")
-    public void cetteMesureProvientDeLaPoubelle(String arg0) {
-    }
-
-    @When("le système transmet cette information")
-    public void leSystemeTransmetCetteInformation() {
-    }
-
-    @Then("le service de gestion enregistre le poids")
-    public void leServiceDeGestionEnregistreLePoids() {
     }
 
     @And("le système reçoit une confirmation")
@@ -87,44 +72,8 @@ public class APICommunicationStepDefs {
     public void leServiceDeGestionMetAJourLeSignalement() {
     }
 
-    @Given("le service d'analyse a détecté un acte de vandalisme")
-    public void leServiceDAnalyseADetecteUnActeDeVandalisme() {
-    }
-
-    @And("la gravité est {string}")
-    public void laGraviteEst(String arg0) {
-    }
-
-    @And("la poubelle concernée est {string}")
-    public void laPoubelleConcerneeEst(String arg0) {
-    }
-
-    @Then("le service de gestion crée un incident")
-    public void leServiceDeGestionCreeUnIncident() {
-    }
-
-    @And("le service de gestion met à jour le statut de la poubelle")
-    public void leServiceDeGestionMetAJourLeStatutDeLaPoubelle() {
-    }
-
     @Given("une poubelle {string} demande sa configuration")
     public void unePoubelleDemandeSaConfiguration(String arg0) {
-    }
-
-    @When("le système interroge le service de gestion pour obtenir ces informations")
-    public void leSystemeInterrogeLeServiceDeGestionPourObtenirCesInformations() {
-    }
-
-    @Then("le service de gestion fournit l'intervalle de mesure")
-    public void leServiceDeGestionFournitLIntervalleDeMesure() {
-    }
-
-    @And("le service de gestion fournit le seuil d'alerte")
-    public void leServiceDeGestionFournitLeSeuilDAlerte() {
-    }
-
-    @And("le système transmet ces paramètres à la poubelle")
-    public void leSystemeTransmetCesParametresALaPoubelle() {
     }
 
     @Given("une poubelle {string} veut connaître son statut")
