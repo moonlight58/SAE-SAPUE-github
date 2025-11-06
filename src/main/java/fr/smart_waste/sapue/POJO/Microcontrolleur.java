@@ -1,11 +1,11 @@
-package com.smartwaste.server.model;
+package fr.smart_waste.sapue.POJO;
 
 import org.bson.types.ObjectId;
 
 /**
  * POJO for Micro-controlleur collection
  */
-public class Microcontroller {
+public class Microcontrolleur {
     private ObjectId id;
     private String reference;
     private ObjectId poubelle; // reference to Bin
@@ -13,10 +13,10 @@ public class Microcontroller {
     private SensorConfig configSensor;
 
     // Constructors
-    public Microcontroller() {
+    public Microcontrolleur() {
     }
 
-    public Microcontroller(String reference, ObjectId poubelle, String ipAddress, SensorConfig configSensor) {
+    public Microcontrolleur(String reference, ObjectId poubelle, String ipAddress, SensorConfig configSensor) {
         this.reference = reference;
         this.poubelle = poubelle;
         this.ipAddress = ipAddress;
@@ -66,7 +66,7 @@ public class Microcontroller {
 
     @Override
     public String toString() {
-        return "Microcontroller{" +
+        return "Microcontrolleur{" +
                 "id=" + id +
                 ", reference='" + reference + '\'' +
                 ", poubelle=" + poubelle +
