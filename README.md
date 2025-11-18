@@ -3,7 +3,7 @@
 ## 📁 Project Structure
 
 ```
-com.smartwaste.server
+fr.smart_waste.sapue
 ├── config
 │   └── ServerConfig.java          # YAML configuration loader
 ├── core
@@ -112,22 +112,22 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 ### 4. Run Server
 ```bash
 # With default config.yml
-java -cp target/classes com.smartwaste.server.core.SmartWasteServer
+java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer
 
 # With custom config
-java -cp target/classes com.smartwaste.server.core.SmartWasteServer /path/to/config.yml
+java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer /path/to/config.yml
 ```
 
 ### 5. Test with TestClient
 ```bash
-java -cp target/classes com.smartwaste.server.test.TestClient
+java -cp target/classes fr.smart_waste.sapue.test.TestClient
 ```
 
 ## 🔧 Future Enhancements (Easy to Add)
 
 ### Protocol Parser (Next Step)
 ```java
-com.smartwaste.server.protocol
+fr.smart_waste.sapue.protocol
 ├── ProtocolParser.java        # Parse requests
 ├── CommandHandler.java        # Route commands
 └── ResponseBuilder.java       # Build responses
@@ -135,7 +135,7 @@ com.smartwaste.server.protocol
 
 ### API-based DataDriver
 ```java
-com.smartwaste.server.dataaccess
+fr.smart_waste.sapue.dataaccess
 └── ApiDataDriver.java         # Call Node API instead of direct MongoDB
 ```
 
@@ -155,7 +155,7 @@ private byte[] receiveBinaryData(int expectedBytes) { ... }
 
 ### Authentication/Session Management
 ```java
-com.smartwaste.server.auth
+fr.smart_waste.sapue.auth
 ├── SessionManager.java
 └── AuthHandler.java
 ```
