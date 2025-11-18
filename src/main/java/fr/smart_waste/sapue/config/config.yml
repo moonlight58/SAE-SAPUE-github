@@ -1,0 +1,15 @@
+# Smart Waste TCP Server Configuration
+
+server:
+  port: 8888
+  maxConnections: 100
+  socketTimeout: 30000  # milliseconds (30 seconds)
+
+mongodb:
+  connectionString: "mongodb+srv://moonlight58:moonlight58@cluster0.vnh4z0a.mongodb.net/"
+  databaseName: "SAE.SAPUE"
+  environment: "dev"  # "dev" or "prod"
+
+logging:
+  enableMetrics: true
+  verbose: false  # Set to true for detailed request/response logging
