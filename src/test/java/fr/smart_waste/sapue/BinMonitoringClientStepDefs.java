@@ -55,7 +55,7 @@ public class BinMonitoringClientStepDefs {
     }
 
     @When("la poubelle envoie une mesure de poids de {double} kg")
-    public void laPoubelleEnvoieUneMesureDePoidsDeKg(int arg0, int arg1) {
+    public void laPoubelleEnvoieUneMesureDePoidsDeKg(double arg0) {
     }
 
     @Then("le système stocke l'information de poids")

@@ -33,10 +33,10 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class MongoDataDriver implements DataDriver {
 
-    private String mongoURL;
-    private String databaseName;
-    private CodecProvider pojoCodecProvider;
-    private CodecRegistry pojoCodecRegistry;
+    private final String mongoURL;
+    private final String databaseName;
+    private final CodecProvider pojoCodecProvider;
+    private final CodecRegistry pojoCodecRegistry;
     private MongoClient mongoClient;
     private MongoDatabase database;
     MongoCollection<Measure> measures;
@@ -139,7 +139,7 @@ public class MongoDataDriver implements DataDriver {
         if (col == null) return null;
         try {
             InsertOneResult res = col.insertOne(user);
-            if (res != null && res.getInsertedId() != null) {
+            if (res.getInsertedId() != null) {
                 return res.getInsertedId().asObjectId().getValue();
             }
             try { return user.getId(); } catch (Exception ignored) { return null; }
@@ -185,7 +185,7 @@ public class MongoDataDriver implements DataDriver {
         if (col == null) return false;
         try {
             com.mongodb.client.result.UpdateResult ur = col.replaceOne(eq("_id", user.getId()), user);
-            return ur != null && ur.getMatchedCount() > 0;
+            return ur.getMatchedCount() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -200,7 +200,7 @@ public class MongoDataDriver implements DataDriver {
         if (col == null) return false;
         try {
             com.mongodb.client.result.DeleteResult dr = col.deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -226,7 +226,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.MongoCollection<Bin> col = database.getCollection("bins", Bin.class);
             com.mongodb.client.result.InsertOneResult r = col.insertOne(bin);
-            if (r != null && r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
+            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
             try { return bin.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
@@ -243,7 +243,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.UpdateResult ur = database.getCollection("bins", Bin.class)
                     .replaceOne(eq("_id", bin.getId()), bin);
-            return ur != null && ur.getModifiedCount() > 0;
+            return ur.getModifiedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -253,7 +253,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.DeleteResult dr = database.getCollection("bins", Bin.class)
                     .deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -269,7 +269,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.InsertOneResult r = database.getCollection("microcontrolleurs", Microcontrolleur.class)
                     .insertOne(m);
-            if (r != null && r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
+            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
             try { return m.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
@@ -302,7 +302,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.DeleteResult dr = database.getCollection("microcontrolleurs", Microcontrolleur.class)
                     .deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -317,7 +317,7 @@ public class MongoDataDriver implements DataDriver {
         if (s == null || database == null) return null;
         try {
             com.mongodb.client.result.InsertOneResult r = database.getCollection("signalements", Signalement.class).insertOne(s);
-            if (r != null && r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
+            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
             try { return s.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
@@ -344,7 +344,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.DeleteResult dr = database.getCollection("signalements", Signalement.class)
                     .deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -359,7 +359,7 @@ public class MongoDataDriver implements DataDriver {
         if (r == null || database == null) return null;
         try {
             com.mongodb.client.result.InsertOneResult res = database.getCollection("releves", Releve.class).insertOne(r);
-            if (res != null && res.getInsertedId() != null) return res.getInsertedId().asObjectId().getValue();
+            if (res.getInsertedId() != null) return res.getInsertedId().asObjectId().getValue();
             try { return r.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
@@ -382,7 +382,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.UpdateResult ur = database.getCollection("releves", Releve.class)
                     .replaceOne(eq("_id", r.getId()), r);
-            return ur != null && ur.getModifiedCount() > 0;
+            return ur.getModifiedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -392,7 +392,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.DeleteResult dr = database.getCollection("releves", Releve.class)
                     .deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -407,7 +407,7 @@ public class MongoDataDriver implements DataDriver {
         if (a == null || database == null) return null;
         try {
             com.mongodb.client.result.InsertOneResult r = database.getCollection("analyseMedias", AnalyseMedia.class).insertOne(a);
-            if (r != null && r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
+            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
             try { return a.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
@@ -424,7 +424,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.UpdateResult ur = database.getCollection("analyseMedias", AnalyseMedia.class)
                     .replaceOne(eq("_id", a.getId()), a);
-            return ur != null && ur.getModifiedCount() > 0;
+            return ur.getModifiedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
@@ -434,7 +434,7 @@ public class MongoDataDriver implements DataDriver {
         try {
             com.mongodb.client.result.DeleteResult dr = database.getCollection("analyseMedias", AnalyseMedia.class)
                     .deleteOne(eq("_id", id));
-            return dr != null && dr.getDeletedCount() > 0;
+            return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 

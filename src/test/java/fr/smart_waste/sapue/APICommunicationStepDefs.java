@@ -100,7 +100,7 @@ public class APICommunicationStepDefs {
     }
 
     @And("le système informe la poubelle qu{string}est pas enregistrée")
-    public void leSystemeInformeLaPoubelleQuElleNEstPasEnregistree() {
+    public void leSystemeInformeLaPoubelleQuElleNEstPasEnregistree(String phrase) {
     }
 
     @Given("le système a reçu une mesure de la poubelle {string}")

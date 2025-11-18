@@ -71,7 +71,7 @@ public class MediaAnalysisServerStepDefs {
     }
 
     @And("le système informe le service d{string}erreur")
-    public void leSystemeInformeLeServiceDAnalyseDeLErreur() {
+    public void leSystemeInformeLeServiceDAnalyseDeLErreur(String phrase) {
     }
 
     @When("le service d'analyse envoie un résultat")

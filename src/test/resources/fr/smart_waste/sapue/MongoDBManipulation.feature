@@ -13,32 +13,32 @@ Feature: Stockage et récupération des données dans la base de données
     And le niveau est de 75%
     And la date est "2025-10-15T14:30:00Z"
     Then les données sont stockées dans la collection des mesures
-    And l\'enregistrement contient l\'identifiant de la poubelle
-    And l\'enregistrement contient le niveau de remplissage
-    And l\'enregistrement contient la date et l\'heure
+    And l'enregistrement contient l'identifiant de la poubelle
+    And l'enregistrement contient le niveau de remplissage
+    And l'enregistrement contient la date et l'heure
 
   Scenario: Enregistrement d'une mesure de poids
     When une mesure de poids est reçue pour la poubelle "BIN001"
     And le poids est de 45.5 kg
     Then les données sont stockées dans la collection des mesures
-    And l\'enregistrement est horodaté automatiquement
+    And l'enregistrement est horodaté automatiquement
 
   Scenario: Enregistrement d'une mesure de qualité d'air
-    When une mesure de qualité d\'air est reçue pour la poubelle "BIN001"
+    When une mesure de qualité d'air est reçue pour la poubelle "BIN001"
     And le taux de CO2 est de 450 ppm
     And le taux de COV est de 120 ppb
     Then les données sont stockées dans la collection des mesures
     And toutes les valeurs sont conservées
 
-  Scenario: Récupération des dernières mesures d\'une poubelle
-    Given la poubelle "BIN001" a envoyé 10 mesures aujourd\'hui
+  Scenario: Récupération des dernières mesures d'une poubelle
+    Given la poubelle "BIN001" a envoyé 10 mesures aujourd'hui
     When on demande les 5 dernières mesures de la poubelle "BIN001"
     Then le système retourne 5 mesures
     And les mesures sont triées de la plus récente à la plus ancienne
 
   Scenario: Récupération de l'historique d'une poubelle sur une période
     Given la poubelle "BIN001" a des mesures enregistrées
-    When on demande l\'historique entre le "2025-10-01" et le "2025-10-15"
+    When on demande l'historique entre le "2025-10-01" et le "2025-10-15"
     Then le système retourne toutes les mesures de cette période
     And les mesures sont renvoyées
 
@@ -55,7 +55,7 @@ Feature: Stockage et récupération des données dans la base de données
     And son type est "poubelle urbaine"
     And sa capacité est de 120 litres
     Then la poubelle est enregistrée dans la base de données
-    And l\'enregistrement contient toutes les informations
+    And l'enregistrement contient toutes les informations
 
   Scenario: Récupération de la liste de toutes les poubelles
     Given 5 poubelles sont enregistrées dans le système
@@ -105,8 +105,8 @@ Feature: Stockage et récupération des données dans la base de données
 
   Scenario: Rejet d'une donnée avec un identifiant de poubelle invalide
     When une mesure est reçue pour une poubelle "INEXISTANT"
-    Then le système vérifie l\'existence de la poubelle
-    And la poubelle n\'est pas trouvée
+    Then le système vérifie l'existence de la poubelle
+    And la poubelle n'est pas trouvée
     And les données ne sont pas enregistrées
     And une erreur est retournée
 
@@ -114,5 +114,5 @@ Feature: Stockage et récupération des données dans la base de données
     Given une mesure a été enregistrée pour "BIN001" à "14:30:00"
     When la même mesure est reçue à nouveau
     Then le système détecte le doublon
-    And la mesure en double n\'est pas enregistrée
+    And la mesure en double n'est pas enregistrée
     And un avertissement est généré

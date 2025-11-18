@@ -115,7 +115,7 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer
 
 # With custom config
-java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer /path/to/config.yml
+java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer src/main/java/fr/smart_waste/sapue/config/config.yml
 ```
 
 ### 5. Test with TestClient

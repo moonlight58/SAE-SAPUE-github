@@ -35,7 +35,7 @@ public class MongoDBManipulation {
     }
 
     @And("le poids est de {double} kg")
-    public void lePoidsEstDeKg(int arg0, int arg1) {
+    public void lePoidsEstDeKg(double arg0) {
     }
 
     @And("le taux de CO{int} est de {int} ppm")
@@ -258,47 +258,47 @@ public class MongoDBManipulation {
     public void unAvertissementEstGenere() {
     }
 
-    @And("l\\'enregistrement contient l\\'identifiant de la poubelle")
+    @And("l'enregistrement contient l'identifiant de la poubelle")
     public void lEnregistrementContientLIdentifiantDeLaPoubelle() {
     }
 
-    @And("l\\'enregistrement contient le niveau de remplissage")
+    @And("l'enregistrement contient le niveau de remplissage")
     public void lEnregistrementContientLeNiveauDeRemplissage() {
     }
 
-    @And("l\\'enregistrement contient la date et l\\'heure")
+    @And("l'enregistrement contient la date et l'heure")
     public void lEnregistrementContientLaDateEtLHeure() {
     }
 
-    @And("l\\'enregistrement est horodaté automatiquement")
+    @And("l'enregistrement est horodaté automatiquement")
     public void lEnregistrementEstHorodateAutomatiquement() {
     }
 
-    @When("une mesure de qualité d\\'air est reçue pour la poubelle {string}")
+    @When("une mesure de qualité d'air est reçue pour la poubelle {string}")
     public void uneMesureDeQualiteDAirEstRecuePourLaPoubelle(String arg0) {
     }
 
-    @Given("la poubelle {string} a envoyé {int} mesures aujourd\\'hui")
+    @Given("la poubelle {string} a envoyé {int} mesures aujourd'hui")
     public void laPoubelleAEnvoyeMesuresAujourdHui(String arg0, int arg1) {
     }
 
-    @When("on demande l\\'historique entre le {string} et le {string}")
+    @When("on demande l'historique entre le {string} et le {string}")
     public void onDemandeLHistoriqueEntreLeEtLe(String arg0, String arg1) {
     }
 
-    @And("l\\'enregistrement contient toutes les informations")
+    @And("l'enregistrement contient toutes les informations")
     public void lEnregistrementContientToutesLesInformations() {
     }
 
-    @Then("le système vérifie l\\'existence de la poubelle")
+    @Then("le système vérifie l'existence de la poubelle")
     public void leSystemeVerifieLExistenceDeLaPoubelle() {
     }
 
-    @And("la poubelle n\\'est pas trouvée")
+    @And("la poubelle n'est pas trouvée")
     public void laPoubelleNEstPasTrouvee() {
     }
 
-    @And("la mesure en double n\\'est pas enregistrée")
+    @And("la mesure en double n'est pas enregistrée")
     public void laMesureEnDoubleNEstPasEnregistree() {
     }
 
