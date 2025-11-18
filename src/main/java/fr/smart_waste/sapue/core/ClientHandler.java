@@ -1,7 +1,8 @@
-package fr.smart_waste.sapue;
+package fr.smart_waste.sapue.core;
 
-import com.smartwaste.server.dataaccess.DataDriver;
-import com.smartwaste.server.config.ServerConfig;
+import fr.smart_waste.sapue.core.ServerMetrics;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
+import fr.smart_waste.sapue.config.ServerConfig;
 
 import java.io.*;
 import java.net.Socket;
@@ -14,7 +15,6 @@ import java.net.SocketException;
 public class ClientHandler implements Runnable {
     
     private final Socket clientSocket;
-    private final DataDriver dataDriver;
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final SmartWasteServer server;
@@ -28,7 +28,6 @@ public class ClientHandler implements Runnable {
                         ServerConfig config, ServerMetrics metrics, 
                         SmartWasteServer server) {
         this.clientSocket = clientSocket;
-        this.dataDriver = dataDriver;
         this.config = config;
         this.metrics = metrics;
         this.server = server;

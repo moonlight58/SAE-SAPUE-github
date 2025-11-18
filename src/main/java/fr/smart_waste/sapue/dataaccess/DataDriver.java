@@ -1,6 +1,6 @@
-package fr.smart_waste.sapue
+package fr.smart_waste.sapue.dataaccess;
 
-import com.smartwaste.server.model.*;
+import fr.smart_waste.sapue.model.*;
 import org.bson.types.ObjectId;
 import java.util.List;
 
@@ -91,48 +91,48 @@ public interface DataDriver {
     List<Bin> findAllBins();
     
     
-    // ========== Microcontroller Operations ==========
+    // ========== Microcontrolleur Operations ==========
     
     /**
-     * Insert a new microcontroller
-     * @param microcontroller Microcontroller object to insert
-     * @return ObjectId of inserted microcontroller, null if failed
+     * Insert a new microcontrolleur
+     * @param microcontrolleur Microcontrolleur object to insert
+     * @return ObjectId of inserted microcontrolleur, null if failed
      */
-    ObjectId insertMicrocontroller(Microcontroller microcontroller);
+    ObjectId insertMicrocontrolleur(Microcontrolleur microcontrolleur);
     
     /**
-     * Find microcontroller by ID
-     * @param id Microcontroller ObjectId
-     * @return Microcontroller object or null if not found
+     * Find microcontrolleur by ID
+     * @param id Microcontrolleur ObjectId
+     * @return Microcontrolleur object or null if not found
      */
-    Microcontroller findMicrocontrollerById(ObjectId id);
+    Microcontrolleur findMicrocontrolleurById(ObjectId id);
     
     /**
-     * Find microcontroller by reference
-     * @param reference Microcontroller reference string
-     * @return Microcontroller object or null if not found
+     * Find microcontrolleur by reference
+     * @param reference Microcontrolleur reference string
+     * @return Microcontrolleur object or null if not found
      */
-    Microcontroller findMicrocontrollerByReference(String reference);
+    Microcontrolleur findMicrocontrolleurByReference(String reference);
     
     /**
-     * Update an existing microcontroller
-     * @param microcontroller Microcontroller object with updated fields
+     * Update an existing microcontrolleur
+     * @param microcontrolleur Microcontrolleur object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updateMicrocontroller(Microcontroller microcontroller);
+    boolean updateMicrocontrolleur(Microcontrolleur microcontrolleur);
     
     /**
-     * Delete a microcontroller by ID
-     * @param id Microcontroller ObjectId
+     * Delete a microcontrolleur by ID
+     * @param id Microcontrolleur ObjectId
      * @return true if deleted successfully, false otherwise
      */
-    boolean deleteMicrocontroller(ObjectId id);
+    boolean deleteMicrocontrolleur(ObjectId id);
     
     /**
-     * Get all microcontrollers
-     * @return List of all microcontrollers
+     * Get all microcontrolleurs
+     * @return List of all microcontrolleurs
      */
-    List<Microcontroller> findAllMicrocontrollers();
+    List<Microcontrolleur> findAllMicrocontrolleurs();
     
     
     // ========== Signalement Operations ==========
@@ -189,8 +189,8 @@ public interface DataDriver {
     Releve findReleveById(ObjectId id);
     
     /**
-     * Find all releves for a specific microcontroller
-     * @param idControlleur Microcontroller ObjectId
+     * Find all releves for a specific microcontrolleur
+     * @param idControlleur Microcontrolleur ObjectId
      * @return List of releves
      */
     List<Releve> findRelevesByControlleur(ObjectId idControlleur);

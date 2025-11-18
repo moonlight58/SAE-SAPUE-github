@@ -1,4 +1,4 @@
-package fr.smart_waste.sapue.POJO;
+package fr.smart_waste.sapue.model;
 
 import org.bson.types.ObjectId;
 import java.util.List;

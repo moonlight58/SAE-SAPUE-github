@@ -1,4 +1,4 @@
-package fr.smart_waste.sapue;
+package fr.smart_waste.sapue.core;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;

@@ -1,4 +1,4 @@
-package fr.smart_waste.sapue;
+package fr.smart_waste.sapue.config;
 
 import org.yaml.snakeyaml.Yaml;
 

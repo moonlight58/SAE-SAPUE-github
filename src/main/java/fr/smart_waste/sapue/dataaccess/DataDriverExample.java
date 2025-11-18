@@ -1,10 +1,10 @@
-package fr.smart_waste.sapue
+package fr.smart_waste.sapue.dataaccess;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.smartwaste.server.dataaccess.DataDriver;
-import com.smartwaste.server.dataaccess.MongoDataDriver;
-import com.smartwaste.server.model.*;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
+import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
+import fr.smart_waste.sapue.model.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -26,7 +26,7 @@ public class DataDriverExample {
         MongoClient mongoClient = MongoClients.create(connectionString);
         
         // Create DataDriver instance
-        DataDriver dataDriver = new MongoDataDriver(mongoClient, databaseName);
+        DataDriver dataDriver = new MongoDataDriver(mongoClient.toString(), databaseName);
         
         try {
             // Example 1: Insert a Bin
@@ -39,8 +39,8 @@ public class DataDriverExample {
             ObjectId binId = dataDriver.insertBin(bin);
             System.out.println("Inserted Bin with ID: " + binId);
             
-            // Example 2: Insert a Microcontroller
-            System.out.println("\n=== Example 2: Insert a Microcontroller ===");
+            // Example 2: Insert a Microcontrolleur
+            System.out.println("\n=== Example 2: Insert a Microcontrolleur ===");
             
             // Create sensor configuration
             Document sensorParams = new Document()
@@ -53,14 +53,14 @@ public class DataDriverExample {
             sensorConfig.setSamplingInterval(300); // 5 minutes
             sensorConfig.setParameters(sensorParams);
             
-            Microcontroller mc = new Microcontroller();
+            Microcontrolleur mc = new Microcontrolleur();
             mc.setReference("MC-001");
             mc.setPoubelle(binId);
             mc.setIpAddress("192.168.1.100");
             mc.setConfigSensor(sensorConfig);
             
-            ObjectId mcId = dataDriver.insertMicrocontroller(mc);
-            System.out.println("Inserted Microcontroller with ID: " + mcId);
+            ObjectId mcId = dataDriver.insertMicrocontrolleur(mc);
+            System.out.println("Inserted Microcontrolleur with ID: " + mcId);
             
             // Example 3: Insert a Releve (sensor reading)
             System.out.println("\n=== Example 3: Insert a Releve ===");
@@ -78,26 +78,26 @@ public class DataDriverExample {
             ObjectId releveId = dataDriver.insertReleve(releve);
             System.out.println("Inserted Releve with ID: " + releveId);
             
-            // Example 4: Find Microcontroller by reference
-            System.out.println("\n=== Example 4: Find Microcontroller ===");
-            Microcontroller foundMc = dataDriver.findMicrocontrollerByReference("MC-001");
+            // Example 4: Find Microcontrolleur by reference
+            System.out.println("\n=== Example 4: Find Microcontrolleur ===");
+            Microcontrolleur foundMc = dataDriver.findMicrocontrolleurByReference("MC-001");
             if (foundMc != null) {
                 System.out.println("Found: " + foundMc);
             }
             
-            // Example 5: Find all Releves for a Microcontroller
-            System.out.println("\n=== Example 5: Find Releves by Microcontroller ===");
+            // Example 5: Find all Releves for a Microcontrolleur
+            System.out.println("\n=== Example 5: Find Releves by Microcontrolleur ===");
             List<Releve> releves = dataDriver.findRelevesByControlleur(mcId);
             System.out.println("Found " + releves.size() + " releves:");
             for (Releve r : releves) {
                 System.out.println("  - " + r);
             }
             
-            // Example 6: Update Microcontroller IP
-            System.out.println("\n=== Example 6: Update Microcontroller ===");
+            // Example 6: Update Microcontrolleur IP
+            System.out.println("\n=== Example 6: Update Microcontrolleur ===");
             if (foundMc != null) {
                 foundMc.setIpAddress("192.168.1.101");
-                boolean updated = dataDriver.updateMicrocontroller(foundMc);
+                boolean updated = dataDriver.updateMicrocontrolleur(foundMc);
                 System.out.println("Update successful: " + updated);
             }
             
