@@ -32,7 +32,7 @@ mongosh
 use smartwaste_dev
 
 // Create a bin
-db.poubelles.insertOne({
+db.mapPoints.insertOne({
   type: "recyclage",
   position: [6.0240, 47.2378],
   isSAPUE: true
@@ -43,7 +43,7 @@ db.poubelles.insertOne({
 // Create a microcontroller
 db.microcontrolleurs.insertOne({
     reference: "MC-001",
-    poubelle: ObjectId("60af8847e13f5a134c2c34b1"),
+    mapPoint: ObjectId("60af8847e13f5a134c2c34b1"),
     ipAddress: "192.168.1.100",
     configSensor: {
         sensorType: "BME280",
@@ -124,4 +124,54 @@ ServerConfig{serverPort=8888, maxConnections=100, ...}
 [SmartWasteServer] Server started on port 8888
 [SmartWasteServer] Max connections: 100
 [SmartWasteServer] Waiting for client connections...
+```
+
+## Step 7: Test the Server
+### Option A: Using Telnet (Simple Testing) in another console
+```bash
+# Connect to server
+telnet localhost 8888
+
+# Once connected, try these commands:
+REGISTER MC-001 192.168.1.100
+# Expected: OK
+
+PING MC-001
+# Expected: OK
+
+DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25
+# Expected: OK
+
+CONFIG_GET MC-001
+# Expected: OK sensorType:BME280 enabled:true samplingInterval:300 ...
+
+STATUS MC-001 battery:87 uptime:3600 freeMemory:45000
+# Expected: OK
+
+DISCONNECT MC-001
+# Expected: OK
+# Connection will close
+```
+
+### Option B: Using Netcat (nc)
+```bash
+# Test REGISTER command
+echo "REGISTER MC-001 192.168.1.100" | nc localhost 8888
+
+# Test DATA command
+echo "DATA MC-001 BME280 temperature:22.5 humidity:65.0" | nc localhost 8888
+
+# Test CONFIG_GET command
+echo "CONFIG_GET MC-001" | nc localhost 8888
+```
+## Step 8: Test Error Handling
+```bash
+# Test REGISTER command
+echo "REGISTER MC-001 192.168.1.100" | nc localhost 8888
+
+# Test DATA command
+echo "DATA MC-001 BME280 temperature:22.5 humidity:65.0" | nc localhost 8888
+
+# Test CONFIG_GET command
+echo "CONFIG_GET MC-001" | nc localhost 8888
 ```
