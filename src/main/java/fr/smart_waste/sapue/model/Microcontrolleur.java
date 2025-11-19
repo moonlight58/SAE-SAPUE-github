@@ -8,7 +8,7 @@ import org.bson.types.ObjectId;
 public class Microcontrolleur {
     private ObjectId id;
     private String reference;
-    private ObjectId poubelle; // reference to Bin
+    private ObjectId mapPoint; // reference to MapPoint
     private String ipAddress;
     private SensorConfig configSensor;
 
@@ -16,9 +16,9 @@ public class Microcontrolleur {
     public Microcontrolleur() {
     }
 
-    public Microcontrolleur(String reference, ObjectId poubelle, String ipAddress, SensorConfig configSensor) {
+    public Microcontrolleur(String reference, ObjectId mapPoint, String ipAddress, SensorConfig configSensor) {
         this.reference = reference;
-        this.poubelle = poubelle;
+        this.mapPoint = mapPoint;
         this.ipAddress = ipAddress;
         this.configSensor = configSensor;
     }
@@ -40,12 +40,12 @@ public class Microcontrolleur {
         this.reference = reference;
     }
 
-    public ObjectId getPoubelle() {
-        return poubelle;
+    public ObjectId getMapPoint() {
+        return mapPoint;
     }
 
-    public void setPoubelle(ObjectId poubelle) {
-        this.poubelle = poubelle;
+    public void setMapPoint(ObjectId mapPoint) {
+        this.mapPoint = mapPoint;
     }
 
     public String getIpAddress() {
@@ -69,7 +69,7 @@ public class Microcontrolleur {
         return "Microcontrolleur{" +
                 "id=" + id +
                 ", reference='" + reference + '\'' +
-                ", poubelle=" + poubelle +
+                ", mapPoint=" + mapPoint +
                 ", ipAddress='" + ipAddress + '\'' +
                 ", configSensor=" + configSensor +
                 '}';

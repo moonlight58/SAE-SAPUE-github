@@ -29,15 +29,15 @@ public class DataDriverExample {
         DataDriver dataDriver = new MongoDataDriver(mongoClient.toString(), databaseName);
         
         try {
-            // Example 1: Insert a Bin
-            System.out.println("=== Example 1: Insert a Bin ===");
-            Bin bin = new Bin();
-            bin.setType("recyclage");
-            bin.setPosition(Arrays.asList(6.0240, 47.2378)); // Besançon coordinates
-            bin.setIsSAPUE(true);
+            // Example 1: Insert a MapPoint
+            System.out.println("=== Example 1: Insert a MapPoint ===");
+            MapPoint MapPoint = new MapPoint();
+            MapPoint.setType("recyclage");
+            MapPoint.setPosition(Arrays.asList(6.0240, 47.2378)); // Besançon coordinates
+            MapPoint.setIsSAPUE(true);
             
-            ObjectId binId = dataDriver.insertBin(bin);
-            System.out.println("Inserted Bin with ID: " + binId);
+            ObjectId MapPointId = dataDriver.insertMapPoint(MapPoint);
+            System.out.println("Inserted MapPoint with ID: " + MapPointId);
             
             // Example 2: Insert a Microcontrolleur
             System.out.println("\n=== Example 2: Insert a Microcontrolleur ===");
@@ -55,7 +55,7 @@ public class DataDriverExample {
             
             Microcontrolleur mc = new Microcontrolleur();
             mc.setReference("MC-001");
-            mc.setPoubelle(binId);
+            mc.setMapPoint(MapPointId);
             mc.setIpAddress("192.168.1.100");
             mc.setConfigSensor(sensorConfig);
             
@@ -138,10 +138,10 @@ public class DataDriverExample {
             ObjectId analyseId = dataDriver.insertAnalyseMedia(analyse);
             System.out.println("Inserted AnalyseMedia with ID: " + analyseId);
             
-            // Example 10: List all Bins
-            System.out.println("\n=== Example 10: List all Bins ===");
-            List<Bin> allBins = dataDriver.findAllBins();
-            System.out.println("Total bins: " + allBins.size());
+            // Example 10: List all MapPoints
+            System.out.println("\n=== Example 10: List all MapPoints ===");
+            List<MapPoint> allMapPoints = dataDriver.findAllMapPoints();
+            System.out.println("Total MapPoints: " + allMapPoints.size());
             
         } catch (Exception e) {
             e.printStackTrace();

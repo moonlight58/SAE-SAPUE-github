@@ -54,41 +54,41 @@ public interface DataDriver {
     List<User> findAllUsers();
     
     
-    // ========== Bin Operations ==========
-    
+    // ========== MapPoint Operations ==========
+
     /**
-     * Insert a new bin
-     * @param bin Bin object to insert
-     * @return ObjectId of inserted bin, null if failed
+     * Insert a new mapPoint
+     * @param mapPoint MapPoint object to insert
+     * @return ObjectId of inserted mapPoint, null if failed
      */
-    ObjectId insertBin(Bin bin);
-    
+    ObjectId insertMapPoint(MapPoint mapPoint);
+
     /**
-     * Find bin by ID
-     * @param id Bin ObjectId
-     * @return Bin object or null if not found
+     * Find mapPoint by ID
+     * @param id MapPoint ObjectId
+     * @return MapPoint object or null if not found
      */
-    Bin findBinById(ObjectId id);
-    
+    MapPoint findMapPointById(ObjectId id);
+
     /**
-     * Update an existing bin
-     * @param bin Bin object with updated fields
+     * Update an existing mapPoint
+     * @param mapPoint MapPoint object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updateBin(Bin bin);
-    
+    boolean updateMapPoint(MapPoint mapPoint);
+
     /**
-     * Delete a bin by ID
-     * @param id Bin ObjectId
+     * Delete a mapPoint by ID
+     * @param id MapPoint ObjectId
      * @return true if deleted successfully, false otherwise
      */
-    boolean deleteBin(ObjectId id);
-    
+    boolean deleteMapPoint(ObjectId id);
+
     /**
-     * Get all bins
-     * @return List of all bins
+     * Get all mapPoints
+     * @return List of all mapPoints
      */
-    List<Bin> findAllBins();
+    List<MapPoint> findAllMapPoints();
     
     
     // ========== Microcontrolleur Operations ==========

@@ -4,19 +4,21 @@ import org.bson.types.ObjectId;
 import java.util.List;
 
 /**
- * POJO for Poubelles collection
+ * POJO for MapPoints collection
  */
-public class Bin {
-    private ObjectId id;
+public class MapPoint {
+    private ObjectId pointId;
     private String type;
     private List<Double> position; // [longitude, latitude]
     private Boolean isSAPUE;
+    private Double niveauConfiance;
+    private Integer taille;
 
     // Constructors
-    public Bin() {
+    public MapPoint() {
     }
 
-    public Bin(String type, List<Double> position, Boolean isSAPUE) {
+    public MapPoint(String type, List<Double> position, Boolean isSAPUE) {
         this.type = type;
         this.position = position;
         this.isSAPUE = isSAPUE;
@@ -24,11 +26,11 @@ public class Bin {
 
     // Getters and Setters
     public ObjectId getId() {
-        return id;
+        return pointId;
     }
 
     public void setId(ObjectId id) {
-        this.id = id;
+        this.pointId = pointId;
     }
 
     public String getType() {
@@ -48,7 +50,7 @@ public class Bin {
     }
 
     public Double getLongitude() {
-        return position != null && position.size() > 0 ? position.get(0) : null;
+        return position != null && !position.isEmpty() ? position.get(0) : null;
     }
 
     public Double getLatitude() {
@@ -65,8 +67,8 @@ public class Bin {
 
     @Override
     public String toString() {
-        return "Bin{" +
-                "id=" + id +
+        return "MapPoint{" +
+                "pointId=" + pointId +
                 ", type='" + type + '\'' +
                 ", position=" + position +
                 ", isSAPUE=" + isSAPUE +

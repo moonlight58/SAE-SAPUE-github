@@ -9,20 +9,16 @@ import fr.smart_waste.sapue.Chipset;
 import fr.smart_waste.sapue.Measure;
 import fr.smart_waste.sapue.Module;
 import fr.smart_waste.sapue.model.*;
-import org.bson.Document;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
@@ -43,7 +39,7 @@ public class MongoDataDriver implements DataDriver {
     MongoCollection<Module> modules;
     MongoCollection<Chipset> chipsets;
     MongoCollection<User> users;
-    MongoCollection<Bin> bins;
+    MongoCollection<MapPoint> mapPoints;
 
     public MongoDataDriver(String mongoURL, String databaseName) {
         this.mongoURL = mongoURL;
@@ -60,7 +56,7 @@ public class MongoDataDriver implements DataDriver {
             modules = database.getCollection("modules", Module.class);
             chipsets = database.getCollection("chipsets", Chipset.class);
             users = database.getCollection("users", User.class);
-            bins = database.getCollection("bins", Bin.class);
+            mapPoints = database.getCollection("mapPoints", MapPoint.class);
         }
         catch(IllegalArgumentException e) {
             return false;
@@ -223,46 +219,46 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public synchronized ObjectId insertBin(Bin bin) {
-        if (bin == null || database == null) return null;
+    public synchronized ObjectId insertMapPoint(MapPoint mapPoint) {
+        if (mapPoint == null || database == null) return null;
         try {
-            com.mongodb.client.MongoCollection<Bin> col = database.getCollection("bins", Bin.class);
-            com.mongodb.client.result.InsertOneResult r = col.insertOne(bin);
+            com.mongodb.client.MongoCollection<MapPoint> col = database.getCollection("mapPoints", MapPoint.class);
+            com.mongodb.client.result.InsertOneResult r = col.insertOne(mapPoint);
             if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
-            try { return bin.getId(); } catch (Exception ignored) { return null; }
+            try { return mapPoint.getId(); } catch (Exception ignored) { return null; }
         } catch (Exception e) { e.printStackTrace(); return null; }
     }
 
     @Override
-    public Bin findBinById(ObjectId id) {
+    public MapPoint findMapPointById(ObjectId id) {
         if (id == null || database == null) return null;
-        return database.getCollection("bins", Bin.class).find(eq("_id", id)).first();
+        return database.getCollection("mapPoints", MapPoint.class).find(eq("_id", id)).first();
     }
 
     @Override
-    public boolean updateBin(Bin bin) {
-        if (bin == null || database == null) return false;
+    public boolean updateMapPoint(MapPoint mapPoint) {
+        if (mapPoint == null || database == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("bins", Bin.class)
-                    .replaceOne(eq("_id", bin.getId()), bin);
+            com.mongodb.client.result.UpdateResult ur = database.getCollection("mapPoints", MapPoint.class)
+                    .replaceOne(eq("_id", mapPoint.getId()), mapPoint);
             return ur.getModifiedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
     @Override
-    public boolean deleteBin(ObjectId id) {
+    public boolean deleteMapPoint(ObjectId id) {
         if (id == null || database == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("bins", Bin.class)
+            com.mongodb.client.result.DeleteResult dr = database.getCollection("mapPoints", MapPoint.class)
                     .deleteOne(eq("_id", id));
             return dr.getDeletedCount() > 0;
         } catch (Exception e) { return false; }
     }
 
     @Override
-    public List<Bin> findAllBins() {
+    public List<MapPoint> findAllMapPoints() {
         if (database == null) return new ArrayList<>();
-        return database.getCollection("bins", Bin.class).find().into(new ArrayList<>());
+        return database.getCollection("mapPoints", MapPoint.class).find().into(new ArrayList<>());
     }
 
     @Override

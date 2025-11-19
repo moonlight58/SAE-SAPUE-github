@@ -153,13 +153,6 @@ Add to `ClientHandler`:
 private byte[] receiveBinaryData(int expectedBytes) { ... }
 ```
 
-### Authentication/Session Management
-```java
-fr.smart_waste.sapue.auth
-├── SessionManager.java
-└── AuthHandler.java
-```
-
 ## 📊 Example Output
 
 ```
