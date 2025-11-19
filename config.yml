@@ -7,7 +7,7 @@ server:
 
 mongodb:
   connectionString: "mongodb+srv://moonlight58:moonlight58@cluster0.vnh4z0a.mongodb.net/"
-  databaseName: "SAE.SAPUE"
+  databaseName: "smartwaste_dev"
   environment: "dev"  # "dev" or "prod"
 
 logging:

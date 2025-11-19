@@ -43,6 +43,7 @@ public class MongoDataDriver implements DataDriver {
     MongoCollection<Module> modules;
     MongoCollection<Chipset> chipsets;
     MongoCollection<User> users;
+    MongoCollection<Bin> bins;
 
     public MongoDataDriver(String mongoURL, String databaseName) {
         this.mongoURL = mongoURL;
@@ -59,6 +60,7 @@ public class MongoDataDriver implements DataDriver {
             modules = database.getCollection("modules", Module.class);
             chipsets = database.getCollection("chipsets", Chipset.class);
             users = database.getCollection("users", User.class);
+            bins = database.getCollection("bins", Bin.class);
         }
         catch(IllegalArgumentException e) {
             return false;
