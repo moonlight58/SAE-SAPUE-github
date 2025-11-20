@@ -3,7 +3,7 @@ package fr.smart_waste.sapue.model;
 import org.bson.types.ObjectId;
 
 /**
- * POJO for Utilisateurs collection
+ * POJO for Users collection
  */
 public class User {
     private ObjectId id;

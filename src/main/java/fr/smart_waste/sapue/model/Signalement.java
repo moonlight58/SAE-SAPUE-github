@@ -9,7 +9,7 @@ import java.util.List;
 public class Signalement {
     private ObjectId id;
     private String type;
-    private ObjectId utilisateur; // reference to User
+    private ObjectId user; // reference to User
     private List<Double> position; // [longitude, latitude]
     private String imagePath;
 
@@ -17,9 +17,9 @@ public class Signalement {
     public Signalement() {
     }
 
-    public Signalement(String type, ObjectId utilisateur, List<Double> position, String imagePath) {
+    public Signalement(String type, ObjectId user, List<Double> position, String imagePath) {
         this.type = type;
-        this.utilisateur = utilisateur;
+        this.user = user;
         this.position = position;
         this.imagePath = imagePath;
     }
@@ -41,12 +41,12 @@ public class Signalement {
         this.type = type;
     }
 
-    public ObjectId getUtilisateur() {
-        return utilisateur;
+    public ObjectId getUser() {
+        return user;
     }
 
-    public void setUtilisateur(ObjectId utilisateur) {
-        this.utilisateur = utilisateur;
+    public void setUser(ObjectId user) {
+        this.user = user;
     }
 
     public List<Double> getPosition() {
@@ -58,7 +58,7 @@ public class Signalement {
     }
 
     public Double getLongitude() {
-        return position != null && position.size() > 0 ? position.get(0) : null;
+        return position != null && !position.isEmpty() ? position.get(0) : null;
     }
 
     public Double getLatitude() {
@@ -78,7 +78,7 @@ public class Signalement {
         return "Signalement{" +
                 "id=" + id +
                 ", type='" + type + '\'' +
-                ", utilisateur=" + utilisateur +
+                ", user=" + user +
                 ", position=" + position +
                 ", imagePath='" + imagePath + '\'' +
                 '}';

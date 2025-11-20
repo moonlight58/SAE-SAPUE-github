@@ -118,7 +118,7 @@ public class DataDriverExample {
             System.out.println("\n=== Example 8: Insert a Signalement ===");
             Signalement signalement = new Signalement();
             signalement.setType("depot_sauvage");
-            signalement.setUtilisateur(userId);
+            signalement.setUser(userId);
             signalement.setPosition(Arrays.asList(6.0250, 47.2380));
             signalement.setImagePath("/images/signalement_001.jpg");
             
