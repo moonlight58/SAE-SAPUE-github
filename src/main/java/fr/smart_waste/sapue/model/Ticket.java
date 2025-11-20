@@ -56,9 +56,9 @@ public class Ticket {
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", status='" + status + '\'' +
-                ", user=" + user +
-                ", created_at=" + created_at +
-                ", updated_at=" + updated_at +
+                ", user=" + user + '\'' +
+                ", created_at=" + created_at + '\'' +
+                ", updated_at=" + updated_at + '\'' +
                 ", chat_history=" + chat_history +
                 '}';
     }
