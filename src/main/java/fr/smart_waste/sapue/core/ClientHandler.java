@@ -107,23 +107,18 @@ public class ClientHandler implements Runnable {
             String command = parts[0].toUpperCase();
             
             // Route to appropriate handler
-            switch (command) {
-                case "REGISTER":
-                    return handleRegister(parts);
-                    
-                case "DATA":
-                    return handleData(parts);
-                    
-                case "PING":
-                    return "OK";
-                    
-                case "DISCONNECT":
+            return switch (command) {
+                case "REGISTER" -> handleRegister(parts);
+                case "DATA" -> handleData(parts);
+                case "PING" -> handlePing(parts);
+                case "CONFIG_GET" -> handleConfig(parts);
+                case "STATUS" -> handleStatus(parts);
+                case "DISCONNECT" -> {
                     running = false;
-                    return "OK";
-                    
-                default:
-                    return "ERR_INVALID_COMMAND";
-            }
+                    yield "OK";
+                }
+                default -> "ERR_INVALID_COMMAND";
+            };
             
         } catch (Exception e) {
             metrics.incrementErrors();
@@ -176,8 +171,7 @@ public class ClientHandler implements Runnable {
         }
         
         // TODO: Parse sensor data and store in database
-        // This will be implemented when we create the protocol parser
-        
+
         log("Data received from " + microcontrollerReference);
         
         return "OK";
@@ -200,7 +194,21 @@ public class ClientHandler implements Runnable {
     public String getMicrocontrollerReference() {
         return microcontrollerReference;
     }
-    
+
+    public String handlePing(String[] parts) {
+
+        return "OK";
+    }
+
+    public String handleConfig(String[] parts) {
+        return "OK";
+    }
+
+    public String handleStatus(String[] parts) {
+        return "OK";
+        // return ("OK sensorType:" + microcontrolleur.sensortype + " enable: " + microcontrolleur.isConnected() + "samplingInterval:" + microcontrolleur.samplingInterval)
+    }
+
     /**
      * Check if client is still connected
      */
