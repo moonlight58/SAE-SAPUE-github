@@ -142,10 +142,10 @@ PING MC-001
 DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25
 # Expected: OK
 
-CONFIG_GET MC-001
+CONFIG_GET MC-001 # not implemented yet
 # Expected: OK sensorType:BME280 enabled:true samplingInterval:300 ...
 
-STATUS MC-001 battery:87 uptime:3600 freeMemory:45000
+STATUS MC-001 battery:87 uptime:3600 freeMemory:45000 # not implemented yet
 # Expected: OK
 
 DISCONNECT MC-001

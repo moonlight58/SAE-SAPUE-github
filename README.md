@@ -4,6 +4,9 @@
 
 ```
 fr.smart_waste.sapue
+├── Chipset.java
+├── Measure.java
+├── Module.java
 ├── config
 │   └── ServerConfig.java          # YAML configuration loader
 ├── core
@@ -21,6 +24,11 @@ fr.smart_waste.sapue
 │   ├── Signalement.java
 │   ├── Releve.java
 │   └── AnalyseMedia.java
+├── protocol
+│   ├── CommandHandler.java
+│   ├── ProtocolRequest.java
+│   ├── ProtocolException.java            
+│   └── ProtocolParser.java       
 └── test
     └── TestClient.java            # Test client simulator
 ```
@@ -112,26 +120,12 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 ### 4. Run Server
 ```bash
 # With default config.yml
-java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer
+mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.core.SmartWasteServer"
 
 # With custom config
-java -cp target/classes fr.smart_waste.sapue.core.SmartWasteServer src/main/java/fr/smart_waste/sapue/config/config.yml
+mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.core.SmartWasteServer" -Dexec.args="/path/to/config.yml"
 ```
 
-### 5. Test with TestClient
-```bash
-java -cp target/classes fr.smart_waste.sapue.test.TestClient
-```
-
-## 🔧 Future Enhancements (Easy to Add)
-
-### Protocol Parser (Next Step)
-```java
-fr.smart_waste.sapue.protocol
-├── ProtocolParser.java        # Parse requests
-├── CommandHandler.java        # Route commands
-└── ResponseBuilder.java       # Build responses
-```
 
 ### API-based DataDriver
 ```java
