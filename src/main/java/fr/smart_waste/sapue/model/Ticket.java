@@ -6,9 +6,7 @@ import java.util.Date;
 public class Ticket {
     private ObjectId id;
     private String type;
-    private String title;
-    private String description;
-    private String status;
+    private String title, description, status;
     private ObjectId user;
     private Date created_at;
     private Date updated_at;

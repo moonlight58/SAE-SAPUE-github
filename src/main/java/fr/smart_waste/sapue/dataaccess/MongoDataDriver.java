@@ -2,6 +2,7 @@ package fr.smart_waste.sapue.dataaccess;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +41,7 @@ public class MongoDataDriver implements DataDriver {
     MongoCollection<Chipset> chipsets;
     MongoCollection<User> users;
     MongoCollection<MapPoint> mapPoints;
+    MongoCollection<Ticket> tickets;
 
     public MongoDataDriver(String mongoURL, String databaseName) {
         this.mongoURL = mongoURL;
@@ -55,6 +57,7 @@ public class MongoDataDriver implements DataDriver {
             measures = database.getCollection("measures", Measure.class);
             modules = database.getCollection("modules", Module.class);
             chipsets = database.getCollection("chipsets", Chipset.class);
+            tickets = database.getCollection("tickets", Ticket.class);
             users = database.getCollection("users", User.class);
             mapPoints = database.getCollection("mapPoints", MapPoint.class);
         }
@@ -447,6 +450,102 @@ public class MongoDataDriver implements DataDriver {
         try {
             if (mongoClient != null) mongoClient.close();
         } catch (Exception ignored) {}
+    }
+
+    @Override
+    public synchronized ObjectId insertTicket(Ticket ticket) {
+        if (ticket == null || database == null) return null;
+        try {
+            // Set timestamps if not already set
+            if (ticket.getCreated_at() == null) {
+                ticket.setCreated_at(new Date());
+            }
+            if (ticket.getUpdated_at() == null) {
+                ticket.setUpdated_at(new Date());
+            }
+
+            com.mongodb.client.result.InsertOneResult r = database.getCollection("tickets", Ticket.class)
+                    .insertOne(ticket);
+            if (r.getInsertedId() != null) {
+                return r.getInsertedId().asObjectId().getValue();
+            }
+            try {
+                return ticket.getId();
+            } catch (Exception ignored) {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Ticket findTicketById(ObjectId id) {
+        if (id == null || database == null) return null;
+        try {
+            return database.getCollection("tickets", Ticket.class)
+                    .find(eq("_id", id))
+                    .first();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateTicket(Ticket ticket) {
+        if (ticket == null || database == null) return false;
+        try {
+            // Update the updated_at timestamp
+            ticket.setUpdated_at(new Date());
+
+            com.mongodb.client.result.UpdateResult ur = database.getCollection("tickets", Ticket.class)
+                    .replaceOne(eq("_id", ticket.getId()), ticket);
+            return ur != null && ur.getModifiedCount() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteTicket(ObjectId id) {
+        if (id == null || database == null) return false;
+        try {
+            com.mongodb.client.result.DeleteResult dr = database.getCollection("tickets", Ticket.class)
+                    .deleteOne(eq("_id", id));
+            return dr.getDeletedCount() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public List<Ticket> findAllTickets() {
+        if (database == null) return new ArrayList<>();
+        try {
+            return database.getCollection("tickets", Ticket.class)
+                    .find()
+                    .into(new ArrayList<>());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<Ticket> findTicketsByUser(ObjectId userId) {
+        if (userId == null || database == null) return new ArrayList<>();
+        try {
+            return database.getCollection("tickets", Ticket.class)
+                    .find(eq("user", userId))
+                    .into(new ArrayList<>());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
 }

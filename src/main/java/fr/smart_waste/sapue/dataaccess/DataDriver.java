@@ -251,12 +251,26 @@ public interface DataDriver {
      * @return List of all analyse medias
      */
     List<AnalyseMedia> findAllAnalyseMedias();
-    
-    
+
+    // ========== Ticket Operations ==========
+
+    ObjectId insertTicket(Ticket ticket);
+
+    Ticket findTicketById(ObjectId id);
+
+    boolean updateTicket(Ticket ticket);
+
+    boolean deleteTicket(ObjectId id);
+
+    List<Ticket> findAllTickets();
+
+    List<Ticket> findTicketsByUser(ObjectId userId);
+
     // ========== Connection Management ==========
     
     /**
      * Close database connection and cleanup resources
      */
     void close();
+
 }
