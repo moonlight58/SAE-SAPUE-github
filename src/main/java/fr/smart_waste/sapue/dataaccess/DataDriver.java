@@ -252,20 +252,6 @@ public interface DataDriver {
      */
     List<AnalyseMedia> findAllAnalyseMedias();
 
-    // ========== Ticket Operations ==========
-
-    ObjectId insertTicket(Ticket ticket);
-
-    Ticket findTicketById(ObjectId id);
-
-    boolean updateTicket(Ticket ticket);
-
-    boolean deleteTicket(ObjectId id);
-
-    List<Ticket> findAllTickets();
-
-    List<Ticket> findTicketsByUser(ObjectId userId);
-
     // ========== Connection Management ==========
     
     /**
