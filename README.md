@@ -1,38 +1,5 @@
 # Smart Waste TCP Server - Architecture Guide
 
-## 📁 Project Structure
-
-```
-fr.smart_waste.sapue
-├── Chipset.java
-├── Measure.java
-├── Module.java
-├── config
-│   └── ServerConfig.java          # YAML configuration loader
-├── core
-│   ├── SmartWasteServer.java      # Main TCP server orchestrator
-│   ├── ClientHandler.java         # Thread per client connection
-│   └── ServerMetrics.java         # Thread-safe metrics tracker
-├── dataaccess
-│   ├── DataDriver.java            # Interface for data operations
-│   └── MongoDataDriver.java       # Direct MongoDB implementation
-├── model
-│   ├── User.java                  # POJOs for all collections
-│   ├── Bin.java
-│   ├── Microcontroller.java
-│   ├── SensorConfig.java
-│   ├── Signalement.java
-│   ├── Releve.java
-│   └── AnalyseMedia.java
-├── protocol
-│   ├── CommandHandler.java
-│   ├── ProtocolRequest.java
-│   ├── ProtocolException.java            
-│   └── ProtocolParser.java       
-└── test
-    └── TestClient.java            # Test client simulator
-```
-
 ## 🏗️ Architecture Overview
 
 ### 1. Main Server (`SmartWasteServer`)
@@ -126,27 +93,6 @@ mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.core.SmartWasteServer"
 mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.core.SmartWasteServer" -Dexec.args="/path/to/config.yml"
 ```
 
-
-### API-based DataDriver
-```java
-fr.smart_waste.sapue.dataaccess
-└── ApiDataDriver.java         # Call Node API instead of direct MongoDB
-```
-
-### Thread Pool Executor
-Just replace in `SmartWasteServer.start()`:
-```java
-ExecutorService threadPool = Executors.newFixedThreadPool(50);
-// In accept loop:
-threadPool.execute(handler);
-```
-
-### Binary Data Support
-Add to `ClientHandler`:
-```java
-private byte[] receiveBinaryData(int expectedBytes) { ... }
-```
-
 ## 📊 Example Output
 
 ```
@@ -169,36 +115,3 @@ Data Received: 156 B
 Data Sent: 12 B
 ====================================
 ```
-
-## ✅ Design Principles
-
-1. **Future-proof:** Modular structure allows easy feature additions
-2. **Thread-safe:** All shared resources properly synchronized
-3. **Configurable:** YAML-based configuration for different environments
-4. **Observable:** Built-in metrics and logging
-5. **Extensible:** Interface-based design for multiple implementations
-6. **Robust:** Error handling and graceful shutdown
-
-## 🎯 What's Working
-
-✅ TCP server accepts connections  
-✅ Multi-threaded client handling  
-✅ Client registry (duplicate prevention)  
-✅ Basic protocol (REGISTER, PING, DATA, DISCONNECT)  
-✅ MongoDB integration (full CRUD)  
-✅ Metrics tracking  
-✅ YAML configuration  
-✅ Graceful shutdown  
-
-## 📝 TODO (Easy to Add Later)
-
-- [ ] Complete protocol parser for sensor data
-- [ ] Store sensor readings in Releve collection
-- [ ] Binary data transfer for images
-- [ ] API-based DataDriver implementation
-- [ ] Thread pool executor
-- [ ] Authentication/session management
-- [ ] Proper logging framework (Log4j/SLF4J)
-- [ ] Unit tests
-- [ ] Docker containerization
-- [ ] CI/CD integration
