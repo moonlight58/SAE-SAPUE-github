@@ -1,7 +1,7 @@
 package fr.smart_waste.sapue.core;
 
-import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.config.ServerConfig;
+import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolParser;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
@@ -17,7 +17,7 @@ import java.net.SocketException;
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
-    private final DataDriver dataDriver;
+    private final MongoDataDriver dataDriver;
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final SmartWasteServer server;
@@ -27,7 +27,7 @@ public class ClientHandler implements Runnable {
     private String microcontrollerReference;
     private boolean running;
 
-    public ClientHandler(Socket clientSocket, DataDriver dataDriver,
+    public ClientHandler(Socket clientSocket, MongoDataDriver dataDriver,
                          ServerConfig config, ServerMetrics metrics,
                          SmartWasteServer server) {
         this.clientSocket = clientSocket;
@@ -103,15 +103,27 @@ public class ClientHandler implements Runnable {
             // Parse request using ProtocolParser
             ProtocolRequest parsedRequest = ProtocolParser.parse(request);
 
-            // Store reference on first REGISTER
-            if ("REGISTER".equals(parsedRequest.getCommand())) {
+            // Execute command using CommandHandler
+            CommandHandler commandHandler = new CommandHandler(dataDriver, server);
+            String response = commandHandler.execute(parsedRequest);
+
+            // Register client ONLY after successful REGISTER command
+            if ("REGISTER".equals(parsedRequest.getCommand()) && "OK".equals(response)) {
                 this.microcontrollerReference = parsedRequest.getReference();
                 server.registerClient(microcontrollerReference, this);
             }
 
-            // Execute command using CommandHandler
-            CommandHandler commandHandler = new CommandHandler(dataDriver, server);
-            String response = commandHandler.execute(parsedRequest);
+            if ("DATA".equals(parsedRequest.getCommand()) && "OK".equals(response)) {
+                // Data received successfully
+            }
+
+            if ("PING".equals(parsedRequest.getCommand()) && "PONG".equals(response)) {
+                // Ping-Pong successful
+            }
+
+            if ("CONFIG_GET".equals(parsedRequest.getCommand())) {
+                // Configuration sent
+            }
 
             // Handle DISCONNECT command
             if ("DISCONNECT".equals(parsedRequest.getCommand()) && "OK".equals(response)) {

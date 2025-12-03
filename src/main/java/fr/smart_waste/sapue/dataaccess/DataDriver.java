@@ -10,50 +10,6 @@ import java.util.List;
  */
 public interface DataDriver {
     
-    // ========== User Operations ==========
-    
-    /**
-     * Insert a new user
-     * @param user User object to insert
-     * @return ObjectId of inserted user, null if failed
-     */
-    ObjectId insertUser(User user);
-    
-    /**
-     * Find user by ID
-     * @param id User ObjectId
-     * @return User object or null if not found
-     */
-    User findUserById(ObjectId id);
-    
-    /**
-     * Find user by pseudo
-     * @param pseudo User pseudo
-     * @return User object or null if not found
-     */
-    User findUserByPseudo(String pseudo);
-    
-    /**
-     * Update an existing user
-     * @param user User object with updated fields
-     * @return true if updated successfully, false otherwise
-     */
-    boolean updateUser(User user);
-    
-    /**
-     * Delete a user by ID
-     * @param id User ObjectId
-     * @return true if deleted successfully, false otherwise
-     */
-    boolean deleteUser(ObjectId id);
-    
-    /**
-     * Get all users
-     * @return List of all users
-     */
-    List<User> findAllUsers();
-    
-    
     // ========== MapPoint Operations ==========
 
     /**

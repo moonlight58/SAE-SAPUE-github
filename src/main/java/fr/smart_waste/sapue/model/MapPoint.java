@@ -7,7 +7,7 @@ import java.util.List;
  * POJO for MapPoints collection
  */
 public class MapPoint {
-    private ObjectId pointId;
+    private ObjectId id;
     private String type;
     private List<Double> position; // [longitude, latitude]
     private Boolean isSAPUE;
@@ -26,11 +26,11 @@ public class MapPoint {
 
     // Getters and Setters
     public ObjectId getId() {
-        return pointId;
+        return id;
     }
 
     public void setId(ObjectId id) {
-        this.pointId = pointId;
+        this.id = id;
     }
 
     public String getType() {
@@ -68,7 +68,7 @@ public class MapPoint {
     @Override
     public String toString() {
         return "MapPoint{" +
-                "pointId=" + pointId +
+                "id=" + id +
                 ", type='" + type + '\'' +
                 ", position=" + position +
                 ", isSAPUE=" + isSAPUE +

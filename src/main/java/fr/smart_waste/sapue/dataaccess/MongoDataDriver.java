@@ -32,38 +32,40 @@ public class MongoDataDriver implements DataDriver {
 
     private final String mongoURL;
     private final String databaseName;
-    private final CodecProvider pojoCodecProvider;
     private final CodecRegistry pojoCodecRegistry;
     private MongoClient mongoClient;
     private MongoDatabase database;
     MongoCollection<Measure> measures;
     MongoCollection<Module> modules;
     MongoCollection<Chipset> chipsets;
-    MongoCollection<User> users;
     MongoCollection<MapPoint> mapPoints;
+    MongoCollection<Microcontrolleur> microcontrolleurs;
 
     public MongoDataDriver(String mongoURL, String databaseName) {
         this.mongoURL = mongoURL;
         this.databaseName = databaseName;
-        pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
+        CodecProvider pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
         pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
     }
 
     public boolean init()  {
         mongoClient = MongoClients.create(mongoURL);
         try {
-            database =  mongoClient.getDatabase(databaseName);
+            // Appliquer le codec POJO sur la database pour que getCollection(..., Class) fonctionne correctement
+            database = mongoClient.getDatabase(databaseName).withCodecRegistry(pojoCodecRegistry);
+
             measures = database.getCollection("measures", Measure.class);
             modules = database.getCollection("modules", Module.class);
             chipsets = database.getCollection("chipsets", Chipset.class);
-            users = database.getCollection("users", User.class);
             mapPoints = database.getCollection("mapPoints", MapPoint.class);
+            microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
         }
         catch(IllegalArgumentException e) {
             return false;
         }
         return true;
     }
+
 
     private ObjectId getModuleId(String moduleKey) {
         Module module = modules.find(eq("key",moduleKey)).first();
@@ -131,95 +133,6 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public synchronized ObjectId insertUser(User user) {
-        if (user == null) return null;
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return null;
-        try {
-            InsertOneResult res = col.insertOne(user);
-            if (res.getInsertedId() != null) {
-                return res.getInsertedId().asObjectId().getValue();
-            }
-            try { return user.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public User findUserById(ObjectId id) {
-        if (id == null) return null;
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return null;
-        try {
-            return col.find(eq("_id", id)).first();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public User findUserByPseudo(String pseudo) {
-        if (pseudo == null) return null;
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return null;
-        try {
-            return col.find(eq("pseudo", pseudo)).first();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public boolean updateUser(User user) {
-        if (user == null) return false;
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return false;
-        try {
-            com.mongodb.client.result.UpdateResult ur = col.replaceOne(eq("_id", user.getId()), user);
-            return ur.getMatchedCount() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    @Override
-    public boolean deleteUser(ObjectId id) {
-        if (id == null) return false;
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return false;
-        try {
-            com.mongodb.client.result.DeleteResult dr = col.deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    @Override
-    public List<User> findAllUsers() {
-        MongoCollection<User> col = users != null ? users :
-                (database != null ? database.getCollection("users", User.class) : null);
-        if (col == null) return new ArrayList<>();
-        try {
-            return col.find().into(new ArrayList<>());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    @Override
     public synchronized ObjectId insertMapPoint(MapPoint mapPoint) {
         if (mapPoint == null || database == null) return null;
         try {
@@ -282,7 +195,13 @@ public class MongoDataDriver implements DataDriver {
     @Override
     public Microcontrolleur findMicrocontrolleurByReference(String reference) {
         if (reference == null || database == null) return null;
-        return database.getCollection("microcontrolleurs", Microcontrolleur.class).find(eq("reference", reference)).first();
+        System.out.println("[DEBUG] Searching for reference: " + reference);
+
+        // Utiliser la collection pré-initialisée
+        Microcontrolleur result = microcontrolleurs.find(eq("reference", reference)).first();
+        System.out.println("[DEBUG] Query result: " + result);
+
+        return result;
     }
 
     @Override

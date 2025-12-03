@@ -21,7 +21,7 @@ public class SmartWasteServer {
 
     private final ServerConfig config;
     private final ServerMetrics metrics;
-    private final DataDriver dataDriver;
+    private final MongoDataDriver dataDriver;
     private final MongoClient mongoClient;
 
     private ServerSocket serverSocket;
@@ -42,7 +42,14 @@ public class SmartWasteServer {
         // Initialize MongoDB connection
         log("Connecting to MongoDB: " + config.getMongoConnectionString());
         this.mongoClient = MongoClients.create(config.getMongoConnectionString());
-        this.dataDriver = new MongoDataDriver(mongoClient.toString(), config.getDatabaseName());
+
+        // Pass the connection string, NOT mongoClient.toString()
+        this.dataDriver = new MongoDataDriver(config.getMongoConnectionString(), config.getDatabaseName());
+
+        if (!dataDriver.init()) {
+            System.err.println("Error while initializing data driver");
+            return;
+        }
 
         log("Server initialized in " + config.getEnvironment() + " mode");
     }

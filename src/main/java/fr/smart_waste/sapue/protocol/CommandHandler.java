@@ -2,6 +2,7 @@ package fr.smart_waste.sapue.protocol;
 
 
 import fr.smart_waste.sapue.dataaccess.DataDriver;
+import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.core.SmartWasteServer;
 import org.bson.Document;
@@ -16,10 +17,10 @@ import java.util.Map;
  */
 public class CommandHandler {
 
-    private final DataDriver dataDriver;
+    private final MongoDataDriver dataDriver;
     private final SmartWasteServer server;
 
-    public CommandHandler(DataDriver dataDriver, SmartWasteServer server) {
+    public CommandHandler(MongoDataDriver dataDriver, SmartWasteServer server) {
         this.dataDriver = dataDriver;
         this.server = server;
     }
@@ -76,8 +77,10 @@ public class CommandHandler {
             return "ERR_ALREADY_REGISTERED";
         }
 
+        System.out.println("Registering device: " + reference + " from IP " + ipAddress);
         // Check if Microcontrolleur exists in database
         Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(reference);
+        System.out.println("mc: " + mc);
 
         if (mc == null) {
             log("Registration denied: " + reference + " not found in database");

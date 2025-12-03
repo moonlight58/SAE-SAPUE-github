@@ -26,7 +26,7 @@ Before running the server, you need to create at least one microcontroller in th
 
 ```javascript
 // Connect to MongoDB
-mongosh
+mongosh mongodb+srv://<db_username>:<db_password>@cluster0.vnh4z0a.mongodb.net/
 
 // Use database
 use smartwaste_dev
@@ -133,7 +133,7 @@ ServerConfig{serverPort=8888, maxConnections=100, ...}
 telnet localhost 8888
 
 # Once connected, try these commands:
-REGISTER MC-001 192.168.1.100
+REGISTER MC-001 192.168.1.101
 # Expected: OK
 
 PING MC-001
