@@ -10,7 +10,9 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -20,6 +22,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.set;
 
 /**
  * MongoDB implementation of DataDriver interface
@@ -36,7 +39,7 @@ public class MongoDataDriver implements DataDriver {
     private MongoDatabase database;
 
     // Collections
-    private MongoCollection<MapPoint> mapPoints;
+    private MongoCollection<Poubelles> poubelles;
     private MongoCollection<Microcontrolleur> microcontrolleurs;
     private MongoCollection<Signalement> signalements;
     private MongoCollection<Releve> releves;
@@ -72,7 +75,7 @@ public class MongoDataDriver implements DataDriver {
             database = mongoClient.getDatabase(databaseName).withCodecRegistry(pojoCodecRegistry);
 
             // Initialize all collections with POJO codec
-            mapPoints = database.getCollection("mapPoints", MapPoint.class);
+            poubelles = database.getCollection("poubelles", Poubelles.class);
             microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
             signalements = database.getCollection("signalements", Signalement.class);
             releves = database.getCollection("releves", Releve.class);
@@ -88,62 +91,113 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-    // ========== MapPoint Operations ==========
+    // ========== Poubelles Operations ==========
 
     @Override
-    public synchronized ObjectId insertMapPoint(MapPoint mapPoint) {
-        if (mapPoint == null) return null;
+    public synchronized ObjectId insertPoubelle(Poubelles poubelle) {
+        if (poubelle == null) return null;
         try {
-            InsertOneResult result = mapPoints.insertOne(mapPoint);
+            InsertOneResult result = poubelles.insertOne(poubelle);
             return result.getInsertedId() != null
                     ? result.getInsertedId().asObjectId().getValue()
-                    : mapPoint.getId();
+                    : poubelle.getId();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error inserting mapPoint: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error inserting poubelle: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public MapPoint findMapPointById(ObjectId id) {
+    public Poubelles findPoubelleById(ObjectId id) {
         if (id == null) return null;
         try {
-            return mapPoints.find(eq("_id", id)).first();
+            return poubelles.find(eq("_id", id)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding mapPoint: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding poubelle by ID: " + e.getMessage());
             return null;
         }
     }
 
     @Override
-    public boolean updateMapPoint(MapPoint mapPoint) {
-        if (mapPoint == null || mapPoint.getId() == null) return false;
+    public Poubelles findPoubelleByMicrocontroller(String mcReference) {
+        if (mcReference == null || mcReference.isEmpty()) return null;
         try {
-            return mapPoints.replaceOne(eq("_id", mapPoint.getId()), mapPoint).getModifiedCount() > 0;
+            return poubelles.find(eq("hardwareConfig.microcontroller", mcReference)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating mapPoint: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding poubelle by microcontroller: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updatePoubelle(Poubelles poubelle) {
+        if (poubelle == null || poubelle.getId() == null) return false;
+        try {
+            return poubelles.replaceOne(eq("_id", poubelle.getId()), poubelle).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating poubelle: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public boolean deleteMapPoint(ObjectId id) {
+    public boolean updateLastMeasurement(ObjectId id, Poubelles.LastMeasurement lastMeasurement) {
+        if (id == null || lastMeasurement == null) return false;
+        try {
+            UpdateResult result = poubelles.updateOne(
+                    eq("_id", id),
+                    set("lastMeasurement", lastMeasurement)
+            );
+            return result.getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating last measurement: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateActiveAlerts(ObjectId id, Poubelles.ActiveAlerts activeAlerts) {
+        if (id == null || activeAlerts == null) return false;
+        try {
+            UpdateResult result = poubelles.updateOne(
+                    eq("_id", id),
+                    set("activeAlerts", activeAlerts)
+            );
+            return result.getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating active alerts: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deletePoubelle(ObjectId id) {
         if (id == null) return false;
         try {
-            return mapPoints.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+            return poubelles.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting mapPoint: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error deleting poubelle: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public List<MapPoint> findAllMapPoints() {
+    public List<Poubelles> findAllPoubelles() {
         try {
-            return mapPoints.find().into(new ArrayList<>());
+            return poubelles.find().into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding all mapPoints: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding all poubelles: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<Poubelles> findPoubellesWithActiveAlerts() {
+        try {
+            return poubelles.find(eq("activeAlerts.hasIssue", true)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding poubelles with active alerts: " + e.getMessage());
             return new ArrayList<>();
         }
     }

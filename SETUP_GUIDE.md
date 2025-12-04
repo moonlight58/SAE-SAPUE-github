@@ -23,6 +23,8 @@ Follow MongoDB installation guide for your OS: https://docs.mongodb.com/manual/i
 ## Step 2: Create Initial Data
 
 Before running the server, you need to create at least one microcontroller in the database:
+#### Étape 1 : Créer les données initiales
+##### 1.1 Créer un Microcontrolleur
 
 ```javascript
 // Connect to MongoDB
@@ -38,12 +40,10 @@ db.mapPoints.insertOne({
   isSAPUE: true
 })
 
-// Get the bin ID (copy the _id value from above)
-
-// Create a microcontroller
+// Créer un microcontrôleur
 db.microcontrolleurs.insertOne({
     reference: "MC-001",
-    mapPoint: ObjectId("60af8847e13f5a134c2c34b1"),
+    mapPoint: null,  // Plus utilisé avec nouvelle structure
     ipAddress: "192.168.1.100",
     configSensor: {
         sensorType: "BME280",
@@ -53,7 +53,162 @@ db.microcontrolleurs.insertOne({
             tempOffset: 0.5,
             pressureUnit: "hPa"
         }
-   }
+    }
+})
+```
+
+##### 1.2 Créer une Poubelle liée au Microcontrolleur
+
+```javascript
+// Créer une poubelle avec le microcontrôleur MC-001
+db.poubelles.insertOne({
+    type: "Poubelle",
+    isSapue: true,
+    certaintyLevel: 1.0,
+    location: {
+        type: "Point",
+        coordinates: [6.0240, 47.2378]  // [longitude, latitude] - Besançon
+    },
+    adress: "1 Rue de la République, 25000 Besançon",
+    hardwareConfig: {
+        ipAddress: "192.168.1.100",
+        microcontroller: ["MC-001"],  // Référence au MC
+        sensors: ["BME280"]
+    },
+    lastMeasurement: {
+        date: new Date(),
+        measurement: {
+            sensorType: "BME280",
+            temperature: 20.5,
+            humidity: 65.0,
+            pressure: 1013.25
+        }
+    },
+    activeAlerts: {
+        hasIssue: false,
+        issueType: null,
+        idSignalement: null
+    }
+})
+```
+
+##### 1.3 Créer plusieurs Poubelles
+
+```javascript
+// Poubelle 1 - Sans alerte
+db.poubelles.insertOne({
+    type: "Poubelle",
+    isSapue: true,
+    certaintyLevel: 1.0,
+    location: {
+        type: "Point",
+        coordinates: [6.0245, 47.2385]
+    },
+    adress: "Place de la Révolution, 25000 Besançon",
+    hardwareConfig: {
+        ipAddress: "192.168.1.101",
+        microcontroller: ["MC-002"],
+        sensors: ["BME280", "HX711"]
+    },
+    lastMeasurement: {
+        date: new Date(),
+        measurement: {
+            sensorType: "HX711",
+            weight: 45.5,
+            fillLevel: 75
+        }
+    },
+    activeAlerts: {
+        hasIssue: false,
+        issueType: null,
+        idSignalement: null
+    }
+})
+
+// Poubelle 2 - Avec alerte (pleine)
+db.poubelles.insertOne({
+    type: "Poubelle",
+    isSapue: true,
+    certaintyLevel: 0.95,
+    location: {
+        type: "Point",
+        coordinates: [6.0250, 47.2390]
+    },
+    adress: "Avenue Foch, 25000 Besançon",
+    hardwareConfig: {
+        ipAddress: "192.168.1.102",
+        microcontroller: ["MC-003"],
+        sensors: ["HCSR04", "MQ135"]
+    },
+    lastMeasurement: {
+        date: new Date(),
+        measurement: {
+            sensorType: "HCSR04",
+            distance: 10,
+            fillLevel: 92
+        }
+    },
+    activeAlerts: {
+        hasIssue: true,
+        issueType: "Plein",
+        idSignalement: null  // Sera ajouté quand un signalement est créé
+    }
+})
+
+// Bac de recyclage - Pas SAPUE
+db.poubelles.insertOne({
+    type: "Bac",
+    isSapue: false,
+    certaintyLevel: 0.8,
+    location: {
+        type: "Point",
+        coordinates: [6.0255, 47.2395]
+    },
+    adress: "Rue Pasteur, 25000 Besançon",
+    hardwareConfig: {
+        ipAddress: null,
+        microcontroller: [],
+        sensors: []
+    },
+    lastMeasurement: null,
+    activeAlerts: {
+        hasIssue: false,
+        issueType: null,
+        idSignalement: null
+    }
+})
+```
+#### Étape 2 : Créer les Microcontrolleurs correspondants
+```javascript
+// MC-002
+db.microcontrolleurs.insertOne({
+    reference: "MC-002",
+    mapPoint: null,
+    ipAddress: "192.168.1.101",
+    configSensor: {
+        sensorType: "HX711",
+        enabled: true,
+        samplingInterval: 600,
+        parameters: {
+            calibrationFactor: 2000
+        }
+    }
+})
+
+// MC-003
+db.microcontrolleurs.insertOne({
+    reference: "MC-003",
+    mapPoint: null,
+    ipAddress: "192.168.1.102",
+    configSensor: {
+        sensorType: "HCSR04",
+        enabled: true,
+        samplingInterval: 300,
+        parameters: {
+            triggerPin: 5,
+            echoPin: 18
+        }
+    }
 })
 ```
 

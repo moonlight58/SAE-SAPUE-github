@@ -1,6 +1,5 @@
 package fr.smart_waste.sapue.protocol;
 
-
 import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 import fr.smart_waste.sapue.model.*;
@@ -14,6 +13,7 @@ import java.util.Map;
 /**
  * Handles execution of parsed protocol commands
  * Interacts with database and server components
+ * Now includes automatic Poubelle lastMeasurement updates
  */
 public class CommandHandler {
 
@@ -78,6 +78,7 @@ public class CommandHandler {
         }
 
         System.out.println("Registering device: " + reference + " from IP " + ipAddress);
+
         // Check if Microcontrolleur exists in database
         Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(reference);
         System.out.println("mc: " + mc);
@@ -101,6 +102,7 @@ public class CommandHandler {
     /**
      * Handle DATA command
      * Store sensor readings in Releve collection
+     * AND update lastMeasurement in Poubelle collection
      */
     private String handleData(ProtocolRequest request) {
         String reference = request.getReference();
@@ -153,9 +155,10 @@ public class CommandHandler {
         }
 
         // Create and store Releve
+        Date measurementDate = new Date();
         Releve releve = new Releve();
         releve.setIdControlleur(mc.getId());
-        releve.setDate(new Date());
+        releve.setDate(measurementDate);
         releve.setReleve(reading);
 
         ObjectId releveId = dataDriver.insertReleve(releve);
@@ -165,7 +168,32 @@ public class CommandHandler {
             return "ERR_DATABASE_ERROR";
         }
 
-        log("Data stored for " + reference + " (" + sensorType + "): " + reading.toJson());
+        log("Data stored in Releves for " + reference + " (" + sensorType + "): " + reading.toJson());
+
+        // ========== UPDATE POUBELLE lastMeasurement ==========
+
+        // Find Poubelle by microcontroller reference
+        Poubelles poubelle = dataDriver.findPoubelleByMicrocontroller(reference);
+
+        if (poubelle != null) {
+            // Create LastMeasurement object
+            Poubelles.LastMeasurement lastMeasurement = new Poubelles.LastMeasurement();
+            lastMeasurement.setDate(measurementDate);
+            lastMeasurement.setMeasurement(reading);
+
+            // Update Poubelle with last measurement
+            boolean updated = dataDriver.updateLastMeasurement(poubelle.getId(), lastMeasurement);
+
+            if (updated) {
+                log("Updated lastMeasurement in Poubelle for " + reference);
+            } else {
+                log("WARNING: Failed to update lastMeasurement in Poubelle for " + reference);
+            }
+        } else {
+            log("WARNING: No Poubelle found for microcontroller " + reference +
+                    " - lastMeasurement not updated");
+        }
+
         return "OK";
     }
 
@@ -299,7 +327,6 @@ public class CommandHandler {
     /**
      * Handle STATUS command
      * Store Microcontrolleur status information
-     * Can be used for battery level, uptime, memory, etc.
      */
     private String handleStatus(ProtocolRequest request) {
         String reference = request.getReference();
