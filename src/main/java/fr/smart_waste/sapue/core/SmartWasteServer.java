@@ -1,9 +1,6 @@
 package fr.smart_waste.sapue.core;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import fr.smart_waste.sapue.config.ServerConfig;
-import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 
 import java.io.IOException;
@@ -22,7 +19,6 @@ public class SmartWasteServer {
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final MongoDataDriver dataDriver;
-    private final MongoClient mongoClient;
 
     private ServerSocket serverSocket;
     private volatile boolean running;
@@ -39,16 +35,12 @@ public class SmartWasteServer {
         this.metrics = new ServerMetrics();
         this.connectedClients = new ConcurrentHashMap<>();
 
-        // Initialize MongoDB connection
+        // Initialize MongoDB connection with proper connection string
         log("Connecting to MongoDB: " + config.getMongoConnectionString());
-        this.mongoClient = MongoClients.create(config.getMongoConnectionString());
-
-        // Pass the connection string, NOT mongoClient.toString()
-        this.dataDriver = new MongoDataDriver(config.getMongoConnectionString(), config.getDatabaseName());
-        if (!dataDriver.init()) {
-            System.err.println("Error while initializing data driver");
-            return;
-        }
+        this.dataDriver = new MongoDataDriver(
+                config.getMongoConnectionString(),
+                config.getDatabaseName()
+        );
 
         log("Server initialized in " + config.getEnvironment() + " mode");
     }
@@ -70,6 +62,8 @@ public class SmartWasteServer {
 
             log("Server started on port " + config.getServerPort());
             log("Max connections: " + config.getMaxConnections());
+            log("Socket timeout: " + config.getSocketTimeout() + "ms");
+            log("Database: " + config.getDatabaseName());
             log("Waiting for client connections...");
 
             // Start metrics printer thread if enabled
@@ -92,9 +86,10 @@ public class SmartWasteServer {
 
                     // Create and start client handler thread
                     ClientHandler handler = new ClientHandler(
-                        clientSocket, dataDriver, config, metrics, this
+                            clientSocket, dataDriver, config, metrics, this
                     );
                     Thread clientThread = new Thread(handler);
+                    clientThread.setName("ClientHandler-" + clientSocket.getInetAddress().getHostAddress());
                     clientThread.start();
 
                 } catch (SocketTimeoutException e) {
@@ -105,12 +100,17 @@ public class SmartWasteServer {
                         log("Error accepting connection: " + e.getMessage());
                         metrics.incrementErrors();
                     }
+                } catch (InterruptedException e) {
+                    log("Sleep interrupted: " + e.getMessage());
+                    Thread.currentThread().interrupt();
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             log("Fatal error starting server: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            cleanup();
         }
     }
 
@@ -129,11 +129,13 @@ public class SmartWasteServer {
 
         try {
             // Disconnect all clients
-            log("Disconnecting " + connectedClients.size() + " clients...");
-            for (ClientHandler handler : connectedClients.values()) {
-                handler.disconnect();
+            if (!connectedClients.isEmpty()) {
+                log("Disconnecting " + connectedClients.size() + " clients...");
+                for (ClientHandler handler : connectedClients.values()) {
+                    handler.disconnect();
+                }
+                connectedClients.clear();
             }
-            connectedClients.clear();
 
             // Close server socket
             if (serverSocket != null && !serverSocket.isClosed()) {
@@ -147,7 +149,6 @@ public class SmartWasteServer {
 
             // Close database connection
             dataDriver.close();
-            mongoClient.close();
 
             log("Server stopped successfully");
 
@@ -164,11 +165,14 @@ public class SmartWasteServer {
     public void restart() {
         log("Restarting server...");
         stop();
+
         try {
             Thread.sleep(2000); // Wait for cleanup
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log("Restart interrupted: " + e.getMessage());
+            Thread.currentThread().interrupt();
         }
+
         start();
     }
 
@@ -176,19 +180,27 @@ public class SmartWasteServer {
      * Register a client in the server registry
      * @param reference Microcontroller reference
      * @param handler ClientHandler instance
+     * @return true if registered, false if already exists
      */
-    public void registerClient(String reference, ClientHandler handler) {
+    public synchronized boolean registerClient(String reference, ClientHandler handler) {
+        if (connectedClients.containsKey(reference)) {
+            log("Registration failed: " + reference + " already registered");
+            return false;
+        }
+
         connectedClients.put(reference, handler);
         log("Client registered: " + reference + " (Total: " + connectedClients.size() + ")");
+        return true;
     }
 
     /**
      * Unregister a client from the server registry
      * @param reference Microcontroller reference
      */
-    public void unregisterClient(String reference) {
-        connectedClients.remove(reference);
-        log("Client unregistered: " + reference + " (Total: " + connectedClients.size() + ")");
+    public synchronized void unregisterClient(String reference) {
+        if (connectedClients.remove(reference) != null) {
+            log("Client unregistered: " + reference + " (Total: " + connectedClients.size() + ")");
+        }
     }
 
     /**
@@ -210,16 +222,34 @@ public class SmartWasteServer {
     }
 
     /**
+     * Get count of connected clients
+     * @return Number of currently connected clients
+     */
+    public int getConnectedClientCount() {
+        return connectedClients.size();
+    }
+
+    /**
      * Broadcast message to all connected clients
      * @param message Message to broadcast
      */
     public void broadcastMessage(String message) {
+        if (connectedClients.isEmpty()) {
+            log("No clients to broadcast to");
+            return;
+        }
+
         log("Broadcasting to " + connectedClients.size() + " clients: " + message);
+        int successCount = 0;
+
         for (ClientHandler handler : connectedClients.values()) {
             if (handler.isConnected()) {
                 handler.sendMessage(message);
+                successCount++;
             }
         }
+
+        log("Broadcast sent to " + successCount + "/" + connectedClients.size() + " clients");
     }
 
     /**
@@ -232,9 +262,9 @@ public class SmartWasteServer {
 
     /**
      * Get data driver
-     * @return DataDriver instance
+     * @return MongoDataDriver instance
      */
-    public DataDriver getDataDriver() {
+    public MongoDataDriver getDataDriver() {
         return dataDriver;
     }
 
@@ -244,6 +274,14 @@ public class SmartWasteServer {
      */
     public boolean isRunning() {
         return running;
+    }
+
+    /**
+     * Get server configuration
+     * @return ServerConfig instance
+     */
+    public ServerConfig getConfig() {
+        return config;
     }
 
     /**
@@ -262,12 +300,41 @@ public class SmartWasteServer {
                 }
             }
         });
+        metricsThread.setName("MetricsPrinter");
         metricsThread.setDaemon(true);
         metricsThread.start();
+
+        log("Metrics printer started (interval: 60s)");
     }
 
     /**
-     * Log helper method
+     * Cleanup resources on shutdown
+     */
+    private void cleanup() {
+        log("Running cleanup...");
+
+        // Ensure all clients are disconnected
+        if (!connectedClients.isEmpty()) {
+            for (ClientHandler handler : connectedClients.values()) {
+                handler.disconnect();
+            }
+            connectedClients.clear();
+        }
+
+        // Ensure server socket is closed
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                log("Error closing server socket: " + e.getMessage());
+            }
+        }
+
+        log("Cleanup complete");
+    }
+
+    /**
+     * Log helper method with timestamp
      */
     private void log(String message) {
         System.out.println("[SmartWasteServer] " + message);
@@ -283,15 +350,19 @@ public class SmartWasteServer {
             ServerConfig config = ServerConfig.loadFromFile(configFile);
             config.validate();
 
-            System.out.println("Configuration loaded:");
+            System.out.println("========================================");
+            System.out.println("  Smart Waste TCP Server");
+            System.out.println("========================================");
+            System.out.println("Configuration loaded from: " + configFile);
             System.out.println(config);
+            System.out.println("========================================\n");
 
             // Create and start server
             SmartWasteServer server = new SmartWasteServer(config);
 
             // Add shutdown hook for graceful shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("\nShutdown signal received");
+                System.out.println("\n[Shutdown Hook] Shutdown signal received");
                 server.stop();
             }));
 

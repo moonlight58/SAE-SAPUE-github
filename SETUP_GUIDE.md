@@ -133,7 +133,7 @@ ServerConfig{serverPort=8888, maxConnections=100, ...}
 telnet localhost 8888
 
 # Once connected, try these commands:
-REGISTER MC-001 192.168.1.101
+REGISTER MC-001 192.168.1.100
 # Expected: OK
 
 PING MC-001
