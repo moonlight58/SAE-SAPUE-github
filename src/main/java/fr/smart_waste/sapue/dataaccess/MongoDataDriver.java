@@ -1,14 +1,8 @@
 package fr.smart_waste.sapue.dataaccess;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
-import fr.smart_waste.sapue.Chipset;
-import fr.smart_waste.sapue.Measure;
-import fr.smart_waste.sapue.Module;
 import fr.smart_waste.sapue.model.*;
 
 import com.mongodb.client.MongoClient;
@@ -25,354 +19,408 @@ import org.bson.types.ObjectId;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
 import static com.mongodb.client.model.Filters.eq;
 
+/**
+ * MongoDB implementation of DataDriver interface
+ * Provides direct database access for Smart Waste application
+ */
 public class MongoDataDriver implements DataDriver {
 
     private final String mongoURL;
     private final String databaseName;
+    private final CodecProvider pojoCodecProvider;
     private final CodecRegistry pojoCodecRegistry;
+
     private MongoClient mongoClient;
     private MongoDatabase database;
-    MongoCollection<Measure> measures;
-    MongoCollection<Module> modules;
-    MongoCollection<Chipset> chipsets;
-    MongoCollection<MapPoint> mapPoints;
-    MongoCollection<Signalement> signalements;
-    MongoCollection<Releve> releves;
-    MongoCollection<AnalyseMedia> analyseMedias;
-    MongoCollection<Microcontrolleur> microcontrolleurs;
 
+    // Collections
+    private MongoCollection<MapPoint> mapPoints;
+    private MongoCollection<Microcontrolleur> microcontrolleurs;
+    private MongoCollection<Signalement> signalements;
+    private MongoCollection<Releve> releves;
+    private MongoCollection<AnalyseMedia> analyseMedias;
+
+    /**
+     * Constructor
+     * @param mongoURL MongoDB connection string
+     * @param databaseName Database name
+     */
     public MongoDataDriver(String mongoURL, String databaseName) {
         this.mongoURL = mongoURL;
         this.databaseName = databaseName;
-        CodecProvider pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
-        pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
+
+        // Setup POJO codec for automatic POJO mapping
+        this.pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
+        this.pojoCodecRegistry = fromRegistries(
+                getDefaultCodecRegistry(),
+                fromProviders(pojoCodecProvider)
+        );
+
+        // Initialize connection and collections
+        init();
     }
 
-    public boolean init()  {
-        mongoClient = MongoClients.create(mongoURL);
+    /**
+     * Initialize MongoDB connection and collections
+     * @return true if successful, false otherwise
+     */
+    public boolean init() {
         try {
-            // Appliquer le codec POJO sur la database pour que getCollection(..., Class) fonctionne correctement
+            mongoClient = MongoClients.create(mongoURL);
             database = mongoClient.getDatabase(databaseName).withCodecRegistry(pojoCodecRegistry);
 
-            measures = database.getCollection("measures", Measure.class);
-            modules = database.getCollection("modules", Module.class);
-            chipsets = database.getCollection("chipsets", Chipset.class);
+            // Initialize all collections with POJO codec
             mapPoints = database.getCollection("mapPoints", MapPoint.class);
             microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
             signalements = database.getCollection("signalements", Signalement.class);
             releves = database.getCollection("releves", Releve.class);
             analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
-        }
-        catch(IllegalArgumentException e) {
+
+            System.out.println("[MongoDataDriver] Connected to database: " + databaseName);
+            return true;
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("[MongoDataDriver] Failed to initialize: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
-        return true;
     }
 
-
-    private ObjectId getModuleId(String moduleKey) {
-        Module module = modules.find(eq("key",moduleKey)).first();
-        if (module != null) {
-            System.out.println(module.getKey()+ " -> "+module.getId());
-
-            return module.getId();
-        }
-        return null;
-    }
-
-    private ObjectId getChipsetId(String chipsetName) {
-        Chipset chipset = chipsets.find(eq("name",chipsetName)).first();
-        if (chipset != null) {
-            System.out.println(chipset.getName()+ " -> "+chipset.getId());
-
-            return chipset.getId();
-        }
-        return null;
-    }
-
-    public synchronized  String autoRegisterModule(String uc, List<String> chipsets) {
-        List<ObjectId> lst = new ArrayList<>();
-        for(String chipset : chipsets) {
-            ObjectId id = getChipsetId(chipset);
-            if (id != null) {
-                lst.add(id);
-            }
-        }
-        // must generate an unique key
-        UUID key = UUID.randomUUID();
-        boolean stop = false;
-        while(!stop) {
-            ObjectId id = getModuleId(key.toString());
-            if (id == null) {
-                stop = true;
-            }
-            else {
-                key = UUID.randomUUID();
-            }
-        }
-        long nb = modules.estimatedDocumentCount()+1;
-        String name = "module "+nb;
-        String shortName = "mod"+nb;
-        Module m = new Module(name, shortName, key.toString(), uc, lst);
-        modules.insertOne(m);
-        return "OK "+m.getName()+","+m.getShortName()+","+m.getKey();
-    }
-
-    public synchronized String saveMeasure(String type, String date, String value, String moduleKey) {
-
-        ObjectId idModule = getModuleId(moduleKey);
-        if (idModule == null) {
-            return "ERR invalid module key";
-        }
-        Measure m = new Measure(type, LocalDateTime.parse(date), value, idModule);
-        measures.insertOne(m);
-        return "OK";
-    }
-
-    public synchronized String saveAnalysis(String type, String date, String value) {
-        Measure m = new Measure(type, LocalDateTime.parse(date), value, null);
-        measures.insertOne(m);
-        return "OK";
-    }
+    // ========== MapPoint Operations ==========
 
     @Override
     public synchronized ObjectId insertMapPoint(MapPoint mapPoint) {
-        if (mapPoint == null || database == null) return null;
+        if (mapPoint == null) return null;
         try {
-            com.mongodb.client.MongoCollection<MapPoint> col = database.getCollection("mapPoints", MapPoint.class);
-            com.mongodb.client.result.InsertOneResult r = col.insertOne(mapPoint);
-            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
-            try { return mapPoint.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) { e.printStackTrace(); return null; }
+            InsertOneResult result = mapPoints.insertOne(mapPoint);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : mapPoint.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting mapPoint: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public MapPoint findMapPointById(ObjectId id) {
-        if (id == null || database == null) return null;
-        return database.getCollection("mapPoints", MapPoint.class).find(eq("_id", id)).first();
+        if (id == null) return null;
+        try {
+            return mapPoints.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding mapPoint: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public boolean updateMapPoint(MapPoint mapPoint) {
-        if (mapPoint == null || database == null) return false;
+        if (mapPoint == null || mapPoint.getId() == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("mapPoints", MapPoint.class)
-                    .replaceOne(eq("_id", mapPoint.getId()), mapPoint);
-            return ur.getModifiedCount() > 0;
-        } catch (Exception e) { return false; }
+            return mapPoints.replaceOne(eq("_id", mapPoint.getId()), mapPoint).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating mapPoint: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean deleteMapPoint(ObjectId id) {
-        if (id == null || database == null) return false;
+        if (id == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("mapPoints", MapPoint.class)
-                    .deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) { return false; }
+            return mapPoints.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting mapPoint: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<MapPoint> findAllMapPoints() {
-        if (database == null) return new ArrayList<>();
-        return database.getCollection("mapPoints", MapPoint.class).find().into(new ArrayList<>());
+        try {
+            return mapPoints.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all mapPoints: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
+    // ========== Microcontrolleur Operations ==========
+
     @Override
-    public synchronized ObjectId insertMicrocontrolleur(Microcontrolleur m) {
-        if (m == null || database == null) return null;
+    public synchronized ObjectId insertMicrocontrolleur(Microcontrolleur mc) {
+        if (mc == null) return null;
         try {
-            com.mongodb.client.result.InsertOneResult r = database.getCollection("microcontrolleurs", Microcontrolleur.class)
-                    .insertOne(m);
-            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
-            try { return m.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) { e.printStackTrace(); return null; }
+            InsertOneResult result = microcontrolleurs.insertOne(mc);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : mc.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting microcontrolleur: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public Microcontrolleur findMicrocontrolleurById(ObjectId id) {
-        if (id == null || database == null) return null;
-        return database.getCollection("microcontrolleurs", Microcontrolleur.class).find(eq("_id", id)).first();
+        if (id == null) return null;
+        try {
+            return microcontrolleurs.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding microcontrolleur by ID: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public Microcontrolleur findMicrocontrolleurByReference(String reference) {
-        if (reference == null || database == null) return null;
-        System.out.println("[DEBUG] Searching for reference: " + reference);
-
-        // Utiliser la collection pré-initialisée
-        Microcontrolleur result = microcontrolleurs.find(eq("reference", reference)).first();
-        System.out.println("[DEBUG] Query result: " + result);
-
-        return result;
+        if (reference == null || reference.isEmpty()) return null;
+        try {
+            return microcontrolleurs.find(eq("reference", reference)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding microcontrolleur by reference: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
-    public boolean updateMicrocontrolleur(Microcontrolleur m) {
-        if (m == null || database == null) return false;
+    public boolean updateMicrocontrolleur(Microcontrolleur mc) {
+        if (mc == null || mc.getId() == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("microcontrolleurs", Microcontrolleur.class)
-                    .replaceOne(eq("_id", m.getId()), m);
-            return ur != null && ur.getModifiedCount() > 0;
-        } catch (Exception e) { return false; }
+            return microcontrolleurs.replaceOne(eq("_id", mc.getId()), mc).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating microcontrolleur: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean deleteMicrocontrolleur(ObjectId id) {
-        if (id == null || database == null) return false;
+        if (id == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("microcontrolleurs", Microcontrolleur.class)
-                    .deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) { return false; }
+            return microcontrolleurs.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting microcontrolleur: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<Microcontrolleur> findAllMicrocontrolleurs() {
-        if (database == null) return new ArrayList<>();
-        return database.getCollection("microcontrolleurs", Microcontrolleur.class).find().into(new ArrayList<>());
+        try {
+            return microcontrolleurs.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all microcontrolleurs: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
+
+    // ========== Signalement Operations ==========
 
     @Override
     public synchronized ObjectId insertSignalement(Signalement s) {
-        if (s == null || database == null) return null;
+        if (s == null) return null;
         try {
-            com.mongodb.client.result.InsertOneResult r = database.getCollection("signalements", Signalement.class).insertOne(s);
-            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
-            try { return s.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) { e.printStackTrace(); return null; }
+            InsertOneResult result = signalements.insertOne(s);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : s.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting signalement: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public Signalement findSignalementById(ObjectId id) {
-        if (id == null || database == null) return null;
-        return database.getCollection("signalements", Signalement.class).find(eq("_id", id)).first();
+        if (id == null) return null;
+        try {
+            return signalements.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding signalement: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public boolean updateSignalement(Signalement s) {
-        if (s == null || database == null) return false;
+        if (s == null || s.getId() == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("signalements", Signalement.class)
-                    .replaceOne(eq("_id", s.getId()), s);
-            return ur != null && ur.getModifiedCount() > 0;
-        } catch (Exception e) { return false; }
+            return signalements.replaceOne(eq("_id", s.getId()), s).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating signalement: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean deleteSignalement(ObjectId id) {
-        if (id == null || database == null) return false;
+        if (id == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("signalements", Signalement.class)
-                    .deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) { return false; }
+            return signalements.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting signalement: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<Signalement> findAllSignalements() {
-        if (database == null) return new ArrayList<>();
-        return database.getCollection("signalements", Signalement.class).find().into(new ArrayList<>());
+        try {
+            return signalements.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all signalements: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
+
+    // ========== Releve Operations ==========
 
     @Override
     public synchronized ObjectId insertReleve(Releve r) {
-        if (r == null || database == null) return null;
+        if (r == null) return null;
         try {
-            com.mongodb.client.result.InsertOneResult res = database.getCollection("releves", Releve.class).insertOne(r);
-            if (res.getInsertedId() != null) return res.getInsertedId().asObjectId().getValue();
-            try { return r.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) { e.printStackTrace(); return null; }
+            InsertOneResult result = releves.insertOne(r);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : r.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting releve: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public Releve findReleveById(ObjectId id) {
-        if (id == null || database == null) return null;
-        return database.getCollection("releves", Releve.class).find(eq("_id", id)).first();
+        if (id == null) return null;
+        try {
+            return releves.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding releve: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public List<Releve> findRelevesByControlleur(ObjectId idControlleur) {
-        if (idControlleur == null || database == null) return new ArrayList<>();
-        return database.getCollection("releves", Releve.class).find(eq("microcontrolleurId", idControlleur)).into(new ArrayList<>());
+        if (idControlleur == null) return new ArrayList<>();
+        try {
+            return releves.find(eq("idControlleur", idControlleur)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding releves by controlleur: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public boolean updateReleve(Releve r) {
-        if (r == null || database == null) return false;
+        if (r == null || r.getId() == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("releves", Releve.class)
-                    .replaceOne(eq("_id", r.getId()), r);
-            return ur.getModifiedCount() > 0;
-        } catch (Exception e) { return false; }
+            return releves.replaceOne(eq("_id", r.getId()), r).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating releve: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean deleteReleve(ObjectId id) {
-        if (id == null || database == null) return false;
+        if (id == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("releves", Releve.class)
-                    .deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) { return false; }
+            return releves.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting releve: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<Releve> findAllReleves() {
-        if (database == null) return new ArrayList<>();
-        return database.getCollection("releves", Releve.class).find().into(new ArrayList<>());
+        try {
+            return releves.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all releves: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
+
+    // ========== AnalyseMedia Operations ==========
 
     @Override
     public synchronized ObjectId insertAnalyseMedia(AnalyseMedia a) {
-        if (a == null || database == null) return null;
+        if (a == null) return null;
         try {
-            com.mongodb.client.result.InsertOneResult r = database.getCollection("analyseMedias", AnalyseMedia.class).insertOne(a);
-            if (r.getInsertedId() != null) return r.getInsertedId().asObjectId().getValue();
-            try { return a.getId(); } catch (Exception ignored) { return null; }
-        } catch (Exception e) { e.printStackTrace(); return null; }
+            InsertOneResult result = analyseMedias.insertOne(a);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : a.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting analyseMedia: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public AnalyseMedia findAnalyseMediaById(ObjectId id) {
-        if (id == null || database == null) return null;
-        return database.getCollection("analyseMedias", AnalyseMedia.class).find(eq("_id", id)).first();
+        if (id == null) return null;
+        try {
+            return analyseMedias.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding analyseMedia: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public boolean updateAnalyseMedia(AnalyseMedia a) {
-        if (a == null || database == null) return false;
+        if (a == null || a.getId() == null) return false;
         try {
-            com.mongodb.client.result.UpdateResult ur = database.getCollection("analyseMedias", AnalyseMedia.class)
-                    .replaceOne(eq("_id", a.getId()), a);
-            return ur.getModifiedCount() > 0;
-        } catch (Exception e) { return false; }
+            return analyseMedias.replaceOne(eq("_id", a.getId()), a).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating analyseMedia: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean deleteAnalyseMedia(ObjectId id) {
-        if (id == null || database == null) return false;
+        if (id == null) return false;
         try {
-            com.mongodb.client.result.DeleteResult dr = database.getCollection("analyseMedias", AnalyseMedia.class)
-                    .deleteOne(eq("_id", id));
-            return dr.getDeletedCount() > 0;
-        } catch (Exception e) { return false; }
+            return analyseMedias.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting analyseMedia: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public List<AnalyseMedia> findAllAnalyseMedias() {
-        if (database == null) return new ArrayList<>();
-        return database.getCollection("analyseMedias", AnalyseMedia.class).find().into(new ArrayList<>());
+        try {
+            return analyseMedias.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all analyseMedias: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
+
+    // ========== Connection Management ==========
 
     @Override
     public void close() {
         try {
-            if (mongoClient != null) mongoClient.close();
-        } catch (Exception ignored) {}
+            if (mongoClient != null) {
+                mongoClient.close();
+                System.out.println("[MongoDataDriver] Connection closed");
+            }
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error closing connection: " + e.getMessage());
+        }
     }
-
 }

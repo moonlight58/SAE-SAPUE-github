@@ -45,7 +45,6 @@ public class SmartWasteServer {
 
         // Pass the connection string, NOT mongoClient.toString()
         this.dataDriver = new MongoDataDriver(config.getMongoConnectionString(), config.getDatabaseName());
-
         if (!dataDriver.init()) {
             System.err.println("Error while initializing data driver");
             return;
