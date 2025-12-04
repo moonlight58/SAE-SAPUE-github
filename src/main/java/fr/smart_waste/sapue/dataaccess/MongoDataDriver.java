@@ -39,6 +39,9 @@ public class MongoDataDriver implements DataDriver {
     MongoCollection<Module> modules;
     MongoCollection<Chipset> chipsets;
     MongoCollection<MapPoint> mapPoints;
+    MongoCollection<Signalement> signalements;
+    MongoCollection<Releve> releves;
+    MongoCollection<AnalyseMedia> analyseMedias;
     MongoCollection<Microcontrolleur> microcontrolleurs;
 
     public MongoDataDriver(String mongoURL, String databaseName) {
@@ -59,6 +62,9 @@ public class MongoDataDriver implements DataDriver {
             chipsets = database.getCollection("chipsets", Chipset.class);
             mapPoints = database.getCollection("mapPoints", MapPoint.class);
             microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
+            signalements = database.getCollection("signalements", Signalement.class);
+            releves = database.getCollection("releves", Releve.class);
+            analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
         }
         catch(IllegalArgumentException e) {
             return false;
