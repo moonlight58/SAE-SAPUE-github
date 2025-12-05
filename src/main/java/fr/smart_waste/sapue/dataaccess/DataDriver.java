@@ -127,65 +127,65 @@ public interface DataDriver {
      * @param signalement Signalement object to insert
      * @return ObjectId of inserted signalement, null if failed
      */
-    ObjectId insertSignalement(Signalement signalement);
+    ObjectId insertSignalements(Signalements signalement);
 
     /**
      * Find signalement by ID
-     * @param id Signalement ObjectId
-     * @return Signalement object or null if not found
+     * @param id Signalements ObjectId
+     * @return Signalements object or null if not found
      */
-    Signalement findSignalementById(ObjectId id);
+    Signalements findSignalementsById(ObjectId id);
 
     /**
      * Update an existing signalement
-     * @param signalement Signalement object with updated fields
+     * @param signalement Signalements object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updateSignalement(Signalement signalement);
+    boolean updateSignalements(Signalements signalement);
 
     /**
      * Delete a signalement by ID
-     * @param id Signalement ObjectId
+     * @param id Signalements ObjectId
      * @return true if deleted successfully, false otherwise
      */
-    boolean deleteSignalement(ObjectId id);
+    boolean deleteSignalements(ObjectId id);
 
     /**
      * Get all signalements
      * @return List of all signalements
      */
-    List<Signalement> findAllSignalements();
+    List<Signalements> findAllSignalements();
 
 
     // ========== Releve Operations ==========
 
     /**
      * Insert a new releve (sensor reading)
-     * @param releve Releve object to insert
+     * @param releves Releve object to insert
      * @return ObjectId of inserted releve, null if failed
      */
-    ObjectId insertReleve(Releve releve);
+    ObjectId insertReleve(Releves releves);
 
     /**
      * Find releve by ID
      * @param id Releve ObjectId
      * @return Releve object or null if not found
      */
-    Releve findReleveById(ObjectId id);
+    Releves findReleveById(ObjectId id);
 
     /**
      * Find all releves for a specific microcontrolleur
      * @param idControlleur Microcontrolleur ObjectId
      * @return List of releves
      */
-    List<Releve> findRelevesByControlleur(ObjectId idControlleur);
+    List<Releves> findRelevesByControlleur(ObjectId idControlleur);
 
     /**
      * Update an existing releve
-     * @param releve Releve object with updated fields
+     * @param releves Releve object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updateReleve(Releve releve);
+    boolean updateReleve(Releves releves);
 
     /**
      * Delete a releve by ID
@@ -198,7 +198,7 @@ public interface DataDriver {
      * Get all releves
      * @return List of all releves
      */
-    List<Releve> findAllReleves();
+    List<Releves> findAllReleves();
 
 
     // ========== AnalyseMedia Operations ==========

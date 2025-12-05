@@ -12,7 +12,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
-import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -41,8 +40,8 @@ public class MongoDataDriver implements DataDriver {
     // Collections
     private MongoCollection<Poubelles> poubelles;
     private MongoCollection<Microcontrolleur> microcontrolleurs;
-    private MongoCollection<Signalement> signalements;
-    private MongoCollection<Releve> releves;
+    private MongoCollection<Signalements> signalements;
+    private MongoCollection<Releves> releves;
     private MongoCollection<AnalyseMedia> analyseMedias;
 
     /**
@@ -77,8 +76,8 @@ public class MongoDataDriver implements DataDriver {
             // Initialize all collections with POJO codec
             poubelles = database.getCollection("poubelles", Poubelles.class);
             microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
-            signalements = database.getCollection("signalements", Signalement.class);
-            releves = database.getCollection("releves", Releve.class);
+            signalements = database.getCollection("signalements", Signalements.class);
+            releves = database.getCollection("releves", Releves.class);
             analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
 
             System.out.println("[MongoDataDriver] Connected to database: " + databaseName);
@@ -276,7 +275,7 @@ public class MongoDataDriver implements DataDriver {
     // ========== Signalement Operations ==========
 
     @Override
-    public synchronized ObjectId insertSignalement(Signalement s) {
+    public synchronized ObjectId insertSignalements(Signalements s) {
         if (s == null) return null;
         try {
             InsertOneResult result = signalements.insertOne(s);
@@ -291,7 +290,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public Signalement findSignalementById(ObjectId id) {
+    public Signalements findSignalementsById(ObjectId id) {
         if (id == null) return null;
         try {
             return signalements.find(eq("_id", id)).first();
@@ -302,7 +301,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean updateSignalement(Signalement s) {
+    public boolean updateSignalements(Signalements s) {
         if (s == null || s.getId() == null) return false;
         try {
             return signalements.replaceOne(eq("_id", s.getId()), s).getModifiedCount() > 0;
@@ -313,7 +312,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean deleteSignalement(ObjectId id) {
+    public boolean deleteSignalements(ObjectId id) {
         if (id == null) return false;
         try {
             return signalements.deleteOne(eq("_id", id)).getDeletedCount() > 0;
@@ -324,7 +323,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public List<Signalement> findAllSignalements() {
+    public List<Signalements> findAllSignalements() {
         try {
             return signalements.find().into(new ArrayList<>());
         } catch (Exception e) {
@@ -336,7 +335,7 @@ public class MongoDataDriver implements DataDriver {
     // ========== Releve Operations ==========
 
     @Override
-    public synchronized ObjectId insertReleve(Releve r) {
+    public synchronized ObjectId insertReleve(Releves r) {
         if (r == null) return null;
         try {
             InsertOneResult result = releves.insertOne(r);
@@ -351,7 +350,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public Releve findReleveById(ObjectId id) {
+    public Releves findReleveById(ObjectId id) {
         if (id == null) return null;
         try {
             return releves.find(eq("_id", id)).first();
@@ -362,7 +361,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public List<Releve> findRelevesByControlleur(ObjectId idControlleur) {
+    public List<Releves> findRelevesByControlleur(ObjectId idControlleur) {
         if (idControlleur == null) return new ArrayList<>();
         try {
             return releves.find(eq("idControlleur", idControlleur)).into(new ArrayList<>());
@@ -373,7 +372,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean updateReleve(Releve r) {
+    public boolean updateReleve(Releves r) {
         if (r == null || r.getId() == null) return false;
         try {
             return releves.replaceOne(eq("_id", r.getId()), r).getModifiedCount() > 0;
@@ -395,7 +394,7 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public List<Releve> findAllReleves() {
+    public List<Releves> findAllReleves() {
         try {
             return releves.find().into(new ArrayList<>());
         } catch (Exception e) {

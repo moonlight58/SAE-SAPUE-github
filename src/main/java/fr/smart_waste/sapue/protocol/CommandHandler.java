@@ -1,6 +1,5 @@
 package fr.smart_waste.sapue.protocol;
 
-import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.core.SmartWasteServer;
@@ -156,12 +155,12 @@ public class CommandHandler {
 
         // Create and store Releve
         Date measurementDate = new Date();
-        Releve releve = new Releve();
-        releve.setIdControlleur(mc.getId());
-        releve.setDate(measurementDate);
-        releve.setReleve(reading);
+        Releves releves = new Releves();
+        releves.setIdControlleur(mc.getId());
+        releves.setDate(measurementDate);
+        releves.setReleve(reading);
 
-        ObjectId releveId = dataDriver.insertReleve(releve);
+        ObjectId releveId = dataDriver.insertReleve(releves);
 
         if (releveId == null) {
             log("ERROR: Failed to store data for " + reference);
@@ -364,16 +363,16 @@ public class CommandHandler {
         }
 
         // Store as a special Releve with sensorType "STATUS"
-        Releve statusReleve = new Releve();
-        statusReleve.setIdControlleur(mc.getId());
-        statusReleve.setDate(new Date());
+        Releves statusReleves = new Releves();
+        statusReleves.setIdControlleur(mc.getId());
+        statusReleves.setDate(new Date());
 
         Document statusReading = new Document();
         statusReading.append("sensorType", "STATUS");
         statusReading.append("status", statusDoc);
-        statusReleve.setReleve(statusReading);
+        statusReleves.setReleve(statusReading);
 
-        ObjectId releveId = dataDriver.insertReleve(statusReleve);
+        ObjectId releveId = dataDriver.insertReleve(statusReleves);
 
         if (releveId == null) {
             log("ERROR: Failed to store status for " + reference);

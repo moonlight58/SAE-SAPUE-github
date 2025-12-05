@@ -7,18 +7,18 @@ import java.util.Date;
 /**
  * POJO for Relevés collection
  */
-public class Releve {
+public class Releves {
     private ObjectId id;
     private ObjectId idControlleur; // reference to Microcontroller
     private Date date;
     private Document releve; // flexible structure for different sensor readings
 
     // Constructors
-    public Releve() {
+    public Releves() {
         this.date = new Date(); // default to current time
     }
 
-    public Releve(ObjectId idControlleur, Date date, Document releve) {
+    public Releves(ObjectId idControlleur, Date date, Document releve) {
         this.idControlleur = idControlleur;
         this.date = date != null ? date : new Date();
         this.releve = releve;
@@ -59,7 +59,7 @@ public class Releve {
 
     @Override
     public String toString() {
-        return "Releve{" +
+        return "Releves{" +
                 "id=" + id +
                 ", idControlleur=" + idControlleur +
                 ", date=" + date +
