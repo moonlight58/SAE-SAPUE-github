@@ -4,11 +4,12 @@ import org.bson.types.ObjectId;
 
 /**
  * POJO for Micro-controlleur collection
+ * Updated to reference Poubelles instead of MapPoint
  */
 public class Microcontrolleur {
     private ObjectId id;
     private String reference;
-    private ObjectId mapPoint; // reference to MapPoint
+    private ObjectId idPoubelle; // reference to Poubelles (replaces mapPoint)
     private String ipAddress;
     private SensorConfig configSensor;
 
@@ -16,9 +17,9 @@ public class Microcontrolleur {
     public Microcontrolleur() {
     }
 
-    public Microcontrolleur(String reference, ObjectId mapPoint, String ipAddress, SensorConfig configSensor) {
+    public Microcontrolleur(String reference, ObjectId idPoubelle, String ipAddress, SensorConfig configSensor) {
         this.reference = reference;
-        this.mapPoint = mapPoint;
+        this.idPoubelle = idPoubelle;
         this.ipAddress = ipAddress;
         this.configSensor = configSensor;
     }
@@ -40,12 +41,12 @@ public class Microcontrolleur {
         this.reference = reference;
     }
 
-    public ObjectId getMapPoint() {
-        return mapPoint;
+    public ObjectId getIdPoubelle() {
+        return idPoubelle;
     }
 
-    public void setMapPoint(ObjectId mapPoint) {
-        this.mapPoint = mapPoint;
+    public void setIdPoubelle(ObjectId idPoubelle) {
+        this.idPoubelle = idPoubelle;
     }
 
     public String getIpAddress() {
@@ -66,10 +67,10 @@ public class Microcontrolleur {
 
     @Override
     public String toString() {
-        return "Microcontrolleur{" +
+        return "Microcontrolleurs{" +
                 "id=" + id +
                 ", reference='" + reference + '\'' +
-                ", mapPoint=" + mapPoint +
+                ", idPoubelle=" + idPoubelle +
                 ", ipAddress='" + ipAddress + '\'' +
                 ", configSensor=" + configSensor +
                 '}';
