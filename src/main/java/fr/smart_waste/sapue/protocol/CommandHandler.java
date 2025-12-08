@@ -76,11 +76,10 @@ public class CommandHandler {
             return "ERR_ALREADY_REGISTERED";
         }
 
-        System.out.println("Registering device: " + reference + " from IP " + ipAddress);
+        log("Registering device: " + reference + " from IP " + ipAddress);
 
         // Check if Microcontrolleur exists in database
         Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(reference);
-        System.out.println("mc: " + mc);
 
         if (mc == null) {
             log("Registration denied: " + reference + " not found in database");
@@ -114,8 +113,14 @@ public class CommandHandler {
 
         // Get Microcontrolleur from database
         Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(reference);
-
         if (mc == null) {
+            return "ERR_DEVICE_NOT_FOUND";
+        }
+
+        // Find Poubelle by microcontroller reference
+        Poubelles poubelle = dataDriver.findPoubelleByMicrocontroller(reference);
+        if (poubelle == null) {
+            log("ERROR: No Poubelle found for microcontroller " + reference);
             return "ERR_DEVICE_NOT_FOUND";
         }
 
@@ -128,69 +133,108 @@ public class CommandHandler {
             return "ERR_SENSOR_NOT_FOUND";
         }
 
-        // Build sensor reading document
-        Document reading = new Document();
-        reading.append("sensorType", sensorType);
+        // Build measurements object
+        Releves.Measurements measurements = new Releves.Measurements();
 
+        // Parse parameters and populate measurements
         for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            // Skip sensorType as it's already added
+            // Skip sensorType
             if ("sensorType".equals(key)) {
                 continue;
             }
 
-            // Try to parse as number, otherwise store as string
             try {
-                if (value.contains(".")) {
-                    reading.append(key, Double.parseDouble(value));
-                } else {
-                    reading.append(key, Integer.parseInt(value));
+                Double doubleValue = Double.parseDouble(value);
+
+                switch (key.toLowerCase()) {
+                    case "filllevel":
+                    case "fill_level":
+                        measurements.setFillLevel(doubleValue);
+                        break;
+                    case "weight":
+                        measurements.setWeight(doubleValue);
+                        break;
+                    case "temperature":
+                        measurements.setTemperature(doubleValue);
+                        break;
+                    case "humidity":
+                        measurements.setHumidity(doubleValue);
+                        break;
+                    case "airquality":
+                    case "air_quality":
+                        measurements.setAirQuality(doubleValue);
+                        break;
+                    case "batterylevel":
+                    case "battery_level":
+                    case "battery":
+                        measurements.setBatteryLevel(doubleValue);
+                        break;
+                    default:
+                        log("WARNING: Unknown measurement key: " + key);
+                        break;
                 }
             } catch (NumberFormatException e) {
-                reading.append(key, value);
+                log("WARNING: Invalid number format for " + key + ": " + value);
+                return "ERR_INVALID_VALUE";
             }
         }
 
         // Create and store Releve
         Date measurementDate = new Date();
-        Releves releves = new Releves();
-        releves.setIdControlleur(mc.getId());
-        releves.setDate(measurementDate);
-        releves.setReleve(reading);
+        Releves releve = new Releves();
+        releve.setIdPoubelle(poubelle.getId());
+        releve.setTimestamp(measurementDate);
+        releve.setMeasurements(measurements);
 
-        ObjectId releveId = dataDriver.insertReleve(releves);
+        ObjectId releveId = dataDriver.insertReleve(releve);
 
         if (releveId == null) {
             log("ERROR: Failed to store data for " + reference);
             return "ERR_DATABASE_ERROR";
         }
 
-        log("Data stored in Releves for " + reference + " (" + sensorType + "): " + reading.toJson());
+        log("Data stored in Releves for " + reference + " (" + sensorType + "): " + measurements);
 
         // ========== UPDATE POUBELLE lastMeasurement ==========
 
-        // Find Poubelle by microcontroller reference
-        Poubelles poubelle = dataDriver.findPoubelleByMicrocontroller(reference);
+        // Build document for lastMeasurement
+        Document measurementDoc = new Document();
+        measurementDoc.append("sensorType", sensorType);
 
-        if (poubelle != null) {
-            // Create LastMeasurement object
-            Poubelles.LastMeasurement lastMeasurement = new Poubelles.LastMeasurement();
-            lastMeasurement.setDate(measurementDate);
-            lastMeasurement.setMeasurement(reading);
+        if (measurements.getFillLevel() != null) {
+            measurementDoc.append("fillLevel", measurements.getFillLevel());
+        }
+        if (measurements.getWeight() != null) {
+            measurementDoc.append("weight", measurements.getWeight());
+        }
+        if (measurements.getTemperature() != null) {
+            measurementDoc.append("temperature", measurements.getTemperature());
+        }
+        if (measurements.getHumidity() != null) {
+            measurementDoc.append("humidity", measurements.getHumidity());
+        }
+        if (measurements.getAirQuality() != null) {
+            measurementDoc.append("airQuality", measurements.getAirQuality());
+        }
+        if (measurements.getBatteryLevel() != null) {
+            measurementDoc.append("batteryLevel", measurements.getBatteryLevel());
+        }
 
-            // Update Poubelle with last measurement
-            boolean updated = dataDriver.updateLastMeasurement(poubelle.getId(), lastMeasurement);
+        // Create LastMeasurement object
+        Poubelles.LastMeasurement lastMeasurement = new Poubelles.LastMeasurement();
+        lastMeasurement.setDate(measurementDate);
+        lastMeasurement.setMeasurement(measurementDoc);
 
-            if (updated) {
-                log("Updated lastMeasurement in Poubelle for " + reference);
-            } else {
-                log("WARNING: Failed to update lastMeasurement in Poubelle for " + reference);
-            }
+        // Update Poubelle with last measurement
+        boolean updated = dataDriver.updateLastMeasurement(poubelle.getId(), lastMeasurement);
+
+        if (updated) {
+            log("Updated lastMeasurement in Poubelle for " + reference);
         } else {
-            log("WARNING: No Poubelle found for microcontroller " + reference +
-                    " - lastMeasurement not updated");
+            log("WARNING: Failed to update lastMeasurement in Poubelle for " + reference);
         }
 
         return "OK";
@@ -337,49 +381,49 @@ public class CommandHandler {
 
         // Get Microcontrolleur from database
         Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(reference);
-
         if (mc == null) {
             return "ERR_DEVICE_NOT_FOUND";
         }
 
-        // Build status document
-        Document statusDoc = new Document();
-        statusDoc.append("timestamp", new Date());
+        // Find Poubelle by microcontroller reference
+        Poubelles poubelle = dataDriver.findPoubelleByMicrocontroller(reference);
+        if (poubelle == null) {
+            log("ERROR: No Poubelle found for microcontroller " + reference);
+            return "ERR_DEVICE_NOT_FOUND";
+        }
+
+        // Build status measurements
+        Releves.Measurements statusMeasurements = new Releves.Measurements();
 
         for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            // Try to parse as number
             try {
-                if (value.contains(".")) {
-                    statusDoc.append(key, Double.parseDouble(value));
-                } else {
-                    statusDoc.append(key, Integer.parseInt(value));
+                Double doubleValue = Double.parseDouble(value);
+
+                if (key.equalsIgnoreCase("battery") || key.equalsIgnoreCase("batteryLevel")) {
+                    statusMeasurements.setBatteryLevel(doubleValue);
                 }
             } catch (NumberFormatException e) {
-                statusDoc.append(key, value);
+                log("WARNING: Invalid number format for status " + key + ": " + value);
             }
         }
 
-        // Store as a special Releve with sensorType "STATUS"
-        Releves statusReleves = new Releves();
-        statusReleves.setIdControlleur(mc.getId());
-        statusReleves.setDate(new Date());
+        // Store as a Releve
+        Releves statusReleve = new Releves();
+        statusReleve.setIdPoubelle(poubelle.getId());
+        statusReleve.setTimestamp(new Date());
+        statusReleve.setMeasurements(statusMeasurements);
 
-        Document statusReading = new Document();
-        statusReading.append("sensorType", "STATUS");
-        statusReading.append("status", statusDoc);
-        statusReleves.setReleve(statusReading);
-
-        ObjectId releveId = dataDriver.insertReleve(statusReleves);
+        ObjectId releveId = dataDriver.insertReleve(statusReleve);
 
         if (releveId == null) {
             log("ERROR: Failed to store status for " + reference);
             return "ERR_DATABASE_ERROR";
         }
 
-        log("Status stored for " + reference + ": " + statusDoc.toJson());
+        log("Status stored for " + reference + ": " + statusMeasurements);
         return "OK";
     }
 

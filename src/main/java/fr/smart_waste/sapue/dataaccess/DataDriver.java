@@ -174,11 +174,11 @@ public interface DataDriver {
     Releves findReleveById(ObjectId id);
 
     /**
-     * Find all releves for a specific microcontrolleur
-     * @param idControlleur Microcontrolleur ObjectId
+     * Find all releves for a specific poubelle (changed from idControlleur to idPoubelle)
+     * @param idPoubelle Poubelle ObjectId
      * @return List of releves
      */
-    List<Releves> findRelevesByControlleur(ObjectId idControlleur);
+    List<Releves> findRelevesByPoubelle(ObjectId idPoubelle);
 
     /**
      * Update an existing releve

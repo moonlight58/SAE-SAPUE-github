@@ -1,6 +1,7 @@
 package fr.smart_waste.sapue.dataaccess;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import fr.smart_waste.sapue.model.*;
@@ -11,7 +12,10 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Sorts.*;
 
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -361,13 +365,72 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public List<Releves> findRelevesByControlleur(ObjectId idControlleur) {
-        if (idControlleur == null) return new ArrayList<>();
+    public List<Releves> findRelevesByPoubelle(ObjectId idPoubelle) {
+        if (idPoubelle == null) return new ArrayList<>();
         try {
-            return releves.find(eq("idControlleur", idControlleur)).into(new ArrayList<>());
+            return releves.find(eq("idPoubelle", idPoubelle)).into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding releves by controlleur: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding releves by poubelle: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Find recent releves for a poubelle
+     * @param idPoubelle Poubelle ObjectId
+     * @param limit Maximum number of results
+     * @return List of recent releves, sorted by timestamp descending
+     */
+    public List<Releves> findRecentRelevesByPoubelle(ObjectId idPoubelle, int limit) {
+        if (idPoubelle == null || limit <= 0) return new ArrayList<>();
+        try {
+            return releves.find(eq("idPoubelle", idPoubelle))
+                    .sort(new Document("timestamp", -1))
+                    .limit(limit)
+                    .into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding recent releves: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Find releves within date range for a poubelle
+     * @param idPoubelle Poubelle ObjectId
+     * @param startDate Start date
+     * @param endDate End date
+     * @return List of releves within the date range
+     */
+    public List<Releves> findRelevesByDateRange(ObjectId idPoubelle, Date startDate, Date endDate) {
+        if (idPoubelle == null || startDate == null || endDate == null) return new ArrayList<>();
+        try {
+            return releves.find(
+                    and(
+                            eq("idPoubelle", idPoubelle),
+                            gte("timestamp", startDate),
+                            lte("timestamp", endDate)
+                    )
+            ).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding releves by date range: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get latest releve for a poubelle
+     * @param idPoubelle Poubelle ObjectId
+     * @return Latest Releve or null
+     */
+    public Releves findLatestReleveByPoubelle(ObjectId idPoubelle) {
+        if (idPoubelle == null) return null;
+        try {
+            return releves.find(eq("idPoubelle", idPoubelle))
+                    .sort(new Document("timestamp", -1))
+                    .first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding latest releve: " + e.getMessage());
+            return null;
         }
     }
 
@@ -400,6 +463,21 @@ public class MongoDataDriver implements DataDriver {
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding all releves: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Delete old releves before a certain date (for data cleanup)
+     * @param beforeDate Delete releves before this date
+     * @return Number of deleted documents
+     */
+    public long deleteRelevesBefore(Date beforeDate) {
+        if (beforeDate == null) return 0;
+        try {
+            return releves.deleteMany(lt("timestamp", beforeDate)).getDeletedCount();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting old releves: " + e.getMessage());
+            return 0;
         }
     }
 
