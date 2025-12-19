@@ -1,4 +1,3 @@
-# language: en
 Feature: Le système central communique avec le service de gestion des données
   En tant que système central de collecte
   Je dois transmettre les informations reçues au service de gestion

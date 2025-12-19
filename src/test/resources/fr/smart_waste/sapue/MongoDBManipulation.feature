@@ -1,4 +1,3 @@
-# language: en
 Feature: Stockage et récupération des données dans la base de données
   En tant que système de gestion des déchets
   Je veux stocker et récupérer les données des poubelles intelligentes

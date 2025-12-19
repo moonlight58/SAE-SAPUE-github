@@ -1,4 +1,3 @@
-# language: en
 Feature: Le système central reçoit et traite les résultats d'analyse multimédia
   En tant que système central de collecte
   Je dois recevoir les résultats d'analyse des photos et vidéos
