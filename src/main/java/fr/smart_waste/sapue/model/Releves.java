@@ -99,7 +99,7 @@ public class Releves {
 
         @Override
         public String toString() {
-            return "Measurements{" +
+            return "measurements{" +
                     "fillLevel=" + fillLevel +
                     ", weight=" + weight +
                     ", temperature=" + temperature +

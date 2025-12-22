@@ -801,7 +801,7 @@ Printed automatically every 60 seconds when enableMetrics: true
 
 **Project:** Smart Waste - SAÉ S5 Development - Serveur Java TCP Centralisation des données
 
-**Authors:** BELHADJ Quentin, BERNARD Elena, RÖTHLIN Gaël, SOLTNER Audrick, UNGER Tristan
+**Authors:** BELHADJ Quentin, BERNARD Elena, RÖTHLIN Gaël, SOLTNER Audrick
 
 **Institution:** IUT Besançon - UMLP
 
