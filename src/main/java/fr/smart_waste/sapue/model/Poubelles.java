@@ -68,7 +68,7 @@ public class Poubelles {
 
         @Override
         public String toString() {
-            return "Location{" +
+            return "location{" +
                     "type='" + type + '\'' +
                     ", coordinates=" + coordinates +
                     '}';
@@ -115,7 +115,7 @@ public class Poubelles {
 
         @Override
         public String toString() {
-            return "HardwareConfig{" +
+            return "hardwareConfig{" +
                     "ipAddress='" + ipAddress + '\'' +
                     ", microcontroller=" + microcontroller +
                     ", sensors=" + sensors +
@@ -153,7 +153,7 @@ public class Poubelles {
 
         @Override
         public String toString() {
-            return "LastMeasurement{" +
+            return "lastMeasurement{" +
                     "date=" + date +
                     ", measurement=" + measurement +
                     '}';
@@ -200,7 +200,7 @@ public class Poubelles {
 
         @Override
         public String toString() {
-            return "ActiveAlerts{" +
+            return "activeAlerts{" +
                     "hasIssue=" + hasIssue +
                     ", issueType='" + issueType + '\'' +
                     ", idSignalement=" + idSignalement +
