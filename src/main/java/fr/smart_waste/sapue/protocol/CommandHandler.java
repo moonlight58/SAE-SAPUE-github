@@ -53,6 +53,9 @@ public class CommandHandler {
                 case "DISCONNECT":
                     return handleDisconnect(request);
 
+                case "HELP":
+                    return handleHelp(request);
+
                 default:
                     return "ERR_INVALID_COMMAND";
             }
@@ -235,6 +238,7 @@ public class CommandHandler {
             log("Updated lastMeasurement in Poubelle for " + reference);
         } else {
             log("WARNING: Failed to update lastMeasurement in Poubelle for " + reference);
+            return "ERR_DATABASE_ERROR";
         }
 
         return "OK";
@@ -441,6 +445,44 @@ public class CommandHandler {
 
         return "OK";
     }
+
+    private String handleHelp(ProtocolRequest request) {
+        String command = request.getParameters().get("command");
+
+        if (command != null && !command.isEmpty()) {
+            switch (command.toUpperCase()) {
+                case "REGISTER":
+                    return "\nusage: Used to register a microcontroller with the server\nformat: REGISTER [µC] [IP]\nexample: REGISTER MC-001 192.168.1.100\n";
+                case "DATA":
+                    return "\nusage: Used to add new sensor data to the server collections\nformat: DATA [µC] [DATA]\nexample: DATA MC-001 sensorType:BME280 temperature:22.5 humidity:65.0 pressure:1013.25\n";
+                case "CONFIG_GET":
+                    return "\nusage: Used to retrieve current sensor configuration\nformat: CONFIG_GET [µC]\nexample: CONFIG_GET MC-001\n";
+                case "CONFIG_UPDATE":
+                    return "\nusage: Used to update sensor configuration\nformat: CONFIG_UPDATE [µC] [CONFIG]\nexample: CONFIG_UPDATE MC-001 samplingInterval:600 enabled:true\n";
+                case "STATUS":
+                    return "\nusage: Used to send device status information\nformat: STATUS [µC] [STATUS]\nexample: STATUS MC-001 batteryLevel:87 uptime:3600 freeMemory:45000\n";
+                case "PING":
+                    return "\nusage: Used to see current status of microcontroller\nformat: PING [µC]\nexample: PING MC-001\n";
+                case "DISCONNECT":
+                    return "\nusage: Used to gracefully disconnect from the server\nformat: DISCONNECT [µC]\nexample: DISCONNECT MC-001\n";
+                case "HELP":
+                    return "\nusage: Show this help message\nformat: HELP [COMMAND]\nexample: HELP REGISTER\n";
+                default:
+                    return "\nUnknown command for help: " + command;
+            }
+        }
+
+        return "\nAvailable commands:\n" +
+            "REGISTER - Register the device with the server\n" +
+            "DATA - Send sensor data to the server collections\n" +
+            "CONFIG_GET - Retrieve current sensor configuration\n" +
+            "CONFIG_UPDATE - Update sensor configuration\n" +
+            "STATUS - Send device status information\n" +
+            "PING - Keep-alive signal\n" +
+            "DISCONNECT - Graceful disconnect from server\n" +
+            "HELP - Show this help message\n";
+    }
+
 
     /**
      * Handle DISCONNECT command

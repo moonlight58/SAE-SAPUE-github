@@ -53,6 +53,9 @@ public class ProtocolParser {
 
             case "PING":
                 return parsePing(parts, rawRequest);
+            
+            case "HELP":
+                return parseHelp(parts, rawRequest);
 
             case "DISCONNECT":
                 return parseDisconnect(parts, rawRequest);
@@ -252,6 +255,21 @@ public class ProtocolParser {
         }
 
         return new ProtocolRequest("PING", reference, new HashMap<>(), rawRequest);
+    }
+
+    /**
+     * Parse HELP command
+     * Format: HELP
+     */
+    private static ProtocolRequest parseHelp(String[] parts, String rawRequest) throws ProtocolException {
+        // HELP command do not take more than 1 argument (ex: HELP DATA is valid)
+        if (parts.length > 2) {
+            throw new ProtocolException("ERR_MALFORMED_REQUEST", "HELP command takes at most one argument");
+        }
+        String command = parts.length == 2 ? parts[1] : "";
+        Map<String, String> params = new HashMap<>();
+        params.put("command", command);
+        return new ProtocolRequest("HELP", "", params, rawRequest);
     }
 
     /**
