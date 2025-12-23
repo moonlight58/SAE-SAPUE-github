@@ -454,7 +454,7 @@ public class CommandHandler {
                 case "REGISTER":
                     return "\nusage: Used to register a microcontroller with the server\nformat: REGISTER [µC] [IP]\nexample: REGISTER MC-001 192.168.1.100\n";
                 case "DATA":
-                    return "\nusage: Used to add new sensor data to the server collections\nformat: DATA [µC] [DATA]\nexample: DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25\n";
+                    return "\nusage: Used to add new sensor data to the server collections\nformat: DATA [µC] [SENSOR] [DATA]\nexample: DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25\n";
                 case "CONFIG_GET":
                     return "\nusage: Used to retrieve current sensor configuration\nformat: CONFIG_GET [µC]\nexample: CONFIG_GET MC-001\n";
                 case "CONFIG_UPDATE":
