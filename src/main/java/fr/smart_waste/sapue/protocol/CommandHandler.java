@@ -1,6 +1,6 @@
 package fr.smart_waste.sapue.protocol;
 
-import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.core.SmartWasteServer;
 import org.bson.Document;
@@ -16,10 +16,10 @@ import java.util.Map;
  */
 public class CommandHandler {
 
-    private final MongoDataDriver dataDriver;
+    private final DataDriver dataDriver;
     private final SmartWasteServer server;
 
-    public CommandHandler(MongoDataDriver dataDriver, SmartWasteServer server) {
+    public CommandHandler(DataDriver dataDriver, SmartWasteServer server) {
         this.dataDriver = dataDriver;
         this.server = server;
     }
@@ -149,10 +149,18 @@ public class CommandHandler {
                 continue;
             }
 
+            String lowerKey = key.toLowerCase();
+            
+            // Handle String values
+            if (lowerKey.equals("wastetype") || lowerKey.equals("waste_type")) {
+                measurements.setWasteType(value);
+                continue;
+            }
+
             try {
                 Double doubleValue = Double.parseDouble(value);
 
-                switch (key.toLowerCase()) {
+                switch (lowerKey) {
                     case "filllevel":
                     case "fill_level":
                         measurements.setFillLevel(doubleValue);
@@ -174,6 +182,9 @@ public class CommandHandler {
                     case "battery_level":
                     case "battery":
                         measurements.setBatteryLevel(doubleValue);
+                        break;
+                    case "confidence":
+                        measurements.setConfidence(doubleValue);
                         break;
                     default:
                         log("WARNING: Unknown measurement key: " + key);

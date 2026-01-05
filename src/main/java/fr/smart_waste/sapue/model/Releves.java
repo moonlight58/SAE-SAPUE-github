@@ -33,6 +33,8 @@ public class Releves {
         private Double humidity; // Humidité en pourcentage
         private Double airQuality; // Qualité de l'air
         private Double batteryLevel; // Niveau de batterie en pourcentage
+        private String wasteType; // Type de déchet identifié
+        private Double confidence; // Niveau de confiance de l'identification
 
         // Constructors
         public Measurements() {
@@ -97,6 +99,22 @@ public class Releves {
             this.batteryLevel = batteryLevel;
         }
 
+        public String getWasteType() {
+            return wasteType;
+        }
+
+        public void setWasteType(String wasteType) {
+            this.wasteType = wasteType;
+        }
+
+        public Double getConfidence() {
+            return confidence;
+        }
+
+        public void setConfidence(Double confidence) {
+            this.confidence = confidence;
+        }
+
         @Override
         public String toString() {
             return "measurements{" +
@@ -106,6 +124,8 @@ public class Releves {
                     ", humidity=" + humidity +
                     ", airQuality=" + airQuality +
                     ", batteryLevel=" + batteryLevel +
+                    ", wasteType='" + wasteType + '\'' +
+                    ", confidence=" + confidence +
                     '}';
         }
     }

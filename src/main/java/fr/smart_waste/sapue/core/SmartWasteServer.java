@@ -1,6 +1,7 @@
 package fr.smart_waste.sapue.core;
 
 import fr.smart_waste.sapue.config.ServerConfig;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class SmartWasteServer {
 
     private final ServerConfig config;
     private final ServerMetrics metrics;
-    private final MongoDataDriver dataDriver;
+    private final DataDriver dataDriver;
 
     private ServerSocket serverSocket;
     private volatile boolean running;
@@ -29,18 +30,13 @@ public class SmartWasteServer {
     /**
      * Constructor
      * @param config Server configuration
+     * @param dataDriver Data access driver
      */
-    public SmartWasteServer(ServerConfig config) {
+    public SmartWasteServer(ServerConfig config, DataDriver dataDriver) {
         this.config = config;
         this.metrics = new ServerMetrics();
         this.connectedClients = new ConcurrentHashMap<>();
-
-        // Initialize MongoDB connection with proper connection string
-        log("Connecting to MongoDB: " + config.getMongoConnectionString());
-        this.dataDriver = new MongoDataDriver(
-                config.getMongoConnectionString(),
-                config.getDatabaseName()
-        );
+        this.dataDriver = dataDriver;
 
         log("Server initialized in " + config.getEnvironment() + " mode");
     }
@@ -262,9 +258,9 @@ public class SmartWasteServer {
 
     /**
      * Get data driver
-     * @return MongoDataDriver instance
+     * @return DataDriver instance
      */
-    public MongoDataDriver getDataDriver() {
+    public DataDriver getDataDriver() {
         return dataDriver;
     }
 
@@ -357,8 +353,14 @@ public class SmartWasteServer {
             System.out.println(config);
             System.out.println("========================================\n");
 
+            // Initialize DataDriver
+            MongoDataDriver dataDriver = new MongoDataDriver(
+                    config.getMongoConnectionString(),
+                    config.getDatabaseName()
+            );
+
             // Create and start server
-            SmartWasteServer server = new SmartWasteServer(config);
+            SmartWasteServer server = new SmartWasteServer(config, dataDriver);
 
             // Add shutdown hook for graceful shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

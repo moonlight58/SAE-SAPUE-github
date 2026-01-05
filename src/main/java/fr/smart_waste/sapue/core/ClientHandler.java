@@ -1,7 +1,7 @@
 package fr.smart_waste.sapue.core;
 
 import fr.smart_waste.sapue.config.ServerConfig;
-import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolParser;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
@@ -17,7 +17,7 @@ import java.net.SocketException;
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
-    private final MongoDataDriver dataDriver;
+    private final DataDriver dataDriver;
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final SmartWasteServer server;
@@ -27,7 +27,7 @@ public class ClientHandler implements Runnable {
     private String microcontrollerReference;
     private boolean running;
 
-    public ClientHandler(Socket clientSocket, MongoDataDriver dataDriver,
+    public ClientHandler(Socket clientSocket, DataDriver dataDriver,
                          ServerConfig config, ServerMetrics metrics,
                          SmartWasteServer server) {
         this.clientSocket = clientSocket;

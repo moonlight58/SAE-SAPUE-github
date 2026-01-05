@@ -9,7 +9,7 @@ Feature: Le système central communique avec le service de gestion des données
 
   Scenario: Le système transmet une mesure de remplissage au service de gestion
     Given le système a reçu une mesure de remplissage de la poubelle "BIN001"
-    And le niveau est de 75%
+    And le niveau de remplissage est de 75%
     When le système transmet cette information au service de gestion
     Then le service de gestion confirme la réception
     And le système notifie la poubelle que tout s'est bien passé
@@ -37,7 +37,7 @@ Feature: Le système central communique avec le service de gestion des données
     And le système transmet ces informations à la poubelle
 
   Scenario: Le système demande des informations sur une poubelle inexistante
-    Given une poubelle "INEXISTANT" demande sa configuration
+    Given une poubelle inexistante "INEXISTANT" demande sa configuration
     When le système interroge le service de gestion
     Then le service de gestion indique que cette poubelle n'existe pas
     And le système informe la poubelle qu'elle n'est pas enregistrée
