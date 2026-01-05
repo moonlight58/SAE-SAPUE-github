@@ -112,11 +112,7 @@ public class ErrorRecoveryeStepDefs {
         throw new PendingException();
     }
 
-    @And("les ressources sont libérées")
-    public void lesRessourcesSontLibérées() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
-    }
+
 
     @And("les métriques sont mises à jour")
     public void lesMétriquesSontMisesÀJour() {
@@ -268,11 +264,7 @@ public class ErrorRecoveryeStepDefs {
         throw new PendingException();
     }
 
-    @And("un avertissement est logué")
-    public void unAvertissementEstLogué() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
-    }
+
 
     @Given("le système est en cours de redémarrage")
     public void leSystèmeEstEnCoursDeRedémarrage() {
@@ -508,11 +500,7 @@ public class ErrorRecoveryeStepDefs {
         throw new PendingException();
     }
 
-    @And("toutes les données sont stockées correctement")
-    public void toutesLesDonnéesSontStockéesCorrectement() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new PendingException();
-    }
+
 
     @And("les métriques montrent l'utilisation du fallback")
     public void lesMétriquesMontrentLUtilisationDuFallback() {

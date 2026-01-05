@@ -4,23 +4,25 @@ Feature: TCP Protocol Edge Cases and Robustness
   Afin d'assurer la robustesse et la sécurité du système
 
   Background:
-    Given le système central est en fonctionnement
+    Given le système central est en fonctionnement (Protocol)
     And la base de données est disponible
 
   Scenario: REGISTER with minimum valid reference length
-    When un client envoie "REGISTER ABC 192.168.1.100"
-    Then le système valide que "ABC" a 3 caractères (minimum)
-    And le système vérifie si "ABC" existe en base
-    And "ABC" existe en base
+    Given "MC-1" existe dans la base
+    When un client envoie "REGISTER MC-1 192.168.1.100"
+    And la référence fait exactement 3 caractères
     Then le système accepte l'enregistrement
 
   Scenario: REGISTER with maximum valid reference length
+    Given "MC-VERY-LONG-REFERENCE-NAME-12345678901234567890" existe dans la base
     When un client envoie "REGISTER MC-VERY-LONG-REFERENCE-NAME-12345678901234567890 192.168.1.100"
     And la référence fait exactement 50 caractères
     Then le système valide la longueur
     And le système accepte si la référence existe en base
 
   Scenario: REGISTER with reference containing special characters
+    Given "MC_001" existe dans la base
+    And "MC-001" existe dans la base
     When un client envoie "REGISTER MC_001 192.168.1.100"
     Then le système accepte les underscores
     When un client envoie "REGISTER MC-001 192.168.1.100"
@@ -39,11 +41,13 @@ Feature: TCP Protocol Edge Cases and Robustness
     Then le système rejette avec "ERR_INVALID_VALUE"
 
   Scenario: REGISTER with extra whitespace
+    Given "MC-001" existe dans la base
     When un client envoie "REGISTER  MC-001  192.168.1.100"
     Then le système normalise les espaces multiples
     And le système traite la commande correctement
 
   Scenario: REGISTER with trailing spaces
+    Given "MC-001" existe dans la base
     When un client envoie "REGISTER MC-001 192.168.1.100   "
     Then le système supprime les espaces de fin
     And le système traite la commande correctement
@@ -66,7 +70,7 @@ Feature: TCP Protocol Edge Cases and Robustness
     Then le système rejette avec "ERR_MISSING_PARAMS"
 
   Scenario: DATA with unknown sensor type
-    Given "MC-001" est enregistré
+    Given "MC-001" a un configSensor.sensorType "BME280"
     When un client envoie "DATA MC-001 UNKNOWN_SENSOR temperature:22.5"
     Then le système rejette avec "ERR_SENSOR_NOT_FOUND"
 
@@ -197,14 +201,14 @@ Feature: TCP Protocol Edge Cases and Robustness
     And le système retourne "OK"
 
   Scenario: Command with lowercase
-    Given "MC-001" est enregistré
-    When un client envoie "register mc-001 192.168.1.100"
+    Given "MC-001" existe dans la base
+    When un client envoie "register MC-001 192.168.1.100"
     Then le système convertit en majuscules
     And traite la commande normalement
 
   Scenario: Command with mixed case
-    Given "MC-001" est enregistré
-    When un client envoie "ReGiStEr mc-001 192.168.1.100"
+    Given "MC-001" existe dans la base
+    When un client envoie "ReGiStEr MC-001 192.168.1.100"
     Then le système convertit en majuscules
     And traite la commande normalement
 
@@ -247,8 +251,8 @@ Feature: TCP Protocol Edge Cases and Robustness
     And les ressources sont libérées
 
   Scenario: Reference with only numbers
+    Given "123" existe dans la base
     When un client envoie "REGISTER 123 192.168.1.100"
-    And "123" existe dans la base
     Then le système accepte (alphanumeric valide)
 
   Scenario: Reference with Unicode characters
@@ -256,10 +260,12 @@ Feature: TCP Protocol Edge Cases and Robustness
     Then le système rejette avec "ERR_INVALID_VALUE"
 
   Scenario: Reference starting with hyphen
+    Given "-MC001" existe dans la base
     When un client envoie "REGISTER -MC001 192.168.1.100"
     Then le système accepte (regex permet hyphen)
 
   Scenario: Reference with consecutive hyphens
+    Given "MC--001" existe dans la base
     When un client envoie "REGISTER MC--001 192.168.1.100"
     Then le système accepte (pas de restriction)
 

@@ -31,7 +31,9 @@ public class CommandHandler {
      */
     public String execute(ProtocolRequest request) {
         try {
-            switch (request.getCommand()) {
+            String commandName = request.getCommand().toUpperCase();
+
+            switch (commandName) {
                 case "REGISTER":
                     return handleRegister(request);
 
@@ -73,6 +75,16 @@ public class CommandHandler {
         String reference = request.getReference();
         String ipAddress = request.getParameter("ipAddress");
 
+        // Validate reference format
+        if (reference == null || !reference.matches("^[a-zA-Z0-9_-]+$")) {
+            return "ERR_INVALID_VALUE";
+        }
+        
+        // Validate IP format
+        if (ipAddress == null || !ipAddress.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) {
+             return "ERR_INVALID_VALUE";
+        }
+
         // Check if already connected
         if (server.isClientRegistered(reference)) {
             log("Registration denied: " + reference + " already connected");
@@ -108,6 +120,10 @@ public class CommandHandler {
     private String handleData(ProtocolRequest request) {
         String reference = request.getReference();
         String sensorType = request.getParameter("sensorType");
+        
+        if (sensorType == null || sensorType.trim().isEmpty()) {
+            return "ERR_MISSING_PARAMS";
+        }
 
         // Verify Microcontrolleur is registered
         if (!server.isClientRegistered(reference)) {
@@ -143,6 +159,10 @@ public class CommandHandler {
         for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
+            
+            if (key == null || key.trim().isEmpty()) {
+                return "ERR_INVALID_VALUE";
+            }
 
             // Skip sensorType
             if ("sensorType".equals(key)) {
