@@ -11,6 +11,8 @@ public class MockDataDriver implements DataDriver {
     public Map<ObjectId, Poubelles> poubelles = new HashMap<>();
     public Map<String, Modules> modules = new HashMap<>();
     public Map<ObjectId, Chipsets> chipsets = new HashMap<>();
+    public Map<ObjectId, Reports> reports = new HashMap<>();
+    public Map<ObjectId, MapPoints> mapPoints = new HashMap<>();
     public Releves lastInsertedReleve;
     
     public boolean shouldFailNextInsert = false;
@@ -175,6 +177,155 @@ public class MockDataDriver implements DataDriver {
 
     @Override
     public List<AnalyseMedia> findAllAnalyseMedias() { return new ArrayList<>(); }
+
+    // ==========================================
+    // Reports Operations (Mock)
+    // ==========================================
+
+    public void addReport(Reports report) {
+        reports.put(report.getId(), report);
+    }
+
+    @Override
+    public ObjectId insertReport(Reports report) {
+        if (report == null) return null;
+        if (report.getId() == null) report.setId(new ObjectId());
+        reports.put(report.getId(), report);
+        return report.getId();
+    }
+
+    @Override
+    public Reports findReportById(ObjectId id) {
+        return reports.get(id);
+    }
+
+    @Override
+    public List<Reports> findReportsByStatus(String status) {
+        List<Reports> result = new ArrayList<>();
+        for (Reports r : reports.values()) {
+            if (status.equals(r.getStatus())) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<Reports> findReportsByMapPoint(ObjectId mapPointId) {
+        List<Reports> result = new ArrayList<>();
+        for (Reports r : reports.values()) {
+            if (mapPointId != null && mapPointId.equals(r.getMapPoint())) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean updateReport(Reports report) {
+        if (report == null || report.getId() == null) return false;
+        reports.put(report.getId(), report);
+        return true;
+    }
+
+    @Override
+    public boolean deleteReport(ObjectId id) {
+        return reports.remove(id) != null;
+    }
+
+    @Override
+    public List<Reports> findAllReports() {
+        return new ArrayList<>(reports.values());
+    }
+
+    // ==========================================
+    // MapPoints Operations (Mock)
+    // ==========================================
+
+    public void addMapPoint(MapPoints mapPoint) {
+        mapPoints.put(mapPoint.getId(), mapPoint);
+    }
+
+    @Override
+    public ObjectId insertMapPoint(MapPoints mapPoint) {
+        if (mapPoint == null) return null;
+        if (mapPoint.getId() == null) mapPoint.setId(new ObjectId());
+        mapPoints.put(mapPoint.getId(), mapPoint);
+        return mapPoint.getId();
+    }
+
+    @Override
+    public MapPoints findMapPointById(ObjectId id) {
+        return mapPoints.get(id);
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsByType(String type) {
+        List<MapPoints> result = new ArrayList<>();
+        for (MapPoints mp : mapPoints.values()) {
+            if (type != null && type.equals(mp.getType())) {
+                result.add(mp);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters) {
+        // Simple mock: return all map points (no geospatial calculation)
+        return new ArrayList<>(mapPoints.values());
+    }
+
+    @Override
+    public MapPoints findMapPointByModule(String moduleKey) {
+        // Find map point that contains this module in its hardwareConfig
+        for (MapPoints mp : mapPoints.values()) {
+            if (mp.getHardwareConfig() != null && mp.getHardwareConfig().getModules() != null) {
+                // Need to check if any module in the list matches the key
+                Modules module = modules.get(moduleKey);
+                if (module != null && mp.getHardwareConfig().getModules().contains(module.getId())) {
+                    return mp;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
+        MapPoints mp = mapPoints.get(mapPointId);
+        if (mp == null) return false;
+        mp.setLastMeasurement(lastMeasurement);
+        return true;
+    }
+
+    @Override
+    public boolean updateMapPoint(MapPoints mapPoint) {
+        if (mapPoint == null || mapPoint.getId() == null) return false;
+        mapPoints.put(mapPoint.getId(), mapPoint);
+        return true;
+    }
+
+    @Override
+    public boolean deleteMapPoint(ObjectId id) {
+        return mapPoints.remove(id) != null;
+    }
+
+    @Override
+    public List<MapPoints> findAllMapPoints() {
+        return new ArrayList<>(mapPoints.values());
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsWithActiveAlerts() {
+        List<MapPoints> result = new ArrayList<>();
+        for (MapPoints mp : mapPoints.values()) {
+            if (mp.getActiveAlerts() != null && Boolean.TRUE.equals(mp.getActiveAlerts().getHasIssue())) {
+                result.add(mp);
+            }
+        }
+        return result;
+    }
 
     @Override
     public void close() {}

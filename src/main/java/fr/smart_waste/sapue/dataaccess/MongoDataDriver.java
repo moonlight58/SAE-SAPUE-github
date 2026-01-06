@@ -1,6 +1,7 @@
 package fr.smart_waste.sapue.dataaccess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +47,8 @@ public class MongoDataDriver implements DataDriver {
     private MongoCollection<Modules> modules;
     private MongoCollection<Chipsets> chipsets;
     private MongoCollection<Signalements> signalements;
+    private MongoCollection<Reports> reports;
+    private MongoCollection<MapPoints> mapPoints;
     private MongoCollection<Releves> releves;
     private MongoCollection<AnalyseMedia> analyseMedias;
 
@@ -83,6 +86,8 @@ public class MongoDataDriver implements DataDriver {
             modules = database.getCollection("Modules", Modules.class);
             chipsets = database.getCollection("Chipsets", Chipsets.class);
             signalements = database.getCollection("signalements", Signalements.class);
+            reports = database.getCollection("Reports", Reports.class);
+            mapPoints = database.getCollection("MapPoints", MapPoints.class);
             releves = database.getCollection("releves", Releves.class);
             analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
 
@@ -625,6 +630,217 @@ public class MongoDataDriver implements DataDriver {
             }
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error closing connection: " + e.getMessage());
+        }
+    }
+    // ==========================================
+    // Reports Operations
+    // ==========================================
+
+    @Override
+    public synchronized ObjectId insertReport(Reports report) {
+        if (report == null) return null;
+        try {
+            InsertOneResult result = reports.insertOne(report);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : report.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting report: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Reports findReportById(ObjectId id) {
+        if (id == null) return null;
+        try {
+            return reports.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding report by ID: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Reports> findReportsByStatus(String status) {
+        if (status == null ||status.isEmpty()) return new ArrayList<>();
+        try {
+            return reports.find(eq("status", status)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding reports by status: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<Reports> findReportsByMapPoint(ObjectId mapPointId) {
+        if (mapPointId == null) return new ArrayList<>();
+        try {
+            return reports.find(eq("mapPoint", mapPointId)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding reports by map point: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public boolean updateReport(Reports report) {
+        if (report == null || report.getId() == null) return false;
+        try {
+            return reports.replaceOne(eq("_id", report.getId()), report).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating report: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteReport(ObjectId id) {
+        if (id == null) return false;
+        try {
+            return reports.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting report: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<Reports> findAllReports() {
+        try {
+            return reports.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all reports: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // ==========================================
+    // MapPoints Operations
+    // ==========================================
+
+    @Override
+    public synchronized ObjectId insertMapPoint(MapPoints mapPoint) {
+        if (mapPoint == null) return null;
+        try {
+            InsertOneResult result = mapPoints.insertOne(mapPoint);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : mapPoint.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting map point: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public MapPoints findMapPointById(ObjectId id) {
+        if (id == null) return null;
+        try {
+            return mapPoints.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding map point by ID: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsByType(String type) {
+        if (type == null || type.isEmpty()) return new ArrayList<>();
+        try {
+            return mapPoints.find(eq("type", type)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding map points by type: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters) {
+        try {
+            // GeoJSON query for nearby points
+            Document geoNearQuery = new Document("location",
+                    new Document("$near", new Document("$geometry",
+                            new Document("type", "Point")
+                                    .append("coordinates", Arrays.asList(longitude, latitude)))
+                            .append("$maxDistance", maxDistanceMeters)));
+            
+            return mapPoints.find(geoNearQuery).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding nearby map points: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public MapPoints findMapPointByModule(String moduleKey) {
+        if (moduleKey == null || moduleKey.isEmpty()) return null;
+        try {
+            // Find MapPoint where hardwareConfig.modules array contains a module with this key
+            // Note: This requires looking up the module ObjectId first
+            Modules module = findModuleByKey(moduleKey);
+            if (module == null || module.getId() == null) return null;
+            
+            return mapPoints.find(eq("hardwareConfig.modules", module.getId())).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding map point by module: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
+        if (mapPointId == null || lastMeasurement == null) return false;
+        try {
+            Document updateDoc = new Document("$set", new Document("lastMeasurement", lastMeasurement));
+            return mapPoints.updateOne(eq("_id", mapPointId), updateDoc).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating map point last measurement: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateMapPoint(MapPoints mapPoint) {
+        if (mapPoint == null || mapPoint.getId() == null) return false;
+        try {
+            return mapPoints.replaceOne(eq("_id", mapPoint.getId()), mapPoint).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating map point: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteMapPoint(ObjectId id) {
+        if (id == null) return false;
+        try {
+            return mapPoints.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting map point: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<MapPoints> findAllMapPoints() {
+        try {
+            return mapPoints.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all map points: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<MapPoints> findMapPointsWithActiveAlerts() {
+        try {
+            return mapPoints.find(eq("activeAlerts.hasIssue", true)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding map points with active alerts: " + e.getMessage());
+            return new ArrayList<>();
         }
     }
 }

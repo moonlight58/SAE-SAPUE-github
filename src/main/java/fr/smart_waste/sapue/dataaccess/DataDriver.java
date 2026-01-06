@@ -163,6 +163,33 @@ public interface DataDriver {
      */
     List<Chipsets> findAllChipsets();
 
+    // ==========================================
+    // Reports operations (formerly Signalements)
+    // ==========================================
+
+    ObjectId insertReport(Reports report);
+    Reports findReportById(ObjectId id);
+    List<Reports> findReportsByStatus(String status);
+    List<Reports> findReportsByMapPoint(ObjectId mapPointId);
+    boolean updateReport(Reports report);
+    boolean deleteReport(ObjectId id);
+    List<Reports> findAllReports();
+
+    // ==========================================
+    // MapPoints operations (formerly Poubelles)
+    // ==========================================
+
+    ObjectId insertMapPoint(MapPoints mapPoint);
+    MapPoints findMapPointById(ObjectId id);
+    List<MapPoints> findMapPointsByType(String type);
+    List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters);
+    MapPoints findMapPointByModule(String moduleKey);
+    boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement);
+    boolean updateMapPoint(MapPoints mapPoint);
+    boolean deleteMapPoint(ObjectId id);
+    List<MapPoints> findAllMapPoints();
+    List<MapPoints> findMapPointsWithActiveAlerts();
+
 
     // ========== Signalement Operations ==========
 
