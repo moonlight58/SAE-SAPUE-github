@@ -26,7 +26,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copier le JAR depuis le stage de build
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/*.jar ./
 
 # Copier les fichiers de configuration si nécessaire
 COPY config.yml /app/

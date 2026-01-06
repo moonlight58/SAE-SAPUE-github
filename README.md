@@ -1,92 +1,44 @@
-# Smart Waste TCP Server - Complete Documentation
+# Smart Waste TCP Server - Documentation Complète
 
-## 📋 Table of Contents
+## 📋 Table des matières
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Setup Guide](#setup-guide)
-4. [Protocol Documentation](#protocol-documentation)
-5. [Database Schema](#database-schema)
-6. [Docker Deployment](#docker-deployment)
-7. [Testing](#testing)
-8. [Migration Guide](#migration-guide)
-
----
-
-## Overview
-
-Smart Waste TCP Server is a multi-threaded TCP server for the Smart Waste project, designed to handle concurrent connections from microcontrollers (ESP32/ESP8266) and multimedia analysis services. It centralizes waste management data collection and storage.
-
-### Key Features
-
-- **Multi-threaded Architecture**: Thread-per-client model with configurable connection limits
-- **Protocol**: Space-delimited text-based TCP protocol with standardized error codes
-- **Database**: MongoDB with POJO mapping for all collections
-- **Dual Storage**: API-based (Node.js) and direct MongoDB access with fallback
-- **Metrics**: Real-time tracking of connections, requests, errors, and data transfer
-- **Automatic Updates**: Real-time `lastMeasurement` updates in Poubelles collection
+1. [Vue d'ensemble](#vue-densemble)
+2. [Démarrage rapide](#démarrage-rapide)
+3. [Configuration MongoDB et Initial Data](#configuration-mongodb-et-initial-data)
+4. [Configuration](#configuration)
+5. [Protocole TCP](#protocole-tcp)
+6. [Schéma MongoDB](#schéma-mongodb)
+7. [Déploiement Docker](#déploiement-docker)
+8. [Tests](#tests)
+9. [Architecture](#architecture)
 
 ---
 
-## Architecture
+## Vue d'ensemble
 
-### Components
+**Smart Waste TCP Server** est un serveur TCP multi-threadé conçu pour centraliser la gestion des données de déchets intelligents. Il reçoit les connexions des microcontrôleurs (ESP32/ESP8266) et traite les mesures de capteurs.
 
-#### 1. **SmartWasteServer** (Main Server)
-- Accepts incoming TCP connections
-- Manages server lifecycle (start/stop/restart)
-- Maintains registry of connected clients
-- Enforces connection limits
-- Graceful shutdown with cleanup
+### Caractéristiques principales
 
-#### 2. **ClientHandler** (Per-Connection Thread)
-- Handles communication with one microcontroller
-- Parses and routes commands
-- Executes database operations
-- Tracks per-connection metrics
-
-#### 3. **ProtocolParser** (Command Parser)
-- Parses raw TCP requests into structured objects
-- Validates format, parameters, and values
-- Returns standardized error codes on failure
-
-#### 4. **CommandHandler** (Business Logic)
-- Executes parsed commands
-- Interacts with database via DataDriver
-- Updates Poubelles `lastMeasurement` automatically
-- Manages device registration and configuration
-
-#### 5. **MongoDataDriver** (Data Access Layer)
-- Implements DataDriver interface
-- Provides CRUD operations for all collections
-- Thread-safe with POJO codec support
-- Connection pooling and error handling
-
-#### 6. **ServerConfig** (Configuration)
-- YAML-based configuration
-- Server settings (port, limits, timeouts)
-- MongoDB connection strings
-- Logging preferences
-
-#### 7. **ServerMetrics** (Monitoring)
-- Thread-safe atomic counters
-- Tracks active/total connections
-- Monitors requests, errors, data transfer
-- Auto-prints summary every 60 seconds
+- ✅ **Architecture multi-threadée** : Modèle thread-par-client avec limites configurables
+- ✅ **Protocole texte** : Protocole TCP délimité par espaces avec codes d'erreur standardisés
+- ✅ **MongoDB** : Schéma complet avec validation et indexation
+- ✅ **Métriques en temps réel** : Suivi des connexions, requêtes, erreurs et transferts
+- ✅ **Mises à jour automatiques** : Synchronisation des `lastMeasurement` dans la collection Poubelles
 
 ---
 
-## Setup Guide
+## Démarrage rapide
 
-### Prerequisites
+### Prérequis
 
-- Java 17 or higher
-- MongoDB 4.4+ (Docker recommended)
+- Java 17+
+- MongoDB 4.4+
 - Maven 3.9+
 
-### Step 1: MongoDB Setup
+### 1. Configuration de MongoDB
 
-**Option A: Docker (Recommended)**
+**Option A : Docker (Recommandé)**
 ```bash
 docker run -d \
   --name mongodb \
@@ -95,81 +47,18 @@ docker run -d \
   mongo:latest
 ```
 
-**Option B: Local Installation**
-Follow: https://docs.mongodb.com/manual/installation/
+**Option B : Installation locale**
+Voir : https://docs.mongodb.com/manual/installation/
 
-### Step 2: Create Initial Data
+### 2. Configuration du serveur
 
-Connect to MongoDB:
-```bash
-mongosh mongodb://localhost:27017
-use smartwaste_dev
-```
+Créez ou modifiez `config.yml` à la racine du projet :
 
-Create Microcontroller:
-```javascript
-db.microcontrolleurs.insertOne({
-    reference: "MC-001",
-    mapPoint: null,
-    ipAddress: "192.168.1.100",
-    configSensor: {
-        sensorType: "BME280",
-        enabled: true,
-        samplingInterval: 300,
-        parameters: {
-            tempOffset: 0.5,
-            pressureUnit: "hPa"
-        }
-    }
-})
-```
-
-Create Poubelle:
-```javascript
-db.poubelles.insertOne({
-    type: "Poubelle",
-    isSapue: true,
-    certaintyLevel: 1.0,
-    location: {
-        type: "Point",
-        coordinates: [6.0240, 47.2378]
-    },
-    adress: "1 Rue de la République, 25000 Besançon",
-    hardwareConfig: {
-        ipAddress: "192.168.1.100",
-        microcontroller: ["MC-001"],
-        sensors: ["BME280"]
-    },
-    lastMeasurement: {
-        date: new Date(),
-        measurement: {
-            sensorType: "BME280",
-            temperature: 20.5,
-            humidity: 65.0,
-            pressure: 1013.25
-        }
-    },
-    activeAlerts: {
-        hasIssue: false,
-        issueType: null,
-        idSignalement: null
-    }
-})
-```
-
-Create geospatial index:
-```javascript
-db.poubelles.createIndex({ "location": "2dsphere" })
-```
-
-### Step 3: Configure Server
-
-Create `config.yml`:
 ```yaml
 server:
-  port: 8888
+  port: 50010
   maxConnections: 100
-  socketTimeout: 30000  # 30 seconds
+  socketTimeout: 30000  # en millisecondes (30 secondes)
 
 mongodb:
   connectionString: "mongodb://localhost:27017"
@@ -178,15 +67,483 @@ mongodb:
 
 logging:
   enableMetrics: true
-  verbose: false
+  verbose: true
 ```
 
-### Step 4: Build & Run
+### 3. Configuration initiale de MongoDB
+
+Connectez-vous à MongoDB :
 
 ```bash
-# Build
-mvn clean compile
+mongosh mongodb://localhost:27017
+use smartwaste_dev
+```
 
+**Créer les collections avec validation de schéma :**
+
+```javascript
+// Users
+db.createCollection("Users", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["name", "mail", "role", "password"],
+            properties: {
+                name: { bsonType: "string" },
+                password: { bsonType: "string" },
+                mail: { bsonType: "string" },
+                phone: { bsonType: "string" },
+                role: { enum: ["user", "agent", "admin"] },
+                levelOfTrust: { bsonType: "double" }
+            }
+        }
+    }
+});
+db.Users.createIndex({ "mail": 1 }, { unique: true });
+
+// MapPoints
+db.createCollection("MapPoints", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["type", "location"],
+            properties: {
+                type: { bsonType: "string" },
+                isSapue: { bsonType: "bool" },
+                certaintyLevel: { bsonType: "double" },
+                location: {
+                    bsonType: "object",
+                    required: ["type", "coordinates"],
+                    properties: {
+                        type: { enum: ["Point"] },
+                        coordinates: {
+                            bsonType: "array",
+                            minItems: 2,
+                            maxItems: 2,
+                            items: { bsonType: "double" }
+                        }
+                    }
+                },
+                address: { bsonType: "string" },
+                hardwareConfig: {
+                    bsonType: "object",
+                    properties: {
+                        ipAddress: { bsonType: "string" },
+                        modules: { bsonType: "array", items: { bsonType: "objectId" } },
+                        sensors: { bsonType: "array", items: { bsonType: "string" } }
+                    }
+                },
+                lastMeasurement: {
+                    bsonType: "object",
+                    properties: {
+                        date: { bsonType: "date" },
+                        measurement: { bsonType: "object" }
+                    }
+                },
+                activeAlerts: {
+                    bsonType: "object",
+                    properties: {
+                        hasIssue: { bsonType: "bool" },
+                        issueType: { bsonType: "string" },
+                        idReport: { bsonType: "objectId" }
+                    }
+                }
+            }
+        }
+    }
+});
+db.MapPoints.createIndex({ "location": "2dsphere" });
+db.MapPoints.createIndex({ "type": 1 });
+
+// Modules
+db.createCollection("Modules", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["name", "key"],
+            properties: {
+                name: { bsonType: "string" },
+                key: { bsonType: "string" },
+                uc: { bsonType: "string" },
+                chipsets: { bsonType: "array", items: { bsonType: "object" } },
+                ipAddress: { bsonType: "string" },
+                firmwareVersion: { bsonType: "string" },
+                commissioningDate: { bsonType: "date" },
+                isEnabled: { bsonType: "bool" }
+            }
+        }
+    }
+});
+db.Modules.createIndex({ "key": 1 }, { unique: true });
+
+// Chipsets
+db.createCollection("Chipsets", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["name", "caps"],
+            properties: {
+                name: { bsonType: "string" },
+                description: { bsonType: "string" },
+                links: { bsonType: "array", items: { bsonType: "string" } },
+                caps: { bsonType: "array", items: { bsonType: "string" } },
+                config: { bsonType: "object" },
+                moduleID: { bsonType: "objectId" }
+            }
+        }
+    }
+});
+
+// Releves
+db.createCollection("Releves", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["id_Controller", "date", "measurement"],
+            properties: {
+                id_Controller: { bsonType: "objectId" },
+                date: { bsonType: "date" },
+                measurement: { bsonType: "object" }
+            }
+        }
+    }
+});
+
+// Reports
+db.createCollection("Reports", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["author", "status", "location", "type", "issueType"],
+            properties: {
+                author: {
+                    bsonType: "object",
+                    required: ["idUser"],
+                    properties: {
+                        idUser: { bsonType: "objectId" },
+                        name: { bsonType: "string" },
+                        role: { bsonType: "string" }
+                    }
+                },
+                cleaner: {
+                    bsonType: "object",
+                    properties: {
+                        idUser: { bsonType: "objectId" },
+                        name: { bsonType: "string" },
+                        role: { bsonType: "string" }
+                    }
+                },
+                status: { enum: ["Ouvert", "Affecte", "EnCours", "Resolu", "Rejete"] },
+                mapPoint: { bsonType: "objectId" },
+                type: { enum: ["DepotSauvage", "ProblemePoubelle"] },
+                issueType: { bsonType: "string" },
+                location: {
+                    bsonType: "object",
+                    required: ["type", "coordinates"],
+                    properties: {
+                        type: { enum: ["Point"] },
+                        coordinates: { bsonType: "array", items: { bsonType: "double" } }
+                    }
+                },
+                photo: {
+                    bsonType: "object",
+                    properties: {
+                        initialPhoto: { bsonType: "string" },
+                        finalPhoto: { bsonType: "string" }
+                    }
+                },
+                history: {
+                    bsonType: "array",
+                    items: {
+                        bsonType: "object",
+                        properties: {
+                            date: { bsonType: "date" },
+                            status: { bsonType: "string" },
+                            byUser: { bsonType: "objectId" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
+db.Reports.createIndex({ "location": "2dsphere" });
+db.Reports.createIndex({ "status": 1 });
+db.Reports.createIndex({ "createdAt": -1 });
+
+// Measurements
+db.createCollection("Measurements", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["id_Controller", "date", "measurement"],
+            properties: {
+                id_Controller: { bsonType: "objectId" },
+                date: { bsonType: "date" },
+                measurement: { bsonType: "object" }
+            }
+        }
+    }
+});
+
+// Tickets
+db.createCollection("Tickets", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["subject", "status", "reporter"],
+            properties: {
+                subject: { bsonType: "string" },
+                status: { enum: ["Open", "Pending", "Resolved", "Closed"] },
+                reporter: {
+                    bsonType: "object",
+                    required: ["idUser"],
+                    properties: {
+                        idUser: { bsonType: "objectId" },
+                        pseudo: { bsonType: "string" },
+                        role: { bsonType: "string" }
+                    }
+                },
+                conversation: {
+                    bsonType: "array",
+                    items: {
+                        bsonType: "object",
+                        required: ["content", "sender"],
+                        properties: {
+                            messageId: { bsonType: "objectId" },
+                            sentAt: { bsonType: "date" },
+                            content: { bsonType: "string" },
+                            sender: {
+                                bsonType: "object",
+                                properties: {
+                                    idUser: { bsonType: "objectId" },
+                                    pseudo: { bsonType: "string" },
+                                    role: { bsonType: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
+db.Tickets.createIndex({ "status": 1, "updatedAt": -1 });
+db.Tickets.createIndex({ "reporter.idUser": 1, "createdAt": -1 });
+```
+
+### 4. Données initiales d'exemple
+
+Voici comment insérer les données de test correctement. **Exécutez ces commandes dans l'ordre** :
+
+**Étape 1 : Créer un utilisateur (agent):**
+
+```javascript
+const userResult = db.Users.insertOne({
+    name: "Jean Dupont",
+    password: "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KKK", // hash bcrypt exemple
+    mail: "jean.dupont@smartwaste.fr",
+    phone: "+33612345678",
+    role: "agent",
+    levelOfTrust: 0.95
+});
+const userId = userResult.insertedId;
+print("User créé avec ID: " + userId);
+```
+
+**Étape 2 : Créer un module (microcontrôleur):**
+
+```javascript
+const moduleResult = db.Modules.insertOne({
+    name: "Capteur Besançon 1",
+    key: "MC-001",
+    uc: "ESP32",
+    chipsets: [],
+    ipAddress: "192.168.1.100",
+    firmwareVersion: "1.2.3",
+    commissioningDate: new Date("2024-01-15"),
+    isEnabled: true
+});
+const moduleId = moduleResult.insertedId;
+print("Module créé avec ID: " + moduleId);
+```
+
+**Étape 3 : Créer un chipset (capteur) :**
+
+```javascript
+const chipsetResult = db.Chipsets.insertOne({
+    name: "BME280",
+    description: "Capteur de température, humidité et pression",
+    links: ["I2C"],
+    caps: ["temperature", "humidity", "pressure"],
+    config: {
+        address: "0x77",
+        oversampling: "16x",
+        standbyTime: 0.5
+    },
+    moduleID: moduleId  // Utiliser l'ID du Module créé à l'étape 2
+});
+const chipsetId = chipsetResult.insertedId;
+print("Chipset créé avec ID: " + chipsetId);
+```
+
+**Étape 4 : Mettre à jour le module avec le chipset:**
+
+```javascript
+db.Modules.updateOne(
+    { _id: moduleId },
+    { $set: { chipsets: [{ _id: chipsetId, type: "BME280", links: "I2C" }] } }
+);
+```
+
+**Étape 5 : Créer un point de localisation (MapPoint - poubelle):**
+
+```javascript
+const mapPointResult = db.MapPoints.insertOne({
+    type: "Poubelle intelligente",
+    isSapue: true,
+    certaintyLevel: 1.0,
+    location: {
+        type: "Point",
+        coordinates: [6.0240, 47.2378]  // [longitude, latitude]
+    },
+    address: "1 Rue de la République, 25000 Besançon",
+    hardwareConfig: {
+        ipAddress: "192.168.1.100",
+        modules: [moduleId],  // Utiliser l'ID du Module
+        sensors: ["BME280"]
+    },
+    lastMeasurement: {
+        date: new Date(),
+        measurement: {
+            sensorType: "BME280",
+            temperature: 20.5,
+            humidity: 65.0,
+            pressure: 1013.25,
+            fillLevel: 75.5,
+            batteryLevel: 87
+        }
+    },
+    activeAlerts: {
+        hasIssue: false,
+        issueType: null,
+        idReport: null
+    }
+});
+const mapPointId = mapPointResult.insertedId;
+print("MapPoint créé avec ID: " + mapPointId);
+```
+
+**Étape 6 : Créer un relevé de mesures (Releves):**
+
+```javascript
+db.Releves.insertOne({
+    id_Controller: moduleId,  // Utiliser l'ID du Module
+    date: new Date(),
+    measurement: {
+        fillLevel: 75.5,
+        weight: 45.2,
+        temperature: 20.5,
+        humidity: 65.0,
+        airQuality: 120,
+        batteryLevel: 87,
+        confidence: 0.98,
+        wasteType: "mixed"
+    }
+});
+print("Relevé créé");
+```
+
+**Étape 7 : Créer un signalement (Report):**
+
+```javascript
+db.Reports.insertOne({
+    author: {
+        idUser: userId,  // Utiliser l'ID utilisateur créé à l'étape 1
+        name: "Jean Dupont",
+        role: "agent"
+    },
+    cleaner: null,
+    status: "Ouvert",
+    mapPoint: mapPointId,  // Utiliser l'ID du MapPoint créé à l'étape 5
+    type: "ProblemePoubelle",
+    issueType: "Poubelle pleine",
+    location: {
+        type: "Point",
+        coordinates: [6.0240, 47.2378]
+    },
+    photo: {
+        initialPhoto: "https://example.com/photo1.jpg",
+        finalPhoto: null
+    },
+    history: [
+        {
+            date: new Date(),
+            status: "Ouvert",
+            byUser: userId  // Utiliser l'ID utilisateur
+        }
+    ]
+});
+print("Report créé");
+```
+
+**Étape 8 : Créer un ticket (Tickets):**
+
+```javascript
+db.Tickets.insertOne({
+    subject: "Problème avec capteur MC-001",
+    status: "Open",
+    reporter: {
+        idUser: userId,  // Utiliser l'ID utilisateur
+        pseudo: "jdupont",
+        role: "agent"
+    },
+    conversation: [
+        {
+            messageId: ObjectId(),
+            sentAt: new Date(),
+            content: "Le capteur MC-001 ne répond plus depuis 2 heures",
+            sender: {
+                idUser: userId,
+                pseudo: "jdupont",
+                role: "agent"
+            }
+        }
+    ]
+});
+print("Ticket créé");
+```
+
+**Vérifier les données créées:**
+
+```javascript
+// Voir tous les users
+db.Users.find().pretty();
+
+// Voir tous les modules
+db.Modules.find().pretty();
+
+// Voir tous les mappoints
+db.MapPoints.find().pretty();
+
+// Vérifier l'index géospatial
+db.MapPoints.getIndexes();
+```
+
+### 5. Compilation et démarrage (java ou maven)
+
+```bash
+# Compiler le projet
+mvn clean package
+
+# ---- Java Run ----
+# Lancer le serveur
+java -jar target/sapue-server.jar config.yml
+
+# Ou sans fichier config (utilise config.yml par défaut)
+java -jar target/sapue-server.jar
+
+# ---- Maven Run ----
 # Run
 mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main"
 
@@ -194,320 +551,393 @@ mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main"
 mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main" -Dexec.args="/path/to/config.yml"
 ```
 
-### Step 5: Test Connection
+---
 
-**Using Telnet:**
-```bash
-telnet localhost 8888
+## Configuration
 
-# Commands:
-REGISTER MC-001 192.168.1.100
-PING MC-001
-DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25
-CONFIG_GET MC-001
-STATUS MC-001 battery:87 uptime:3600
-DISCONNECT MC-001
-```
+### Fichier `config.yml`
 
-**Using Netcat:**
-```bash
-echo "REGISTER MC-001 192.168.1.100" | nc localhost 8888
-echo "DATA MC-001 BME280 temperature:22.5" | nc localhost 8888
-```
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `server.port` | int | 50010 | Port d'écoute du serveur |
+| `server.maxConnections` | int | 100 | Nombre maximum de clients simultanés |
+| `server.socketTimeout` | int | 30000 | Délai d'expiration socket (ms) |
+| `mongodb.connectionString` | string | - | URL de connexion MongoDB |
+| `mongodb.databaseName` | string | smartwaste_dev | Nom de la base de données |
+| `mongodb.environment` | string | dev | Environnement (dev/prod) |
+| `logging.enableMetrics` | boolean | true | Activer les métriques |
+| `logging.verbose` | boolean | false | Logs détaillés |
 
 ---
 
-## Protocol Documentation
+## Protocole TCP
 
-### Protocol Format
+Le serveur utilise un **protocole texte délimité par espaces**. Chaque commande suit le format :
 
 ```
-COMMAND <reference> [parameters...]
+COMMAND REFERENCE [PARAMETERS]
 ```
 
-- **COMMAND**: Uppercase command name
-- **reference**: Microcontroller identifier (3-50 chars, alphanumeric + hyphens/underscores)
-- **parameters**: Space-separated `key:value` pairs
+Où les paramètres clé-valeur sont séparés par `:` (ex: `key:value`)
 
-### Response Format
-
-- **Success**: `OK` or `OK [data]`
-- **Error**: `ERR_CODE` (see error codes below)
-
-### Commands
+### Commandes disponibles
 
 #### 1. REGISTER
 
-Register a microcontroller with the server.
+**Enregistrer un microcontrôleur**
 
-**Format:**
 ```
 REGISTER <reference> <ipAddress>
 ```
 
-**Example:**
+**Paramètres:**
+- `reference` : Identifiant unique du module (ex: MC-001)
+- `ipAddress` : Adresse IP du microcontrôleur
+
+**Exemple:**
 ```
-→ REGISTER MC-001 192.168.1.100
-← OK
+REGISTER MC-001 192.168.1.100
 ```
 
-**Responses:**
-- `OK` - Registration successful
-- `ERR_ALREADY_REGISTERED` - Device already connected
-- `ERR_DEVICE_NOT_FOUND` - Device not in database
-- `ERR_INVALID_VALUE` - Invalid reference or IP format
+**Réponses:**
+- `OK` : Enregistrement réussi
+- `ERR_INVALID_VALUE` : Format invalide
+- `ERR_ALREADY_REGISTERED` : Module déjà connecté
+- `ERR_DEVICE_NOT_FOUND` : Module inexistant en base de données
+
+---
 
 #### 2. DATA
 
-Send sensor readings to be stored.
+**Envoyer des données de capteurs**
 
-**Format:**
 ```
 DATA <reference> <sensorType> <key>:<value> [<key>:<value> ...]
 ```
 
-**Supported Sensor Types:**
-- `BME280` - Temperature, humidity, pressure
-- `HX711` - Weight sensor
-- `HCSR04` - Ultrasonic distance
-- `MQ135` - Air quality
-- `REED` - Reed switch
-- `DHT22` - Temperature and humidity
-- `BATTERY` - Battery monitoring
+**Paramètres:**
+- `reference` : Identifiant du module
+- `sensorType` : Type de capteur (ex: BME280, DHT22)
+- Mesures supportées :
+  - `fillLevel` / `fill_level` : Niveau de remplissage (%)
+  - `weight` : Poids (kg)
+  - `temperature` : Température (°C)
+  - `humidity` : Humidité (%)
+  - `airQuality` / `air_quality` : Qualité de l'air
+  - `batteryLevel` / `battery_level` / `battery` : Niveau batterie (%)
+  - `wasteType` / `waste_type` : Type de déchet (texte)
+  - `confidence` : Confiance de la mesure
 
-**Example:**
+**Exemple:**
 ```
-→ DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25
-← OK
+DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25 battery:87
 ```
 
-**Note:** This automatically updates `lastMeasurement` in the Poubelle collection!
+**Réponses:**
+- `OK` : Données stockées avec succès
+- `ERR_MISSING_PARAMS` : Paramètres manquants
+- `ERR_DEVICE_NOT_REGISTERED` : Module non enregistré
+- `ERR_DEVICE_NOT_FOUND` : Module inexistant
+- `ERR_INVALID_VALUE` : Valeur invalide
 
-**Responses:**
-- `OK` - Data stored successfully
-- `ERR_DEVICE_NOT_REGISTERED` - Device not registered
-- `ERR_SENSOR_NOT_FOUND` - Unknown sensor type
-- `ERR_INVALID_VALUE` - Invalid number format
+**Comportement:**
+- Les données sont stockées dans la collection `Releves`
+- La collection `Poubelles` est mise à jour automatiquement avec `lastMeasurement`
+
+---
 
 #### 3. CONFIG_GET
 
-Retrieve current sensor configuration.
+**Récupérer la configuration actuelle**
 
-**Format:**
 ```
 CONFIG_GET <reference>
 ```
 
-**Example:**
+**Exemple:**
 ```
-→ CONFIG_GET MC-001
-← OK sensorType:BME280 enabled:true samplingInterval:300 tempOffset:0.5
+CONFIG_GET MC-001
 ```
+
+**Réponses:**
+- `OK sensorType:none enabled:false` : Configuration actuelle
+
+---
 
 #### 4. CONFIG_UPDATE
 
-Update sensor configuration.
+**Mettre à jour la configuration des capteurs**
 
-**Format:**
 ```
 CONFIG_UPDATE <reference> <key>:<value> [<key>:<value> ...]
 ```
 
-**Example:**
+**Exemple:**
 ```
-→ CONFIG_UPDATE MC-001 samplingInterval:600 enabled:true
-← OK
+CONFIG_UPDATE MC-001 samplingInterval:600 enabled:true
 ```
+
+**Réponses:**
+- `OK` : Configuration mise à jour
+
+---
 
 #### 5. STATUS
 
-Report microcontroller status.
+**Envoyer l'état du microcontrôleur**
 
-**Format:**
 ```
 STATUS <reference> <key>:<value> [<key>:<value> ...]
 ```
 
-**Example:**
+**Paramètres supportés:**
+- `batteryLevel` / `battery` : Niveau batterie
+- `uptime` : Temps de fonctionnement (secondes)
+- `freeMemory` : Mémoire libre (bytes)
+
+**Exemple:**
 ```
-→ STATUS MC-001 battery:87 uptime:3600 freeMemory:45000
-← OK
+STATUS MC-001 batteryLevel:87 uptime:3600 freeMemory:45000
 ```
+
+**Réponses:**
+- `OK` : État stocké
+- `ERR_DEVICE_NOT_REGISTERED` : Module non enregistré
+- `ERR_DEVICE_NOT_FOUND` : Module inexistant
+
+---
 
 #### 6. PING
 
-Simple keep-alive check.
+**Signal de maintien de connexion (keep-alive)**
 
-**Format:**
 ```
 PING <reference>
 ```
 
-**Example:**
+**Exemple:**
 ```
-→ PING MC-001
-← OK
+PING MC-001
 ```
+
+**Réponses:**
+- `OK` : Connexion active
+
+---
 
 #### 7. DISCONNECT
 
-Gracefully disconnect.
+**Déconnexion gracieuse**
 
-**Format:**
 ```
 DISCONNECT <reference>
 ```
 
-**Example:**
+**Exemple:**
 ```
-→ DISCONNECT MC-001
-← OK
-```
-
-### Error Codes
-
-#### Client Errors (4xx)
-```
-ERR_INVALID_FORMAT          # Malformed request (400)
-ERR_MISSING_PARAMS          # Required parameters missing (400)
-ERR_INVALID_VALUE           # Value out of range (400)
-ERR_INVALID_COMMAND         # Unknown command (400)
-ERR_MALFORMED_REQUEST       # Request corrupted (400)
-ERR_DEVICE_NOT_REGISTERED   # Device not registered (401)
-ERR_DEVICE_NOT_FOUND        # Device ID not in database (404)
-ERR_SENSOR_NOT_FOUND        # Unsupported sensor type (404)
-ERR_ALREADY_REGISTERED      # Device already connected (409)
-ERR_PAYLOAD_TOO_LARGE       # Data too large (413)
-ERR_RATE_LIMIT              # Too many requests (429)
+DISCONNECT MC-001
 ```
 
-#### Server Errors (5xx)
-```
-ERR_INTERNAL_ERROR          # Generic server error (500)
-ERR_DATABASE_ERROR          # Database operation failed (500)
-ERR_API_UNAVAILABLE         # API Node unavailable (503)
-ERR_SERVICE_UNAVAILABLE     # Server overloaded (503)
-ERR_STORAGE_FULL            # Storage full (507)
-ERR_QUEUE_FULL              # Queue full (507)
-```
-
-### Validation Rules
-
-**Reference Format:**
-- Length: 3-50 characters
-- Allowed: alphanumeric, hyphens (-), underscores (_)
-- Example: `MC-001`, `BIN_SENSOR_42`
-
-**IP Address Format:**
-- Standard IPv4: `xxx.xxx.xxx.xxx`
-- Each octet: 0-255
-
-**Key:Value Pairs:**
-- Format: `key:value` (colon separator, no spaces)
-- Key: alphanumeric + underscores
-- Value: any string (numeric values auto-parsed)
+**Réponses:**
+- `OK` : Déconnexion acceptée
 
 ---
 
-## Database Schema
+#### 8. HELP
 
-### Collections
+**Afficher l'aide des commandes**
 
-#### 1. **poubelles**
+```
+HELP [COMMAND]
+```
+
+**Exemple:**
+```
+HELP REGISTER
+HELP        # Affiche toutes les commandes
+```
+
+---
+
+### Codes d'erreur
+
+| Code | Signification |
+|------|---------------|
+| `OK` | Succès |
+| `ERR_MALFORMED_REQUEST` | Requête mal formée |
+| `ERR_INVALID_COMMAND` | Commande inconnue |
+| `ERR_MISSING_PARAMS` | Paramètres manquants |
+| `ERR_INVALID_VALUE` | Valeur invalide |
+| `ERR_DEVICE_NOT_FOUND` | Module inexistant en base |
+| `ERR_DEVICE_NOT_REGISTERED` | Module non enregistré auprès du serveur |
+| `ERR_ALREADY_REGISTERED` | Module déjà connecté |
+| `ERR_DATABASE_ERROR` | Erreur d'accès à la base de données |
+| `ERR_INTERNAL_ERROR` | Erreur interne du serveur |
+
+---
+
+## Schéma MongoDB
+
+La base de données contient les collections suivantes avec validation de schéma :
+
+### 📁 Users
+
+Stocke les informations des utilisateurs.
+
 ```javascript
 {
   _id: ObjectId,
-  type: String,                    // "Poubelle", "Bac", etc.
-  isSapue: Boolean,                // Smart bin or not
-  certaintyLevel: Double,          // AI detection confidence (0-1)
+  name: String,
+  password: String (hash),
+  mail: String (unique),
+  phone: String,
+  role: "user" | "agent" | "admin",
+  levelOfTrust: Double
+}
+```
+
+**Index:**
+- `mail` (unique)
+
+---
+
+### 📁 MapPoints
+
+Points de localisation des poubelles et signalements.
+
+```javascript
+{
+  _id: ObjectId,
+  type: String,
+  isSapue: Boolean,
+  certaintyLevel: Double,
   location: {
     type: "Point",
-    coordinates: [longitude, latitude]
+    coordinates: [longitude, latitude]  // GeoJSON
   },
-  adress: String,
+  address: String,
   hardwareConfig: {
     ipAddress: String,
-    microcontroller: [String],     // References like ["MC-001"]
-    sensors: [String]              // ["BME280", "HX711"]
+    modules: [ObjectId],              // Références aux Modules
+    sensors: [String]
   },
-  lastMeasurement: {               // AUTO-UPDATED by DATA command
+  lastMeasurement: {
     date: Date,
-    measurement: {
-      sensorType: String,
-      temperature: Double,
-      humidity: Double,
-      // ... sensor-specific fields
-    }
+    measurement: Object               // Mesures actuelles
   },
   activeAlerts: {
     hasIssue: Boolean,
-    issueType: String,             // "Plein", "Problème technique"
-    idSignalement: ObjectId
+    issueType: String,
+    idReport: ObjectId
   }
 }
 ```
 
-#### 2. **microcontrolleurs**
+**Index:**
+- `location` (2dsphere pour géospatialité)
+- `type`
+
+---
+
+### 📁 Modules
+
+Microcontrôleurs (ESP32, Arduino, etc.)
+
 ```javascript
 {
   _id: ObjectId,
-  reference: String,               // Unique identifier (e.g., "MC-001")
-  mapPoint: ObjectId,              // Deprecated, use idPoubelle
-  idPoubelle: ObjectId,            // Reference to poubelles
-  ipAddress: String,
-  configSensor: {
-    sensorType: String,
-    enabled: Boolean,
-    samplingInterval: Integer,     // seconds
-    parameters: {                  // Flexible sensor-specific config
-      tempOffset: Double,
-      pressureUnit: String,
-      // ...
+  name: String,
+  key: String (unique UUID),
+  uc: String,                         // Type de µcontrôleur
+  chipsets: [
+    {
+      _id: ObjectId,
+      type: String,
+      links: String
     }
-  }
+  ],
+  ipAddress: String,
+  firmwareVersion: String,
+  commissioningDate: Date,
+  isEnabled: Boolean
 }
 ```
 
-#### 3. **releves**
+**Index:**
+- `key` (unique)
+
+---
+
+### 📁 Chipsets
+
+Capteurs/composants embarqués dans les modules.
+
 ```javascript
 {
   _id: ObjectId,
-  idPoubelle: ObjectId,            // Reference to poubelles
-  timestamp: Date,
-  measurements: {
-    fillLevel: Double,             // %
-    weight: Double,                // kg
-    temperature: Double,           // °C
-    humidity: Double,              // %
-    airQuality: Double,            // ppm/ppb
-    batteryLevel: Double           // %
+  name: String,
+  description: String,
+  links: [String],
+  caps: [String],                     // Capacités/fonctionnalités
+  config: Object,
+  moduleID: ObjectId                  // Référence au Module
+}
+```
+
+---
+
+### 📁 Releves
+
+Relevés de mesures (données historiques des capteurs).
+
+```javascript
+{
+  _id: ObjectId,
+  id_Controller: ObjectId,            // Référence au Module
+  date: Date,
+  measurement: {
+    fillLevel: Double,
+    weight: Double,
+    temperature: Double,
+    humidity: Double,
+    airQuality: Double,
+    batteryLevel: Double,
+    confidence: Double,
+    wasteType: String
   }
 }
 ```
 
-#### 4. **signalements**
+---
+
+### 📁 Reports
+
+Signalements et rapports de problèmes.
+
 ```javascript
 {
   _id: ObjectId,
   author: {
     idUser: ObjectId,
     name: String,
-    role: String                   // "user", "agent", "admin"
+    role: String
   },
-  cleaner: { /* same structure */ },
-  createdAt: Date,
-  updatedAt: Date,
-  status: String,                  // "Ouvert", "En cours", "Résolu"
-  idPoubelle: ObjectId,            // Link to bin (if bin issue)
-  type: String,                    // "Depot sauvage", "Problème poubelle"
-  issueType: String,               // Specific issue
+  cleaner: {
+    idUser: ObjectId,
+    name: String,
+    role: String
+  },
+  status: "Ouvert" | "Affecte" | "EnCours" | "Resolu" | "Rejete",
+  mapPoint: ObjectId,
+  type: "DepotSauvage" | "ProblemePoubelle",
+  issueType: String,
   location: {
     type: "Point",
     coordinates: [longitude, latitude]
   },
   photo: {
-    initialPhoto: String,
-    finalPhoto: String
+    initialPhoto: String (URL),
+    finalPhoto: String (URL)
   },
   history: [
     {
@@ -519,338 +949,150 @@ ERR_QUEUE_FULL              # Queue full (507)
 }
 ```
 
-#### 5. **analyseMedias**
+**Index:**
+- `location` (2dsphere)
+- `status`
+- `createdAt` (descendant)
+
+---
+
+### 📁 Measurements
+
+Collection pour les mesures (alias pour Releves).
+
 ```javascript
 {
   _id: ObjectId,
-  resultat: {                      // Flexible structure
-    wasteDetected: Boolean,
-    wasteType: String,
-    confidence: Double,
-    // ... analysis-specific fields
-  }
+  id_Controller: ObjectId,
+  date: Date,
+  measurement: Object
 }
 ```
 
-### Indexes
+---
 
-**Required:**
+### 📁 Tickets
+
+Support/tickets utilisateurs.
+
 ```javascript
-db.poubelles.createIndex({ "location": "2dsphere" })
-db.poubelles.createIndex({ "hardwareConfig.microcontroller": 1 })
-db.microcontrolleurs.createIndex({ "reference": 1 }, { unique: true })
-db.releves.createIndex({ "idPoubelle": 1, "timestamp": -1 })
+{
+  _id: ObjectId,
+  subject: String,
+  status: "Open" | "Pending" | "Resolved" | "Closed",
+  reporter: {
+    idUser: ObjectId,
+    pseudo: String,
+    role: String
+  },
+  conversation: [
+    {
+      messageId: ObjectId,
+      sentAt: Date,
+      content: String,
+      sender: {
+        idUser: ObjectId,
+        pseudo: String,
+        role: String
+      }
+    }
+  ]
+}
+```
+
+**Index:**
+- `status`, `updatedAt`
+- `reporter.idUser`, `createdAt`
+
+---
+
+## Déploiement Docker
+
+### Docker simple
+
+```bash
+docker build -t sapue-server .
+docker run -d \
+  --name sapue-server \
+  -p 50010:50010 \
+  -e MONGO_URI="mongodb://host.docker.internal:27017" \
+  -e DB_NAME="smartwaste_dev" \
+  sapue-server
+```
+
+### Docker Compose
+
+Voir `docker-compose.yml` pour un déploiement avec MongoDB intégré.
+
+```bash
+docker-compose up -d
 ```
 
 ---
 
-## Docker Deployment
+## Tests
 
-### Build Image
-
-```bash
-docker build -t sapue-server-tcp:latest .
-```
-
-### Run Container
+Les tests utilisent Cucumber (BDD) et JUnit.
 
 ```bash
-docker run --network host sapue-server-tcp:latest
-```
-
-### Dockerfile
-
-```dockerfile
-# Multi-stage build
-FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-COPY --from=build /app/target/*.jar app.jar
-COPY config.yml /app/
-RUN chown -R appuser:appgroup /app
-USER appuser
-EXPOSE 8888
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-
----
-
-## Testing
-
-### Unit Tests (Cucumber)
-
-```bash
+# Lancer tous les tests
 mvn test
+
+# Tests spécifiques
+mvn test -Dtest=RunCucumberTest
 ```
 
-### Feature Files
-
-Located in `src/test/resources/fr/smart_waste/sapue/`:
-- `BinMonitoringClient.feature` - Bin sensor data collection
-- `APICommunication.feature` - API communication scenarios
-- `MediaAnalysisServer.feature` - Media analysis results
-- `MongoDBManipulation.feature` - Database operations
-- `ErrorRecovery.feature` - Error handling and recovery
-- `PerformanceLoad.feature` - Load and performance testing
-- `ProtocolEdgeCases.feature` - Protocol edge cases
-
-### Manual Testing with TestClient
-
-```java
-java fr.smart_waste.sapue.TestClient localhost 8888
-```
+**Scénarios disponibles:**
+- `APICommunication.feature` : Communication avec l'API
+- `BinMonitoringClient.feature` : Suivi des poubelles
+- `ProtocolEdgeCases.feature` : Cas limites du protocole
+- `ErrorRecovery.feature` : Récupération d'erreurs
+- `PerformanceLoad.feature` : Tests de charge
+- `MediaAnalysisServer.feature` : Analyse multimédia
+- `MongoDBManipulation.feature` : Opérations base de données
 
 ---
 
-## Migration Guide
-
-### From MapPoint to Poubelles Structure
-
-**Step 1: Migrate existing MapPoints**
-
-```javascript
-db.mapPoints.find().forEach(function(mapPoint) {
-    var mc = db.microcontrolleurs.findOne({ mapPoint: mapPoint._id });
-    
-    if (mc) {
-        db.poubelles.insertOne({
-            type: mapPoint.type,
-            isSapue: mapPoint.isSAPUE,
-            certaintyLevel: 1.0,
-            location: {
-                type: "Point",
-                coordinates: mapPoint.position
-            },
-            adress: "À renseigner",
-            hardwareConfig: {
-                ipAddress: mc.ipAddress,
-                microcontroller: [mc.reference],
-                sensors: [mc.configSensor.sensorType]
-            },
-            lastMeasurement: null,
-            activeAlerts: {
-                hasIssue: false,
-                issueType: null,
-                idSignalement: null
-            }
-        });
-    }
-});
-```
-
-**Step 2: Update Microcontrolleur references**
-
-```javascript
-db.microcontrolleurs.find().forEach(function(mc) {
-    var poubelle = db.poubelles.findOne({
-        "hardwareConfig.microcontroller": mc.reference
-    });
-    
-    if (poubelle) {
-        db.microcontrolleurs.updateOne(
-            { _id: mc._id },
-            { $set: { idPoubelle: poubelle._id } }
-        );
-    }
-});
-```
-
-### Key Changes
-
-1. **lastMeasurement is automatically updated** when DATA command is received
-2. **activeAlerts must be manually updated** when signalement is created (implement in Node API)
-3. **Microcontrolleur-Poubelle link** via reference string in array
-4. **Geospatial queries** now use `poubelles.location` instead of `mapPoints.position`
-
-### Useful Queries
-
-**Find all bins with active alerts:**
-```javascript
-db.poubelles.find({ "activeAlerts.hasIssue": true })
-```
-
-**Find bins near a point:**
-```javascript
-db.poubelles.find({
-    location: {
-        $near: {
-            $geometry: { type: "Point", coordinates: [6.0240, 47.2378] },
-            $maxDistance: 1000  // meters
-        }
-    }
-})
-```
-
-**Find bins by microcontroller:**
-```javascript
-db.poubelles.findOne({ "hardwareConfig.microcontroller": "MC-001" })
-```
-
-**Find bins without microcontroller (AI-detected):**
-```javascript
-db.poubelles.find({ 
-    "hardwareConfig.microcontroller": { $size: 0 },
-    certaintyLevel: { $lt: 1.0 }
-})
-```
-
----
-
-## Development Guidelines
-
-### Code Structure
+## Architecture
 
 ```
 src/main/java/fr/smart_waste/sapue/
-├── Main.java                    # Entry point
+├── Main.java                          # Point d'entrée
 ├── config/
-│   └── ServerConfig.java        # YAML configuration
+│   └── ServerConfig.java              # Configuration YAML
 ├── core/
-│   ├── SmartWasteServer.java   # Main server
-│   ├── ClientHandler.java       # Per-client thread
-│   └── ServerMetrics.java       # Metrics tracking
+│   ├── SmartWasteServer.java          # Serveur principal
+│   ├── ClientHandler.java             # Gestion client
+│   └── ServerMetrics.java             # Métriques
 ├── dataaccess/
-│   ├── DataDriver.java          # Interface
-│   └── MongoDataDriver.java     # MongoDB implementation
+│   ├── DataDriver.java                # Interface DAO
+│   └── MongoDataDriver.java           # Implémentation MongoDB
 ├── model/
-│   ├── Poubelles.java
-│   ├── Microcontrolleur.java
+│   ├── Users.java
+│   ├── MapPoints.java
+│   ├── Modules.java
+│   ├── Chipsets.java
 │   ├── Releves.java
-│   ├── Signalements.java
-│   ├── AnalyseMedia.java
-│   └── SensorConfig.java
+│   ├── Reports.java
+│   ├── Poubelles.java
+│   ├── Tickets.java
+│   └── ...
 └── protocol/
-    ├── ProtocolParser.java      # Request parser
-    ├── ProtocolRequest.java     # Parsed request object
-    ├── ProtocolException.java   # Protocol errors
-    └── CommandHandler.java      # Command execution
-```
-
-### Best Practices
-
-1. **Always validate input** before database operations
-2. **Use try-catch** for all database operations
-3. **Log errors with context** (client, command, parameters)
-4. **Update metrics** for all operations
-5. **Close resources** in finally blocks
-6. **Test edge cases** thoroughly
-
-### Performance Considerations
-
-- Thread pool (future): Replace thread-per-client with thread pool
-- Connection pooling: MongoDB driver handles this automatically
-- Batch operations: Consider batching for bulk inserts
-- Index usage: Verify with `explain()` in MongoDB
-- Memory management: Monitor metrics for memory leaks
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**1. "ERR_DEVICE_NOT_FOUND"**
-- Check if microcontroller exists in database
-- Verify reference format (3-50 chars, alphanumeric + hyphens/underscores)
-
-**2. "ERR_ALREADY_REGISTERED"**
-- Device is already connected
-- Disconnect first or wait for timeout
-
-**3. "ERR_DATABASE_ERROR"**
-- Check MongoDB is running
-- Verify connection string in config.yml
-- Check database logs
-
-**4. Port already in use**
-```bash
-# Find process using port
-lsof -i :8888
-# Kill process
-kill -9 <PID>
-```
-
-**5. Connection timeout**
-- Increase `socketTimeout` in config.yml
-- Check network latency
-- Verify firewall rules
-
-### Logging
-
-**Enable verbose logging:**
-```yaml
-logging:
-  verbose: true
-```
-
-**View metrics:**
-```
-Printed automatically every 60 seconds when enableMetrics: true
+    ├── ProtocolParser.java            # Analyseur de requêtes
+    ├── CommandHandler.java            # Exécuteur de commandes
+    ├── ProtocolRequest.java           # Modèle de requête
+    └── ProtocolException.java         # Exceptions protocolaires
 ```
 
 ---
 
-## License & Contact
+## Support
 
-**Project:** Smart Waste - SAÉ S5 Development - Serveur Java TCP Centralisation des données
-
-**Authors:** BELHADJ Quentin, BERNARD Elena, RÖTHLIN Gaël, SOLTNER Audrick
-
-**Institution:** IUT Besançon - UMLP
+Pour toute question ou problème, consultez les tests ou contactez l'équipe de développement.
 
 ---
 
-## Appendix
-
-### Maven Dependencies
-
-```xml
-<dependencies>
-    <!-- MongoDB Java Driver -->
-    <dependency>
-        <groupId>org.mongodb</groupId>
-        <artifactId>mongodb-driver-sync</artifactId>
-        <version>4.11.1</version>
-    </dependency>
-    
-    <!-- SnakeYAML -->
-    <dependency>
-        <groupId>org.yaml</groupId>
-        <artifactId>snakeyaml</artifactId>
-        <version>2.0</version>
-    </dependency>
-    
-    <!-- Cucumber Testing -->
-    <dependency>
-        <groupId>io.cucumber</groupId>
-        <artifactId>cucumber-java</artifactId>
-        <version>7.28.2</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
-```
-
-### Configuration Options
-
-```yaml
-server:
-  port: 8888                    # TCP listen port
-  maxConnections: 100           # Max concurrent clients
-  socketTimeout: 30000          # Socket timeout (ms)
-
-mongodb:
-  connectionString: "mongodb://localhost:27017"
-  databaseName: "smartwaste_dev"
-  environment: "dev"            # "dev" or "prod"
-
-logging:
-  enableMetrics: true           # Enable metrics tracking
-  verbose: false                # Verbose request/response logging
-```
+**Dernière mise à jour:** 6 janvier 2026  
+**Version MongoDB:** 4.4+  
+**Version Java:** 17+  
+**Version Maven:** 3.9+
