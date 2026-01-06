@@ -1032,7 +1032,14 @@ Les tests utilisent Cucumber (BDD) et JUnit.
 mvn test
 
 # Tests spécifiques
-mvn test -Dtest=RunCucumberTest
+mvn test -Dcucumber.features="src/test/resources/fr/smart_waste/sapue/<features file name>"
+# exemple: 
+# mvn test -Dcucumber.features="src/test/resources/fr/smart_waste/sapue/APICommunication.feature"
+
+# ou plusieurs test à la fois
+mvn test -Dcucumber.features="src/test/resources/fr/smart_waste/sapue/<features file n°1 name>,<features file n°2 name>,<features file n°3 name>"
+# exemple: 
+# mvn test -Dcucumber.features="src/test/resources/fr/smart_waste/sapue/APICommunication.feature,src/test/resources/fr/smart_waste/sapue/BinMonitoringClient.feature,src/test/resources/fr/smart_waste/sapue/ProtocolEdgeCases.feature"
 ```
 
 **Scénarios disponibles:**
@@ -1043,45 +1050,6 @@ mvn test -Dtest=RunCucumberTest
 - `PerformanceLoad.feature` : Tests de charge
 - `MediaAnalysisServer.feature` : Analyse multimédia
 - `MongoDBManipulation.feature` : Opérations base de données
-
----
-
-## Architecture
-
-```
-src/main/java/fr/smart_waste/sapue/
-├── Main.java                          # Point d'entrée
-├── config/
-│   └── ServerConfig.java              # Configuration YAML
-├── core/
-│   ├── SmartWasteServer.java          # Serveur principal
-│   ├── ClientHandler.java             # Gestion client
-│   └── ServerMetrics.java             # Métriques
-├── dataaccess/
-│   ├── DataDriver.java                # Interface DAO
-│   └── MongoDataDriver.java           # Implémentation MongoDB
-├── model/
-│   ├── Users.java
-│   ├── MapPoints.java
-│   ├── Modules.java
-│   ├── Chipsets.java
-│   ├── Releves.java
-│   ├── Reports.java
-│   ├── Poubelles.java
-│   ├── Tickets.java
-│   └── ...
-└── protocol/
-    ├── ProtocolParser.java            # Analyseur de requêtes
-    ├── CommandHandler.java            # Exécuteur de commandes
-    ├── ProtocolRequest.java           # Modèle de requête
-    └── ProtocolException.java         # Exceptions protocolaires
-```
-
----
-
-## Support
-
-Pour toute question ou problème, consultez les tests ou contactez l'équipe de développement.
 
 ---
 
