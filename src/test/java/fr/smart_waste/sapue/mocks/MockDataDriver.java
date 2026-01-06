@@ -13,6 +13,17 @@ public class MockDataDriver implements DataDriver {
     public Releves lastInsertedReleve;
     
     public boolean shouldFailNextInsert = false;
+    public boolean available = true;
+    public boolean fallbackAvailable = true;
+    public boolean usedFallback = false;
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+    
+    public void setFallbackAvailable(boolean fallbackAvailable) {
+        this.fallbackAvailable = fallbackAvailable;
+    }
 
     public void addMicrocontrolleur(Microcontrolleur mc) {
         mcs.put(mc.getReference(), mc);
@@ -94,6 +105,14 @@ public class MockDataDriver implements DataDriver {
     @Override
     public ObjectId insertReleve(Releves releves) {
         if (shouldFailNextInsert) return null;
+        if (!available) {
+            if (fallbackAvailable) {
+                lastInsertedReleve = releves;
+                usedFallback = true;
+                return new ObjectId();
+            }
+            return null;
+        }
         lastInsertedReleve = releves;
         return new ObjectId();
     }

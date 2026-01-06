@@ -1,8 +1,6 @@
 package fr.smart_waste.sapue;
 
 import fr.smart_waste.sapue.config.ServerConfig;
-import fr.smart_waste.sapue.core.SmartWasteServer;
-import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
