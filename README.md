@@ -10,7 +10,6 @@
 6. [Schéma MongoDB](#schéma-mongodb)
 7. [Déploiement Docker](#déploiement-docker)
 8. [Tests](#tests)
-9. [Architecture](#architecture)
 
 ---
 
@@ -214,7 +213,7 @@ db.createCollection("Reports", {
     validator: {
         $jsonSchema: {
             bsonType: "object",
-            required: ["author", "status", "location", "type", "issueType"],
+            required: ["author", "status", "location", "type"],
             properties: {
                 author: {
                     bsonType: "object",
@@ -249,6 +248,7 @@ db.createCollection("Reports", {
                     bsonType: "object",
                     properties: {
                         initialPhoto: { bsonType: "string" },
+                        coordinates: { bsonType: "array", items: { bsonType: "double" } },
                         finalPhoto: { bsonType: "string" }
                     }
                 },
