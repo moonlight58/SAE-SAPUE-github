@@ -530,18 +530,11 @@ db.MapPoints.find().pretty();
 db.MapPoints.getIndexes();
 ```
 
-### 5. Compilation et démarrage (java ou maven)
+### 5. Compilation et démarrage
 
 ```bash
 # Compiler le projet
-mvn clean package
-
-# ---- Java Run ----
-# Lancer le serveur
-java -jar target/sapue-server.jar config.yml
-
-# Ou sans fichier config (utilise config.yml par défaut)
-java -jar target/sapue-server.jar
+mvn clean compile
 
 # ---- Maven Run ----
 # Run
