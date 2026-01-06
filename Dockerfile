@@ -8,7 +8,7 @@ WORKDIR /app
 # Copier les fichiers de configuration Maven
 COPY pom.xml .
 
-# Télécharger les dépendances (mise en cache si pom.xml ne change pas)
+# Télécharger les dépendances
 RUN mvn dependency:go-offline -B
 
 # Copier le code source
@@ -26,11 +26,10 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copier le JAR depuis le stage de build
-COPY --from=build /app/target/*.jar ./
+COPY --from=build /app/target/*.jar app.jar
 
-# Copier les fichiers de configuration si nécessaire
+# Copier les fichiers de configuration
 COPY config.yml /app/
-
 
 # Changer le propriétaire des fichiers
 RUN chown -R appuser:appgroup /app
@@ -40,7 +39,7 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Port exposé (à adapter selon votre application)
-EXPOSE 8080
+EXPOSE 50010
 
 # Commande de démarrage
 ENTRYPOINT ["java", "-jar", "app.jar"]
