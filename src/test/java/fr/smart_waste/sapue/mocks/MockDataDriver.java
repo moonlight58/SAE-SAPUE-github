@@ -9,7 +9,8 @@ import java.util.*;
 public class MockDataDriver implements DataDriver {
     
     public Map<ObjectId, Poubelles> poubelles = new HashMap<>();
-    public Map<String, Microcontrolleur> mcs = new HashMap<>();
+    public Map<String, Modules> modules = new HashMap<>();
+    public Map<ObjectId, Chipsets> chipsets = new HashMap<>();
     public Releves lastInsertedReleve;
     
     public boolean shouldFailNextInsert = false;
@@ -25,8 +26,12 @@ public class MockDataDriver implements DataDriver {
         this.fallbackAvailable = fallbackAvailable;
     }
 
-    public void addMicrocontrolleur(Microcontrolleur mc) {
-        mcs.put(mc.getReference(), mc);
+    public void addModule(Modules module) {
+        modules.put(module.getKey(), module);
+    }
+    
+    public void addChipset(Chipsets chipset) {
+        chipsets.put(chipset.getId(), chipset);
     }
     
     public void addPoubelle(Poubelles p) {
@@ -40,11 +45,11 @@ public class MockDataDriver implements DataDriver {
     public Poubelles findPoubelleById(ObjectId id) { return poubelles.get(id); }
 
     @Override
-    public Poubelles findPoubelleByMicrocontroller(String mcReference) {
+    public Poubelles findPoubelleByModule(String moduleKey) {
         return poubelles.values().stream()
             .filter(p -> p.getHardwareConfig() != null && 
                          p.getHardwareConfig().getMicrocontroller() != null &&
-                         p.getHardwareConfig().getMicrocontroller().contains(mcReference))
+                         p.getHardwareConfig().getMicrocontroller().contains(moduleKey))
             .findFirst()
             .orElse(null);
     }
@@ -68,24 +73,48 @@ public class MockDataDriver implements DataDriver {
     public List<Poubelles> findPoubellesWithActiveAlerts() { return new ArrayList<>(); }
 
     @Override
-    public ObjectId insertMicrocontrolleur(Microcontrolleur microcontrolleur) { return null; }
+    public ObjectId insertModule(Modules module) { return null; }
 
     @Override
-    public Microcontrolleur findMicrocontrolleurById(ObjectId id) { return null; }
+    public Modules findModuleById(ObjectId id) { return null; }
 
     @Override
-    public Microcontrolleur findMicrocontrolleurByReference(String reference) {
-        return mcs.get(reference);
+    public Modules findModuleByKey(String key) {
+        return modules.get(key);
     }
 
     @Override
-    public boolean updateMicrocontrolleur(Microcontrolleur microcontrolleur) { return true; }
+    public boolean updateModule(Modules module) { return true; }
 
     @Override
-    public boolean deleteMicrocontrolleur(ObjectId id) { return true; }
+    public boolean deleteModule(ObjectId id) { return true; }
 
     @Override
-    public List<Microcontrolleur> findAllMicrocontrolleurs() { return new ArrayList<>(); }
+    public List<Modules> findAllModules() { return new ArrayList<>(); }
+
+    @Override
+    public ObjectId insertChipset(Chipsets chipset) { return new ObjectId(); }
+
+    @Override
+    public Chipsets findChipsetById(ObjectId id) { 
+        return chipsets.get(id); 
+    }
+
+    @Override
+    public List<Chipsets> findChipsetsByModuleId(ObjectId moduleId) { 
+        return chipsets.values().stream()
+            .filter(c -> c.getModuleID() != null && c.getModuleID().equals(moduleId))
+            .toList();
+    }
+
+    @Override
+    public boolean updateChipset(Chipsets chipset) { return true; }
+
+    @Override
+    public boolean deleteChipset(ObjectId id) { return true; }
+
+    @Override
+    public List<Chipsets> findAllChipsets() { return new ArrayList<>(chipsets.values()); }
 
     @Override
     public ObjectId insertSignalements(Signalements signalement) { return new ObjectId(); }

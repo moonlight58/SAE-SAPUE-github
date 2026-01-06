@@ -27,11 +27,11 @@ public interface DataDriver {
     Poubelles findPoubelleById(ObjectId id);
 
     /**
-     * Find poubelle by microcontroller reference
-     * @param mcReference Microcontroller reference (e.g., "MC-001")
+     * Find poubelle by module key
+     * @param moduleKey Module key (UUID)
      * @return Poubelles object or null if not found
      */
-    Poubelles findPoubelleByMicrocontroller(String mcReference);
+    Poubelles findPoubelleByModule(String moduleKey);
 
     /**
      * Update an existing poubelle
@@ -76,48 +76,92 @@ public interface DataDriver {
     List<Poubelles> findPoubellesWithActiveAlerts();
 
 
-    // ========== Microcontrolleur Operations ==========
+    // ========== Module Operations ==========
 
     /**
-     * Insert a new microcontrolleur
-     * @param microcontrolleur Microcontrolleur object to insert
-     * @return ObjectId of inserted microcontrolleur, null if failed
+     * Insert a new module
+     * @param module Modules object to insert
+     * @return ObjectId of inserted module, null if failed
      */
-    ObjectId insertMicrocontrolleur(Microcontrolleur microcontrolleur);
+    ObjectId insertModule(Modules module);
 
     /**
-     * Find microcontrolleur by ID
-     * @param id Microcontrolleur ObjectId
-     * @return Microcontrolleur object or null if not found
+     * Find module by ID
+     * @param id Module ObjectId
+     * @return Modules object or null if not found
      */
-    Microcontrolleur findMicrocontrolleurById(ObjectId id);
+    Modules findModuleById(ObjectId id);
 
     /**
-     * Find microcontrolleur by reference
-     * @param reference Microcontrolleur reference string
-     * @return Microcontrolleur object or null if not found
+     * Find module by key (UUID)
+     * @param key Module key string (UUID)
+     * @return Modules object or null if not found
      */
-    Microcontrolleur findMicrocontrolleurByReference(String reference);
+    Modules findModuleByKey(String key);
 
     /**
-     * Update an existing microcontrolleur
-     * @param microcontrolleur Microcontrolleur object with updated fields
+     * Update an existing module
+     * @param module Modules object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updateMicrocontrolleur(Microcontrolleur microcontrolleur);
+    boolean updateModule(Modules module);
 
     /**
-     * Delete a microcontrolleur by ID
-     * @param id Microcontrolleur ObjectId
+     * Delete a module by ID
+     * @param id Module ObjectId
      * @return true if deleted successfully, false otherwise
      */
-    boolean deleteMicrocontrolleur(ObjectId id);
+    boolean deleteModule(ObjectId id);
 
     /**
-     * Get all microcontrolleurs
-     * @return List of all microcontrolleurs
+     * Get all modules
+     * @return List of all modules
      */
-    List<Microcontrolleur> findAllMicrocontrolleurs();
+    List<Modules> findAllModules();
+
+
+    // ========== Chipsets Operations ==========
+
+    /**
+     * Insert a new chipset
+     * @param chipset Chipsets object to insert
+     * @return ObjectId of inserted chipset, null if failed
+     */
+    ObjectId insertChipset(Chipsets chipset);
+
+    /**
+     * Find chipset by ID
+     * @param id Chipset ObjectId
+     * @return Chipsets object or null if not found
+     */
+    Chipsets findChipsetById(ObjectId id);
+
+    /**
+     * Find all chipsets for a specific module
+     * @param moduleId Module ObjectId
+     * @return List of chipsets
+     */
+    List<Chipsets> findChipsetsByModuleId(ObjectId moduleId);
+
+    /**
+     * Update an existing chipset
+     * @param chipset Chipsets object with updated fields
+     * @return true if updated successfully, false otherwise
+     */
+    boolean updateChipset(Chipsets chipset);
+
+    /**
+     * Delete a chipset by ID
+     * @param id Chipset ObjectId
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteChipset(ObjectId id);
+
+    /**
+     * Get all chipsets
+     * @return List of all chipsets
+     */
+    List<Chipsets> findAllChipsets();
 
 
     // ========== Signalement Operations ==========

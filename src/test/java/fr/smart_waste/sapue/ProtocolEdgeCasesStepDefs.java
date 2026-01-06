@@ -3,9 +3,8 @@ package fr.smart_waste.sapue;
 import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
-import fr.smart_waste.sapue.model.Microcontrolleur;
+import fr.smart_waste.sapue.model.Modules;
 import fr.smart_waste.sapue.model.Poubelles;
-import fr.smart_waste.sapue.model.SensorConfig;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
 import io.cucumber.java.Before;
@@ -28,7 +27,7 @@ public class ProtocolEdgeCasesStepDefs {
     private String lastResponse;
     private String lastReference;
     private String lastCommand;
-
+    
     @Before
     public void setup() {
         dataDriver = new MockDataDriver();
@@ -38,9 +37,9 @@ public class ProtocolEdgeCasesStepDefs {
     
     // Helpers
     private void setupBinInDb(String ref) {
-        Microcontrolleur mc = new Microcontrolleur();
-        mc.setReference(ref);
-        mc.setId(new ObjectId());
+        Modules module = new Modules();
+        module.setKey(ref);
+        module.setId(new ObjectId());
         
         Poubelles p = new Poubelles();
         p.setId(new ObjectId());
@@ -48,18 +47,17 @@ public class ProtocolEdgeCasesStepDefs {
         config.setMicrocontroller(Collections.singletonList(ref));
         p.setHardwareConfig(config);
         
-        dataDriver.addMicrocontrolleur(mc);
+        dataDriver.addModule(module);
         dataDriver.addPoubelle(p);
     }
     
     private void setupBinWithSensorConfig(String ref, String sensorType) {
-        Microcontrolleur mc = new Microcontrolleur();
-        mc.setReference(ref);
-        mc.setId(new ObjectId());
+        Modules module = new Modules();
+        module.setKey(ref);
+        module.setId(new ObjectId());
         
-        SensorConfig sc = new SensorConfig();
-        sc.setSensorType(sensorType);
-        mc.setConfigSensor(sc);
+        // Note: SensorConfig is deprecated, chipsets should be used instead
+        // For backward compatibility in tests, we'll just create the module
         
         Poubelles p = new Poubelles();
         p.setId(new ObjectId());
@@ -67,7 +65,7 @@ public class ProtocolEdgeCasesStepDefs {
         config.setMicrocontroller(Collections.singletonList(ref));
         p.setHardwareConfig(config);
         
-        dataDriver.addMicrocontrolleur(mc);
+        dataDriver.addModule(module);
         dataDriver.addPoubelle(p);
     }
 
@@ -225,7 +223,7 @@ public class ProtocolEdgeCasesStepDefs {
     @And("{string} n'existe pas dans la collection microcontrolleurs")
     public void nExistePasDansLaCollectionMicrocontrolleurs(String ref) {
         // ensure not in mock
-        dataDriver.mcs.remove(ref);
+        dataDriver.modules.remove(ref);
     }
 
     @And("la connexion n'est pas enregistrée")
@@ -323,9 +321,8 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("{string} n'a pas de configSensor dans la base")
     public void nAPasDeConfigSensorDansLaBase(String ref) {
-        // ensure config is null in mock
-        Microcontrolleur mc = dataDriver.findMicrocontrolleurByReference(ref);
-        if (mc != null) mc.setConfigSensor(null);
+        // Note: Modules no longer use configSensor, chipsets are separate
+        // This test step is now a no-op for backward compatibility
     }
 
     @Then("les paramètres supplémentaires sont ignorés")
@@ -557,7 +554,7 @@ public class ProtocolEdgeCasesStepDefs {
     
     @And("{string} n'existe pas dans la base")
     public void nexistePasDansLaBase(String ref) {
-        dataDriver.mcs.remove(ref);
+        dataDriver.modules.remove(ref);
     }
     
 

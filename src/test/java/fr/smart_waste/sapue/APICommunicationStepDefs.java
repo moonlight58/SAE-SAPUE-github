@@ -321,9 +321,9 @@ public class APICommunicationStepDefs {
     // ==========================================
 
     private void setupBinInDb(String ref) {
-        Microcontrolleur mc = new Microcontrolleur();
-        mc.setReference(ref);
-        mc.setId(new ObjectId());
+        Modules module = new Modules();
+        module.setKey(ref);
+        module.setId(new ObjectId());
         
         Poubelles p = new Poubelles();
         p.setId(new ObjectId());
@@ -331,7 +331,7 @@ public class APICommunicationStepDefs {
         config.setMicrocontroller(Collections.singletonList(ref));
         p.setHardwareConfig(config);
         
-        dataDriver.addMicrocontrolleur(mc);
+        dataDriver.addModule(module);
         dataDriver.addPoubelle(p);
     }
     

@@ -43,7 +43,8 @@ public class MongoDataDriver implements DataDriver {
 
     // Collections
     private MongoCollection<Poubelles> poubelles;
-    private MongoCollection<Microcontrolleur> microcontrolleurs;
+    private MongoCollection<Modules> modules;
+    private MongoCollection<Chipsets> chipsets;
     private MongoCollection<Signalements> signalements;
     private MongoCollection<Releves> releves;
     private MongoCollection<AnalyseMedia> analyseMedias;
@@ -79,7 +80,8 @@ public class MongoDataDriver implements DataDriver {
 
             // Initialize all collections with POJO codec
             poubelles = database.getCollection("poubelles", Poubelles.class);
-            microcontrolleurs = database.getCollection("microcontrolleurs", Microcontrolleur.class);
+            modules = database.getCollection("Modules", Modules.class);
+            chipsets = database.getCollection("Chipsets", Chipsets.class);
             signalements = database.getCollection("signalements", Signalements.class);
             releves = database.getCollection("releves", Releves.class);
             analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
@@ -123,12 +125,12 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public Poubelles findPoubelleByMicrocontroller(String mcReference) {
-        if (mcReference == null || mcReference.isEmpty()) return null;
+    public Poubelles findPoubelleByModule(String moduleKey) {
+        if (moduleKey == null || moduleKey.isEmpty()) return null;
         try {
-            return poubelles.find(eq("hardwareConfig.microcontroller", mcReference)).first();
+            return poubelles.find(eq("hardwareConfig.microcontroller", moduleKey)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding poubelle by microcontroller: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding poubelle by module: " + e.getMessage());
             return null;
         }
     }
@@ -205,73 +207,144 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-    // ========== Microcontrolleur Operations ==========
+    // ========== Module Operations ==========
 
     @Override
-    public synchronized ObjectId insertMicrocontrolleur(Microcontrolleur mc) {
-        if (mc == null) return null;
+    public synchronized ObjectId insertModule(Modules module) {
+        if (module == null) return null;
         try {
-            InsertOneResult result = microcontrolleurs.insertOne(mc);
+            InsertOneResult result = modules.insertOne(module);
             return result.getInsertedId() != null
                     ? result.getInsertedId().asObjectId().getValue()
-                    : mc.getId();
+                    : module.getId();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error inserting microcontrolleur: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error inserting module: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public Microcontrolleur findMicrocontrolleurById(ObjectId id) {
+    public Modules findModuleById(ObjectId id) {
         if (id == null) return null;
         try {
-            return microcontrolleurs.find(eq("_id", id)).first();
+            return modules.find(eq("_id", id)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding microcontrolleur by ID: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding module by ID: " + e.getMessage());
             return null;
         }
     }
 
     @Override
-    public Microcontrolleur findMicrocontrolleurByReference(String reference) {
-        if (reference == null || reference.isEmpty()) return null;
+    public Modules findModuleByKey(String key) {
+        if (key == null || key.isEmpty()) return null;
         try {
-            return microcontrolleurs.find(eq("reference", reference)).first();
+            return modules.find(eq("key", key)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding microcontrolleur by reference: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding module by key: " + e.getMessage());
             return null;
         }
     }
 
     @Override
-    public boolean updateMicrocontrolleur(Microcontrolleur mc) {
-        if (mc == null || mc.getId() == null) return false;
+    public boolean updateModule(Modules module) {
+        if (module == null || module.getId() == null) return false;
         try {
-            return microcontrolleurs.replaceOne(eq("_id", mc.getId()), mc).getModifiedCount() > 0;
+            return modules.replaceOne(eq("_id", module.getId()), module).getModifiedCount() > 0;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating microcontrolleur: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error updating module: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public boolean deleteMicrocontrolleur(ObjectId id) {
+    public boolean deleteModule(ObjectId id) {
         if (id == null) return false;
         try {
-            return microcontrolleurs.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+            return modules.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting microcontrolleur: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error deleting module: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public List<Microcontrolleur> findAllMicrocontrolleurs() {
+    public List<Modules> findAllModules() {
         try {
-            return microcontrolleurs.find().into(new ArrayList<>());
+            return modules.find().into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding all microcontrolleurs: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding all modules: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // ========== Chipsets Operations ==========
+
+    @Override
+    public synchronized ObjectId insertChipset(Chipsets chipset) {
+        if (chipset == null) return null;
+        try {
+            InsertOneResult result = chipsets.insertOne(chipset);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : chipset.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting chipset: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Chipsets findChipsetById(ObjectId id) {
+        if (id == null) return null;
+        try {
+            return chipsets.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding chipset by ID: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Chipsets> findChipsetsByModuleId(ObjectId moduleId) {
+        if (moduleId == null) return new ArrayList<>();
+        try {
+            return chipsets.find(eq("moduleID", moduleId)).into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding chipsets by module ID: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public boolean updateChipset(Chipsets chipset) {
+        if (chipset == null || chipset.getId() == null) return false;
+        try {
+            return chipsets.replaceOne(eq("_id", chipset.getId()), chipset).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating chipset: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteChipset(ObjectId id) {
+        if (id == null) return false;
+        try {
+            return chipsets.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting chipset: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<Chipsets> findAllChipsets() {
+        try {
+            return chipsets.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all chipsets: " + e.getMessage());
             return new ArrayList<>();
         }
     }
