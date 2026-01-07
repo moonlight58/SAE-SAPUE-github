@@ -579,7 +579,22 @@ public class CommandHandler {
     private String handleImageAnalyse(ProtocolRequest request) {
         String reference = request.getParameter("reference");
         String imageBase64 = request.getParameter("imageBase64");
-        return "OK";
+
+        if (imageBase64 == null || imageBase64.isEmpty()) {
+            log("ERROR: Missing image data for IMAGE ANALYSE");
+            return "ERR_INVALID_VALUE";
+        }
+
+        log("Performing image analysis for reference: " + reference);
+        String result = dataDriver.analyzeImage(imageBase64);
+
+        if (result == null) {
+            log("ERROR: Image analysis failed");
+            return "ERR_ANALYSIS_FAILED";
+        }
+
+        log("Image analysis successful. Result: " + result);
+        return "OK type:" + result;
     }
 
 

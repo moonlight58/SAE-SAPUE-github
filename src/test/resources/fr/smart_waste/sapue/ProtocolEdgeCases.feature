@@ -300,3 +300,18 @@ Feature: TCP Protocol Edge Cases and Robustness
   Scenario: Command with tab characters
     When un client envoie "REGISTER\tMC-001\t192.168.1.100"
     Then le système peut traiter les tabs comme espaces
+
+  Scenario: IMAGE ANALYSE identifies waste type
+    Given "MC-001" est enregistré
+    When un client envoie "IMAGE ANALYSE MC-001 /9j/4AAQ...imageBase64Content..."
+    Then le système retourne "OK type:ordures_menageres"
+
+  Scenario: IMAGE ANALYSE returns specific waste type
+    Given "MC-001" est enregistré
+    When un client envoie "IMAGE ANALYSE MC-001 /9j/4AAQ...recyclage...imageBase64Content..."
+    Then le système retourne "OK type:recyclage"
+
+  Scenario: IMAGE ANALYSE with missing image data
+    Given "MC-001" est enregistré
+    When un client envoie "IMAGE ANALYSE MC-001"
+    Then le système rejette avec "ERR_MISSING_PARAMS"

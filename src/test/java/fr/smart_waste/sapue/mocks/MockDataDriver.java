@@ -371,5 +371,18 @@ public class MockDataDriver implements DataDriver {
     }
 
     @Override
+    public String analyzeImage(String imageBase64) {
+        if (!available) return null;
+        
+        // Simple mock logic based on keywords in "base64" string
+        if (imageBase64 == null) return "ordures_menageres";
+        if (imageBase64.contains("encombrant")) return "encombrant";
+        if (imageBase64.contains("recyclage")) return "recyclage";
+        if (imageBase64.contains("verre")) return "verre";
+        
+        return "ordures_menageres";
+    }
+
+    @Override
     public void close() {}
 }

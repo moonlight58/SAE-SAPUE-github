@@ -143,6 +143,10 @@ public class APICommunicationStepDefs {
 
     @And("le niveau de confiance est de {int}%")
     public void leNiveauDeConfianceEstDe(int confidence) {
+        if (currentRequest == null) {
+            Map<String, String> params = new HashMap<>();
+            currentRequest = new ProtocolRequest("IMAGE_ANALYSE", "REF-DUMMY", params, "");
+        }
         currentRequest.getParameters().put("confidence", String.valueOf(confidence));
     }
 

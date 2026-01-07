@@ -345,7 +345,18 @@ public interface DataDriver {
      * Get all analyse medias
      * @return List of all analyse medias
      */
+    /**
+     * Get all analyse medias
+     * @return List of all analyse medias
+     */
     List<AnalyseMedia> findAllAnalyseMedias();
+
+    /**
+     * Analyze an image to identify waste type
+     * @param imageBase64 Image data in Base64 format
+     * @return Identified waste type or null if failed
+     */
+    String analyzeImage(String imageBase64);
 
     // ========== Connection Management ==========
 

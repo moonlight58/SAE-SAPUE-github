@@ -20,7 +20,9 @@ public class Main {
             // Initialize DataDriver
             DataDriver dataDriver = new MongoDataDriver(
                     config.getMongoConnectionString(),
-                    config.getDatabaseName()
+                    config.getDatabaseName(),
+                    config.getMediaServerHost(),
+                    config.getMediaServerPort()
             );
 
             // Create and start server

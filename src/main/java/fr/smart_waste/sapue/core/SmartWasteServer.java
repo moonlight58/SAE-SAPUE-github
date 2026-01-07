@@ -356,7 +356,9 @@ public class SmartWasteServer {
             // Initialize DataDriver
             MongoDataDriver dataDriver = new MongoDataDriver(
                     config.getMongoConnectionString(),
-                    config.getDatabaseName()
+                    config.getDatabaseName(),
+                    config.getMediaServerHost(),
+                    config.getMediaServerPort()
             );
 
             // Create and start server

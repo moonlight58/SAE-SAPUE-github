@@ -3,6 +3,9 @@ package fr.smart_waste.sapue.dataaccess;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.io.*;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import fr.smart_waste.sapue.model.*;
 
@@ -35,6 +38,9 @@ public class MongoDataDriver implements DataDriver {
     private final CodecProvider pojoCodecProvider;
     private final CodecRegistry pojoCodecRegistry;
 
+    private String mediaServerHost;
+    private int mediaServerPort;
+
     private MongoClient mongoClient;
     private MongoDatabase database;
 
@@ -53,8 +59,21 @@ public class MongoDataDriver implements DataDriver {
      * @param databaseName Database name
      */
     public MongoDataDriver(String mongoURL, String databaseName) {
+        this(mongoURL, databaseName, "localhost", 50060);
+    }
+
+    /**
+     * Constructor with media server config
+     * @param mongoURL MongoDB connection string
+     * @param databaseName Database name
+     * @param mediaServerHost Media analysis server host
+     * @param mediaServerPort Media analysis server port
+     */
+    public MongoDataDriver(String mongoURL, String databaseName, String mediaServerHost, int mediaServerPort) {
         this.mongoURL = mongoURL;
         this.databaseName = databaseName;
+        this.mediaServerHost = mediaServerHost;
+        this.mediaServerPort = mediaServerPort;
 
         // Setup POJO codec for automatic POJO mapping
         this.pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
@@ -440,6 +459,34 @@ public class MongoDataDriver implements DataDriver {
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding all analyseMedias: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public String analyzeImage(String imageBase64) {
+        if (imageBase64 == null || imageBase64.isEmpty()) {
+            return null;
+        }
+
+        try (Socket socket = new Socket(mediaServerHost, mediaServerPort);
+             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
+
+            // The protocol with the analysis server: send the base64, get the result
+            // Format: ANALYSE <imageBase64>
+            out.println("ANALYSE " + imageBase64);
+
+            String response = in.readLine();
+            if (response != null && response.startsWith("OK type:")) {
+                return response.substring("OK type:".length()).trim();
+            } else {
+                System.err.println("[MongoDataDriver] Media server returned error or unexpected response: " + response);
+                return null;
+            }
+
+        } catch (IOException e) {
+            System.err.println("[MongoDataDriver] Error communicating with media analysis server: " + e.getMessage());
+            return null;
         }
     }
 

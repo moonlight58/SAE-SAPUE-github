@@ -22,6 +22,10 @@ public class ServerConfig {
     private String databaseName;
     private String environment; // "dev" or "prod"
     
+    // Media Analysis Server settings
+    private String mediaServerHost;
+    private int mediaServerPort;
+    
     // Logging settings
     private boolean enableMetrics;
     private boolean verboseLogging;
@@ -50,6 +54,16 @@ public class ServerConfig {
             config.mongoConnectionString = (String) mongoData.get("connectionString");
             config.databaseName = (String) mongoData.get("databaseName");
             config.environment = (String) mongoData.getOrDefault("environment", "dev");
+            
+            // Load Media Analysis settings
+            Map<String, Object> mediaData = (Map<String, Object>) data.get("mediaAnalysis");
+            if (mediaData != null) {
+                config.mediaServerHost = (String) mediaData.getOrDefault("host", "localhost");
+                config.mediaServerPort = (Integer) mediaData.getOrDefault("port", 50060);
+            } else {
+                config.mediaServerHost = "localhost";
+                config.mediaServerPort = 50060;
+            }
             
             // Load logging settings
             Map<String, Object> loggingData = (Map<String, Object>) data.get("logging");
@@ -111,6 +125,14 @@ public class ServerConfig {
     
     public boolean isVerboseLogging() {
         return verboseLogging;
+    }
+
+    public String getMediaServerHost() {
+        return mediaServerHost;
+    }
+
+    public int getMediaServerPort() {
+        return mediaServerPort;
     }
     
     @Override
