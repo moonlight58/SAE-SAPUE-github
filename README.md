@@ -109,7 +109,7 @@ db.createCollection("MapPoints", {
             properties: {
                 type: { bsonType: "string" },
                 isSapue: { bsonType: "bool" },
-                certaintyLevel: { bsonType: "double" },
+                certaintyLevel: { bsonType: ["double", "int"] },
                 location: {
                     bsonType: "object",
                     required: ["type", "coordinates"],
@@ -124,19 +124,18 @@ db.createCollection("MapPoints", {
                     }
                 },
                 address: { bsonType: "string" },
-                hardwareConfig: {
-                    bsonType: "object",
-                    properties: {
-                        ipAddress: { bsonType: "string" },
-                        modules: { bsonType: "array", items: { bsonType: "objectId" } },
-                        sensors: { bsonType: "array", items: { bsonType: "string" } }
-                    }
+                modules: {
+                    bsonType: "array",
+                    items: { bsonType: "objectId" }
                 },
-                lastMeasurement: {
-                    bsonType: "object",
-                    properties: {
-                        date: { bsonType: "date" },
-                        measurement: { bsonType: "object" }
+                lastMeasurements: {
+                    bsonType: "array",
+                    items: {
+                        bsonType: "object",
+                        properties: {
+                            date: { bsonType: "date" },
+                            measurement: { bsonType: "object" }
+                        }
                     }
                 },
                 activeAlerts: {
@@ -398,41 +397,7 @@ db.Modules.updateOne(
 
 **Étape 5 : Créer un point de localisation (MapPoint - poubelle):**
 
-```javascript
-const mapPointResult = db.MapPoints.insertOne({
-    type: "Poubelle intelligente",
-    isSapue: true,
-    certaintyLevel: 1.0,
-    location: {
-        type: "Point",
-        coordinates: [6.0240, 47.2378]  // [longitude, latitude]
-    },
-    address: "1 Rue de la République, 25000 Besançon",
-    hardwareConfig: {
-        ipAddress: "192.168.1.100",
-        modules: [moduleId],  // Utiliser l'ID du Module
-        sensors: ["BME280"]
-    },
-    lastMeasurement: {
-        date: new Date(),
-        measurement: {
-            sensorType: "BME280",
-            temperature: 20.5,
-            humidity: 65.0,
-            pressure: 1013.25,
-            fillLevel: 75.5,
-            batteryLevel: 87
-        }
-    },
-    activeAlerts: {
-        hasIssue: false,
-        issueType: null,
-        idReport: null
-    }
-});
-const mapPointId = mapPointResult.insertedId;
-print("MapPoint créé avec ID: " + mapPointId);
-```
+###### Removed
 
 **Étape 6 : Créer un relevé de mesures (Releves):**
 

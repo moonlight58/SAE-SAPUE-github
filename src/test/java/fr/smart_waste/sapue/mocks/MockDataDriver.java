@@ -78,12 +78,11 @@ public class MockDataDriver implements DataDriver {
 
     @Override
     public MapPoints findMapPointByModule(String moduleKey) {
+        Modules module = modules.get(moduleKey);
+        if (module == null) return null;
         for (MapPoints mp : mapPoints.values()) {
-            if (mp.getHardwareConfig() != null && mp.getHardwareConfig().getModules() != null) {
-                Modules module = modules.get(moduleKey);
-                if (module != null && mp.getHardwareConfig().getModules().contains(module.getId())) {
-                    return mp;
-                }
+            if (mp.getModules() != null && mp.getModules().contains(module.getId())) {
+                return mp;
             }
         }
         return null;
@@ -97,10 +96,13 @@ public class MockDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
+    public boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement) {
         MapPoints mp = mapPoints.get(mapPointId);
         if (mp == null) return false;
-        mp.setLastMeasurement(lastMeasurement);
+        if (mp.getLastMeasurements() == null) {
+            mp.setLastMeasurements(new ArrayList<>());
+        }
+        mp.getLastMeasurements().add(measurement);
         return true;
     }
 
@@ -368,19 +370,6 @@ public class MockDataDriver implements DataDriver {
     @Override
     public List<AnalyseMedia> findAllAnalyseMedias() {
         return new ArrayList<>();
-    }
-
-    @Override
-    public String analyzeImage(String imageBase64) {
-        if (!available) return null;
-        
-        // Simple mock logic based on keywords in "base64" string
-        if (imageBase64 == null) return "ordures_menageres";
-        if (imageBase64.contains("encombrant")) return "encombrant";
-        if (imageBase64.contains("recyclage")) return "recyclage";
-        if (imageBase64.contains("verre")) return "verre";
-        
-        return "ordures_menageres";
     }
 
     @Override

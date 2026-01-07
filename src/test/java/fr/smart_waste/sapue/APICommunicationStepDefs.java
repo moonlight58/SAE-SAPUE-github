@@ -4,6 +4,7 @@ import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
 import io.cucumber.java.Before;
@@ -31,7 +32,7 @@ public class APICommunicationStepDefs {
     public void setup() {
         dataDriver = new MockDataDriver();
         server = new MockSmartWasteServer(new ServerConfig());
-        commandHandler = new CommandHandler(dataDriver, server);
+        commandHandler = new CommandHandler(dataDriver, server, new MediaAnalysisClient("localhost", 50060));
     }
 
     // ==========================================
@@ -331,9 +332,7 @@ public class APICommunicationStepDefs {
         
         MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
-        config.setModules(Collections.singletonList(module.getId()));
-        p.setHardwareConfig(config);
+        p.setModules(Collections.singletonList(module.getId()));
         
         dataDriver.addModule(module);
         dataDriver.addMapPoint(p);

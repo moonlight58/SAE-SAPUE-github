@@ -3,10 +3,8 @@ import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
 import fr.smart_waste.sapue.model.*;
-import fr.smart_waste.sapue.protocol.CommandHandler;
-import fr.smart_waste.sapue.protocol.ProtocolRequest;
-import fr.smart_waste.sapue.protocol.ProtocolParser;
-import fr.smart_waste.sapue.protocol.ProtocolException;
+import fr.smart_waste.sapue.protocol.*;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -31,7 +29,7 @@ public class BinMonitoringClientStepDefs {
     public void setup() {
         dataDriver = new MockDataDriver();
         server = new MockSmartWasteServer(new ServerConfig());
-        commandHandler = new CommandHandler(dataDriver, server);
+        commandHandler = new CommandHandler(dataDriver, server, new MediaAnalysisClient("localhost", 50060));
     }
     
     // Helpers
@@ -42,9 +40,7 @@ public class BinMonitoringClientStepDefs {
         
         MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
-        config.setModules(Collections.singletonList(module.getId()));
-        p.setHardwareConfig(config);
+        p.setModules(Collections.singletonList(module.getId()));
         
         dataDriver.addModule(module);
         dataDriver.addMapPoint(p);

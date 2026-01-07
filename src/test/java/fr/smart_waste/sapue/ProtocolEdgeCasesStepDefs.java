@@ -7,6 +7,7 @@ import fr.smart_waste.sapue.model.Modules;
 import fr.smart_waste.sapue.model.MapPoints;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -23,6 +24,7 @@ public class ProtocolEdgeCasesStepDefs {
     private MockDataDriver dataDriver;
     private MockSmartWasteServer server;
     private CommandHandler commandHandler;
+    private MediaAnalysisClient mediaAnalysisClient;
     
     private String lastResponse;
     private String lastReference;
@@ -32,7 +34,8 @@ public class ProtocolEdgeCasesStepDefs {
     public void setup() {
         dataDriver = new MockDataDriver();
         server = new MockSmartWasteServer(new ServerConfig());
-        commandHandler = new CommandHandler(dataDriver, server);
+        mediaAnalysisClient = new MediaAnalysisClient("localhost", 50060);
+        commandHandler = new CommandHandler(dataDriver, server, mediaAnalysisClient);
     }
     
     // Helpers
@@ -43,9 +46,7 @@ public class ProtocolEdgeCasesStepDefs {
         
         MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
-        config.setModules(Collections.singletonList(module.getId()));
-        p.setHardwareConfig(config);
+        p.setModules(Collections.singletonList(module.getId()));
         
         dataDriver.addModule(module);
         dataDriver.addMapPoint(p);
@@ -61,9 +62,7 @@ public class ProtocolEdgeCasesStepDefs {
         
         MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
-        config.setModules(Collections.singletonList(module.getId()));
-        p.setHardwareConfig(config);
+        p.setModules(Collections.singletonList(module.getId()));
         
         dataDriver.addModule(module);
         dataDriver.addMapPoint(p);
@@ -86,6 +85,20 @@ public class ProtocolEdgeCasesStepDefs {
     @When("un client envoie {string}")
     public void unClientEnvoie(String command) {
         lastCommand = command;
+        
+        // Setup mock response for IMAGE ANALYSE
+        if (command.startsWith("IMAGE ANALYSE")) {
+            if (command.contains("recyclage")) {
+                mediaAnalysisClient.setMockResponse("recyclage");
+            } else if (command.contains("ordures_menageres") || command.contains("imageBase64Content")) {
+                mediaAnalysisClient.setMockResponse("ordures_menageres");
+            } else {
+                mediaAnalysisClient.setMockResponse(null); // Force real connection (should fail/timeout in test)
+            }
+        } else {
+            mediaAnalysisClient.setMockResponse(null);
+        }
+
         try {
             ProtocolRequest request = fr.smart_waste.sapue.protocol.ProtocolParser.parse(command);
             lastResponse = commandHandler.execute(request);

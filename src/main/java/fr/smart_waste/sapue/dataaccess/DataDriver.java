@@ -57,12 +57,12 @@ public interface DataDriver {
     boolean updateMapPoint(MapPoints mapPoint);
 
     /**
-     * Update last measurement for a MapPoint
+     * Add a new measurement to the history of a MapPoint
      * @param mapPointId MapPoints ObjectId
-     * @param lastMeasurement LastMeasurement object
-     * @return true if updated successfully, false otherwise
+     * @param measurement LastMeasurement object to add
+     * @return true if added successfully, false otherwise
      */
-    boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement);
+    boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement);
 
     /**
      * Delete a MapPoint by ID
@@ -341,22 +341,7 @@ public interface DataDriver {
      */
     boolean deleteAnalyseMedia(ObjectId id);
 
-    /**
-     * Get all analyse medias
-     * @return List of all analyse medias
-     */
-    /**
-     * Get all analyse medias
-     * @return List of all analyse medias
-     */
     List<AnalyseMedia> findAllAnalyseMedias();
-
-    /**
-     * Analyze an image to identify waste type
-     * @param imageBase64 Image data in Base64 format
-     * @return Identified waste type or null if failed
-     */
-    String analyzeImage(String imageBase64);
 
     // ========== Connection Management ==========
 

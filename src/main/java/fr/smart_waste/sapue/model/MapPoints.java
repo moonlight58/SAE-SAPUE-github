@@ -15,9 +15,9 @@ public class MapPoints {
     private Boolean isSapue;
     private Double certaintyLevel;
     private Location location;
-    private String address; // FIXED: was "adress"
-    private HardwareConfig hardwareConfig;
-    private LastMeasurement lastMeasurement;
+    private String address;
+    private List<ObjectId> modules;
+    private List<LastMeasurement> lastMeasurements;
     private ActiveAlerts activeAlerts;
 
     // Constructors
@@ -75,57 +75,9 @@ public class MapPoints {
         }
     }
 
-    public static class HardwareConfig {
-        private String ipAddress;
-        private List<ObjectId> modules; // CHANGED: was List<String> microcontroller
-        private List<String> sensors; // Sensor types like ["BME280", "HX711"]
-
-        public HardwareConfig() {
-        }
-
-        public HardwareConfig(String ipAddress, List<ObjectId> modules, List<String> sensors) {
-            this.ipAddress = ipAddress;
-            this.modules = modules;
-            this.sensors = sensors;
-        }
-
-        public String getIpAddress() {
-            return ipAddress;
-        }
-
-        public void setIpAddress(String ipAddress) {
-            this.ipAddress = ipAddress;
-        }
-
-        public List<ObjectId> getModules() {
-            return modules;
-        }
-
-        public void setModules(List<ObjectId> modules) {
-            this.modules = modules;
-        }
-
-        public List<String> getSensors() {
-            return sensors;
-        }
-
-        public void setSensors(List<String> sensors) {
-            this.sensors = sensors;
-        }
-
-        @Override
-        public String toString() {
-            return "HardwareConfig{" +
-                    "ipAddress='" + ipAddress + '\'' +
-                    ", modules=" + modules +
-                    ", sensors=" + sensors +
-                    '}';
-        }
-    }
-
     public static class LastMeasurement {
         private Date date;
-        private Document measurement; // Flexible structure from Releves
+        private Document measurement; // Flexible structure from Measurements
 
         public LastMeasurement() {
         }
@@ -163,7 +115,7 @@ public class MapPoints {
     public static class ActiveAlerts {
         private Boolean hasIssue;
         private String issueType;
-        private ObjectId idReport; // CHANGED: was idSignalement
+        private ObjectId idReport;
 
         public ActiveAlerts() {
         }
@@ -257,20 +209,20 @@ public class MapPoints {
         this.address = address;
     }
 
-    public HardwareConfig getHardwareConfig() {
-        return hardwareConfig;
+    public List<ObjectId> getModules() {
+        return modules;
     }
 
-    public void setHardwareConfig(HardwareConfig hardwareConfig) {
-        this.hardwareConfig = hardwareConfig;
+    public void setModules(List<ObjectId> modules) {
+        this.modules = modules;
     }
 
-    public LastMeasurement getLastMeasurement() {
-        return lastMeasurement;
+    public List<LastMeasurement> getLastMeasurements() {
+        return lastMeasurements;
     }
 
-    public void setLastMeasurement(LastMeasurement lastMeasurement) {
-        this.lastMeasurement = lastMeasurement;
+    public void setLastMeasurements(List<LastMeasurement> lastMeasurements) {
+        this.lastMeasurements = lastMeasurements;
     }
 
     public ActiveAlerts getActiveAlerts() {
@@ -290,8 +242,8 @@ public class MapPoints {
                 ", certaintyLevel=" + certaintyLevel +
                 ", location=" + location +
                 ", address='" + address + '\'' +
-                ", hardwareConfig=" + hardwareConfig +
-                ", lastMeasurement=" + lastMeasurement +
+                ", modules=" + modules +
+                ", lastMeasurements=" + lastMeasurements +
                 ", activeAlerts=" + activeAlerts +
                 '}';
     }

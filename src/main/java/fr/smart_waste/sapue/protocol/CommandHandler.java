@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.core.SmartWasteServer;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -20,10 +21,12 @@ public class CommandHandler {
 
     private final DataDriver dataDriver;
     private final SmartWasteServer server;
+    private final MediaAnalysisClient mediaAnalysisClient;
 
-    public CommandHandler(DataDriver dataDriver, SmartWasteServer server) {
+    public CommandHandler(DataDriver dataDriver, SmartWasteServer server, MediaAnalysisClient mediaAnalysisClient) {
         this.dataDriver = dataDriver;
         this.server = server;
+        this.mediaAnalysisClient = mediaAnalysisClient;
     }
 
     /**
@@ -269,7 +272,7 @@ public class CommandHandler {
         lastMeasurement.setMeasurement(measurementDoc);
 
         // Update MapPoint with last measurement
-        boolean updated = dataDriver.updateMapPointLastMeasurement(mapPoint.getId(), lastMeasurement);
+        boolean updated = dataDriver.addMapPointMeasurement(mapPoint.getId(), lastMeasurement);
 
         if (updated) {
             log("Updated lastMeasurement in MapPoint for " + reference);
@@ -577,16 +580,17 @@ public class CommandHandler {
      * Format: IMAGE ANALYSE <reference> <image_base64>
      */
     private String handleImageAnalyse(ProtocolRequest request) {
-        String reference = request.getParameter("reference");
+        String reference = request.getReference();
         String imageBase64 = request.getParameter("imageBase64");
 
         if (imageBase64 == null || imageBase64.isEmpty()) {
             log("ERROR: Missing image data for IMAGE ANALYSE");
-            return "ERR_INVALID_VALUE";
+            return "ERR_MISSING_PARAMS";
         }
 
         log("Performing image analysis for reference: " + reference);
-        String result = dataDriver.analyzeImage(imageBase64);
+        String result = mediaAnalysisClient.analyzeImage(reference, imageBase64);
+        log("Image analysis result: " + result);
 
         if (result == null) {
             log("ERROR: Image analysis failed");
