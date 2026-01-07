@@ -64,6 +64,8 @@ public class ProtocolParser {
                     return parseImageDatabase(parts, rawRequest);
                 } else if ("UPDATE".equals(subCommand)) {
                     return parseImageUpdate(parts, rawRequest);
+                } else if ("ANALYSE".equals(subCommand)) {
+                    return parseImageAnalyse(parts, rawRequest);
                 } else {
                     throw new ProtocolException("ERR_INVALID_COMMAND", "Unknown IMAGE subcommand: " + subCommand);
                 }
@@ -413,6 +415,52 @@ public class ProtocolParser {
         params.put("imageBase64", imageBase64Str);
         
         return new ProtocolRequest("IMAGE_UPDATE", "", params, rawRequest);
+    }
+
+    /**
+     * Parse IMAGE ANALYSE command
+     * Format: IMAGE ANALYSE <reference> <image_base64>
+     * 
+     * Example: IMAGE ANALYSE MC-001 /9j/4AAQ...
+     */
+    private static ProtocolRequest parseImageAnalyse(String[] parts, String rawRequest) throws ProtocolException {
+        // IMAGE ANALYSE <reference> <image_base64>
+        // parts[0] = IMAGE
+        // parts[1] = ANALYSE
+        // parts[2] = reference
+        // parts[3...] = image_base64 (peut contenir des espaces)
+        
+        if (parts.length < 4) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", 
+                "IMAGE ANALYSE requires: reference, image_base64");
+        }
+
+        String reference = parts[2];
+        
+        // Reconstruct image_base64
+        StringBuilder imageBase64 = new StringBuilder();
+        for (int i = 3; i < parts.length; i++) {
+            if (i > 3) imageBase64.append(" ");
+            imageBase64.append(parts[i]);
+        }
+        
+        // Validate reference
+        if (!isValidReference(reference)) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reference format: " + reference);
+        }
+        
+        // Validate base64
+        String imageBase64Str = imageBase64.toString().trim();
+        if (imageBase64Str.isEmpty()) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
+        }
+        
+        // Store in parameters
+        Map<String, String> params = new HashMap<>();
+        params.put("reference", reference);
+        params.put("imageBase64", imageBase64Str);
+        
+        return new ProtocolRequest("IMAGE_ANALYSE", reference, params, rawRequest);
     }
 
     /**

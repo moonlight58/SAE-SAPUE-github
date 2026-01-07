@@ -8,12 +8,14 @@ import java.util.*;
 
 public class MockDataDriver implements DataDriver {
     
-    public Map<ObjectId, Poubelles> poubelles = new HashMap<>();
     public Map<String, Modules> modules = new HashMap<>();
     public Map<ObjectId, Chipsets> chipsets = new HashMap<>();
     public Map<ObjectId, Reports> reports = new HashMap<>();
     public Map<ObjectId, MapPoints> mapPoints = new HashMap<>();
-    public Releves lastInsertedReleve;
+    public Map<ObjectId, Measurements> measurements = new HashMap<>();
+    public Map<ObjectId, Users> users = new HashMap<>();
+    
+    public Measurements lastInsertedMeasurement;
     
     public boolean shouldFailNextInsert = false;
     public boolean available = true;
@@ -35,219 +37,17 @@ public class MockDataDriver implements DataDriver {
     public void addChipset(Chipsets chipset) {
         chipsets.put(chipset.getId(), chipset);
     }
-    
-    public void addPoubelle(Poubelles p) {
-        poubelles.put(p.getId(), p);
-    }
 
-    @Override
-    public ObjectId insertPoubelle(Poubelles poubelle) { return null; }
-
-    @Override
-    public Poubelles findPoubelleById(ObjectId id) { return poubelles.get(id); }
-
-    @Override
-    public Poubelles findPoubelleByModule(String moduleKey) {
-        return poubelles.values().stream()
-            .filter(p -> p.getHardwareConfig() != null && 
-                         p.getHardwareConfig().getMicrocontroller() != null &&
-                         p.getHardwareConfig().getMicrocontroller().contains(moduleKey))
-            .findFirst()
-            .orElse(null);
-    }
-
-    @Override
-    public boolean updatePoubelle(Poubelles poubelle) { return true; }
-
-    @Override
-    public boolean updateLastMeasurement(ObjectId id, Poubelles.LastMeasurement lastMeasurement) { return true; }
-
-    @Override
-    public boolean updateActiveAlerts(ObjectId id, Poubelles.ActiveAlerts activeAlerts) { return true; }
-
-    @Override
-    public boolean deletePoubelle(ObjectId id) { return true; }
-
-    @Override
-    public List<Poubelles> findAllPoubelles() { return new ArrayList<>(poubelles.values()); }
-
-    @Override
-    public List<Poubelles> findPoubellesWithActiveAlerts() { return new ArrayList<>(); }
-
-    @Override
-    public ObjectId insertModule(Modules module) { return null; }
-
-    @Override
-    public Modules findModuleById(ObjectId id) { return null; }
-
-    @Override
-    public Modules findModuleByKey(String key) {
-        return modules.get(key);
-    }
-
-    @Override
-    public boolean updateModule(Modules module) { return true; }
-
-    @Override
-    public boolean deleteModule(ObjectId id) { return true; }
-
-    @Override
-    public List<Modules> findAllModules() { return new ArrayList<>(); }
-
-    @Override
-    public ObjectId insertChipset(Chipsets chipset) { return new ObjectId(); }
-
-    @Override
-    public Chipsets findChipsetById(ObjectId id) { 
-        return chipsets.get(id); 
-    }
-
-    @Override
-    public List<Chipsets> findChipsetsByModuleId(ObjectId moduleId) { 
-        return chipsets.values().stream()
-            .filter(c -> c.getModuleID() != null && c.getModuleID().equals(moduleId))
-            .toList();
-    }
-
-    @Override
-    public boolean updateChipset(Chipsets chipset) { return true; }
-
-    @Override
-    public boolean deleteChipset(ObjectId id) { return true; }
-
-    @Override
-    public List<Chipsets> findAllChipsets() { return new ArrayList<>(chipsets.values()); }
-
-    @Override
-    public ObjectId insertSignalements(Signalements signalement) { return new ObjectId(); }
-
-    @Override
-    public Signalements findSignalementsById(ObjectId id) { return null; }
-
-    @Override
-    public boolean updateSignalements(Signalements signalement) { return true; }
-
-    @Override
-    public boolean deleteSignalements(ObjectId id) { return true; }
-
-    @Override
-    public List<Signalements> findAllSignalements() { return new ArrayList<>(); }
-
-    @Override
-    public ObjectId insertReleve(Releves releves) {
-        if (shouldFailNextInsert) return null;
-        if (!available) {
-            if (fallbackAvailable) {
-                lastInsertedReleve = releves;
-                usedFallback = true;
-                return new ObjectId();
-            }
-            return null;
-        }
-        lastInsertedReleve = releves;
-        return new ObjectId();
-    }
-
-    @Override
-    public Releves findReleveById(ObjectId id) { return null; }
-
-    @Override
-    public List<Releves> findRelevesByPoubelle(ObjectId idPoubelle) { return new ArrayList<>(); }
-
-    @Override
-    public boolean updateReleve(Releves releves) { return true; }
-
-    @Override
-    public boolean deleteReleve(ObjectId id) { return true; }
-
-    @Override
-    public List<Releves> findAllReleves() { return new ArrayList<>(); }
-
-    @Override
-    public ObjectId insertAnalyseMedia(AnalyseMedia analyseMedia) { return new ObjectId(); }
-
-    @Override
-    public AnalyseMedia findAnalyseMediaById(ObjectId id) { return null; }
-
-    @Override
-    public boolean updateAnalyseMedia(AnalyseMedia analyseMedia) { return true; }
-
-    @Override
-    public boolean deleteAnalyseMedia(ObjectId id) { return true; }
-
-    @Override
-    public List<AnalyseMedia> findAllAnalyseMedias() { return new ArrayList<>(); }
-
-    // ==========================================
-    // Reports Operations (Mock)
-    // ==========================================
-
-    public void addReport(Reports report) {
-        reports.put(report.getId(), report);
-    }
-
-    @Override
-    public ObjectId insertReport(Reports report) {
-        if (report == null) return null;
-        if (report.getId() == null) report.setId(new ObjectId());
-        reports.put(report.getId(), report);
-        return report.getId();
-    }
-
-    @Override
-    public Reports findReportById(ObjectId id) {
-        return reports.get(id);
-    }
-
-    @Override
-    public List<Reports> findReportsByStatus(String status) {
-        List<Reports> result = new ArrayList<>();
-        for (Reports r : reports.values()) {
-            if (status.equals(r.getStatus())) {
-                result.add(r);
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public List<Reports> findReportsByMapPoint(ObjectId mapPointId) {
-        List<Reports> result = new ArrayList<>();
-        for (Reports r : reports.values()) {
-            if (mapPointId != null && mapPointId.equals(r.getMapPoint())) {
-                result.add(r);
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public boolean updateReport(Reports report) {
-        if (report == null || report.getId() == null) return false;
-        reports.put(report.getId(), report);
-        return true;
-    }
-
-    @Override
-    public boolean deleteReport(ObjectId id) {
-        return reports.remove(id) != null;
-    }
-
-    @Override
-    public List<Reports> findAllReports() {
-        return new ArrayList<>(reports.values());
-    }
-
-    // ==========================================
-    // MapPoints Operations (Mock)
-    // ==========================================
+    // ========== MapPoints Operations (Mock) ==========
 
     public void addMapPoint(MapPoints mapPoint) {
+        if (mapPoint.getId() == null) mapPoint.setId(new ObjectId());
         mapPoints.put(mapPoint.getId(), mapPoint);
     }
 
     @Override
     public ObjectId insertMapPoint(MapPoints mapPoint) {
+        if (shouldFailNextInsert) return null;
         if (mapPoint == null) return null;
         if (mapPoint.getId() == null) mapPoint.setId(new ObjectId());
         mapPoints.put(mapPoint.getId(), mapPoint);
@@ -272,16 +72,14 @@ public class MockDataDriver implements DataDriver {
 
     @Override
     public List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters) {
-        // Simple mock: return all map points (no geospatial calculation)
+        // Simple mock: return all map points
         return new ArrayList<>(mapPoints.values());
     }
 
     @Override
     public MapPoints findMapPointByModule(String moduleKey) {
-        // Find map point that contains this module in its hardwareConfig
         for (MapPoints mp : mapPoints.values()) {
             if (mp.getHardwareConfig() != null && mp.getHardwareConfig().getModules() != null) {
-                // Need to check if any module in the list matches the key
                 Modules module = modules.get(moduleKey);
                 if (module != null && mp.getHardwareConfig().getModules().contains(module.getId())) {
                     return mp;
@@ -292,17 +90,17 @@ public class MockDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
-        MapPoints mp = mapPoints.get(mapPointId);
-        if (mp == null) return false;
-        mp.setLastMeasurement(lastMeasurement);
+    public boolean updateMapPoint(MapPoints mapPoint) {
+        if (mapPoint == null || mapPoint.getId() == null) return false;
+        mapPoints.put(mapPoint.getId(), mapPoint);
         return true;
     }
 
     @Override
-    public boolean updateMapPoint(MapPoints mapPoint) {
-        if (mapPoint == null || mapPoint.getId() == null) return false;
-        mapPoints.put(mapPoint.getId(), mapPoint);
+    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
+        MapPoints mp = mapPoints.get(mapPointId);
+        if (mp == null) return false;
+        mp.setLastMeasurement(lastMeasurement);
         return true;
     }
 
@@ -327,34 +125,249 @@ public class MockDataDriver implements DataDriver {
         return result;
     }
 
+    // ========== Module Operations (Mock) ==========
+
     @Override
-    public List<Users> findAllUsers() {
-        return new ArrayList<>();
+    public ObjectId insertModule(Modules module) {
+        if (module == null) return null;
+        if (module.getId() == null) module.setId(new ObjectId());
+        modules.put(module.getKey(), module);
+        return module.getId();
     }
 
     @Override
+    public Modules findModuleById(ObjectId id) {
+        return modules.values().stream().filter(m -> m.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    @Override
+    public Modules findModuleByKey(String key) {
+        return modules.get(key);
+    }
+
+    @Override
+    public boolean updateModule(Modules module) {
+        if (module == null || module.getKey() == null) return false;
+        modules.put(module.getKey(), module);
+        return true;
+    }
+
+    @Override
+    public boolean deleteModule(ObjectId id) {
+        Modules m = findModuleById(id);
+        if (m == null) return false;
+        modules.remove(m.getKey());
+        return true;
+    }
+
+    @Override
+    public List<Modules> findAllModules() {
+        return new ArrayList<>(modules.values());
+    }
+
+    // ========== Chipsets Operations (Mock) ==========
+
+    @Override
+    public ObjectId insertChipset(Chipsets chipset) {
+        if (chipset == null) return null;
+        if (chipset.getId() == null) chipset.setId(new ObjectId());
+        chipsets.put(chipset.getId(), chipset);
+        return chipset.getId();
+    }
+
+    @Override
+    public Chipsets findChipsetById(ObjectId id) {
+        return chipsets.get(id);
+    }
+
+    @Override
+    public List<Chipsets> findChipsetsByModuleId(ObjectId moduleId) {
+        return chipsets.values().stream()
+                .filter(c -> moduleId != null && moduleId.equals(c.getModuleID()))
+                .toList();
+    }
+
+    @Override
+    public boolean updateChipset(Chipsets chipset) {
+        if (chipset == null || chipset.getId() == null) return false;
+        chipsets.put(chipset.getId(), chipset);
+        return true;
+    }
+
+    @Override
+    public boolean deleteChipset(ObjectId id) {
+        return chipsets.remove(id) != null;
+    }
+
+    @Override
+    public List<Chipsets> findAllChipsets() {
+        return new ArrayList<>(chipsets.values());
+    }
+
+    // ========== Reports Operations (Mock) ==========
+
+    public void addReport(Reports report) {
+        if (report.getId() == null) report.setId(new ObjectId());
+        reports.put(report.getId(), report);
+    }
+
+    @Override
+    public ObjectId insertReport(Reports report) {
+        if (report == null) return null;
+        if (report.getId() == null) report.setId(new ObjectId());
+        reports.put(report.getId(), report);
+        return report.getId();
+    }
+
+    @Override
+    public Reports findReportById(ObjectId id) {
+        return reports.get(id);
+    }
+
+    @Override
+    public List<Reports> findReportsByStatus(String status) {
+        return reports.values().stream()
+                .filter(r -> status != null && status.equalsIgnoreCase(r.getStatus()))
+                .toList();
+    }
+
+    @Override
+    public List<Reports> findReportsByMapPoint(ObjectId mapPointId) {
+        return reports.values().stream()
+                .filter(r -> mapPointId != null && mapPointId.equals(r.getMapPoint()))
+                .toList();
+    }
+
+    @Override
+    public boolean updateReport(Reports report) {
+        if (report == null || report.getId() == null) return false;
+        reports.put(report.getId(), report);
+        return true;
+    }
+
+    @Override
+    public boolean deleteReport(ObjectId id) {
+        return reports.remove(id) != null;
+    }
+
+    @Override
+    public List<Reports> findAllReports() {
+        return new ArrayList<>(reports.values());
+    }
+
+    // ========== Measurements Operations (Mock) ==========
+
+    @Override
+    public ObjectId insertMeasurement(Measurements measurement) {
+        if (shouldFailNextInsert) return null;
+        if (!available) {
+            if (fallbackAvailable) {
+                lastInsertedMeasurement = measurement;
+                usedFallback = true;
+                return new ObjectId();
+            }
+            return null;
+        }
+        if (measurement.getId() == null) measurement.setId(new ObjectId());
+        measurements.put(measurement.getId(), measurement);
+        lastInsertedMeasurement = measurement;
+        return measurement.getId();
+    }
+
+    @Override
+    public Measurements findMeasurementById(ObjectId id) {
+        return measurements.get(id);
+    }
+
+    @Override
+    public List<Measurements> findMeasurementsByController(ObjectId idController) {
+        return measurements.values().stream()
+                .filter(m -> idController != null && idController.equals(m.getId_Controller()))
+                .toList();
+    }
+
+    @Override
+    public boolean updateMeasurement(Measurements measurement) {
+        if (measurement == null || measurement.getId() == null) return false;
+        measurements.put(measurement.getId(), measurement);
+        return true;
+    }
+
+    @Override
+    public boolean deleteMeasurement(ObjectId id) {
+        return measurements.remove(id) != null;
+    }
+
+    @Override
+    public List<Measurements> findAllMeasurements() {
+        return new ArrayList<>(measurements.values());
+    }
+
+    // ========== Users Operations (Mock) ==========
+
+    @Override
     public Users findUserById(ObjectId id) {
-        return null;
+        return users.get(id);
     }
 
     @Override
     public Users findUserByMail(String mail) {
-        return null;
+        return users.values().stream()
+                .filter(u -> mail != null && mail.equalsIgnoreCase(u.getMail()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public ObjectId insertUser(Users user) {
-        return null;
-    }
-
-    @Override
-    public boolean deleteUser(ObjectId id) {
-        return false;
+        if (user == null) return null;
+        if (user.getId() == null) user.setId(new ObjectId());
+        users.put(user.getId(), user);
+        return user.getId();
     }
 
     @Override
     public boolean updateUser(Users user) {
-        return false;
+        if (user == null || user.getId() == null) return false;
+        users.put(user.getId(), user);
+        return true;
+    }
+
+    @Override
+    public boolean deleteUser(ObjectId id) {
+        return users.remove(id) != null;
+    }
+
+    @Override
+    public List<Users> findAllUsers() {
+        return new ArrayList<>(users.values());
+    }
+
+    // ========== AnalyseMedia Operations (Mock) ==========
+
+    @Override
+    public ObjectId insertAnalyseMedia(AnalyseMedia analyseMedia) {
+        return new ObjectId();
+    }
+
+    @Override
+    public AnalyseMedia findAnalyseMediaById(ObjectId id) {
+        return null;
+    }
+
+    @Override
+    public boolean updateAnalyseMedia(AnalyseMedia analyseMedia) {
+        return true;
+    }
+
+    @Override
+    public boolean deleteAnalyseMedia(ObjectId id) {
+        return true;
+    }
+
+    @Override
+    public List<AnalyseMedia> findAllAnalyseMedias() {
+        return new ArrayList<>();
     }
 
     @Override

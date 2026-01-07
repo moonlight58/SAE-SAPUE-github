@@ -757,7 +757,7 @@ HELP        # Affiche toutes les commandes
 # envoyer une image à la base de données - créant la première partie du rapport
 IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
 
-# update le rapport avec l'image finale après intervention
+# update le rapport avec l'image finale après intervention - rajoutant le deuxième partie du rapport
 IMAGE UPDATE <cleanerId> <reportId> <image_base64>
 
 # envoyer une image au serveur d'analyse d'images

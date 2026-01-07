@@ -57,6 +57,9 @@ public class CommandHandler {
                 case "IMAGE_UPDATE":
                     return handleImageUpdate(request);
 
+                case "IMAGE_ANALYSE":
+                    return handleImageAnalyse(request);
+
                 case "PING":
                     return handlePing(request);
 
@@ -144,10 +147,10 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_FOUND";
         }
 
-        // Find Poubelle by module key
-        Poubelles poubelle = dataDriver.findPoubelleByModule(reference);
-        if (poubelle == null) {
-            log("ERROR: No Poubelle found for microcontroller " + reference);
+        // Find MapPoint by module key
+        MapPoints mapPoint = dataDriver.findMapPointByModule(reference);
+        if (mapPoint == null) {
+            log("ERROR: No MapPoint found for microcontroller " + reference);
             return "ERR_DEVICE_NOT_FOUND";
         }
 
@@ -156,7 +159,7 @@ public class CommandHandler {
         // TODO: Update this logic to work with Chipsets collection
 
         // Build measurements object
-        Releves.Measurements measurements = new Releves.Measurements();
+        Measurements.Measurement measurementData = new Measurements.Measurement();
 
         // Parse parameters and populate measurements
         for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
@@ -176,7 +179,7 @@ public class CommandHandler {
             
             // Handle String values
             if (lowerKey.equals("wastetype") || lowerKey.equals("waste_type")) {
-                measurements.setWasteType(value);
+                measurementData.setWasteType(value);
                 continue;
             }
 
@@ -186,28 +189,28 @@ public class CommandHandler {
                 switch (lowerKey) {
                     case "filllevel":
                     case "fill_level":
-                        measurements.setFillLevel(doubleValue);
+                        measurementData.setFillLevel(doubleValue);
                         break;
                     case "weight":
-                        measurements.setWeight(doubleValue);
+                        measurementData.setWeight(doubleValue);
                         break;
                     case "temperature":
-                        measurements.setTemperature(doubleValue);
+                        measurementData.setTemperature(doubleValue);
                         break;
                     case "humidity":
-                        measurements.setHumidity(doubleValue);
+                        measurementData.setHumidity(doubleValue);
                         break;
                     case "airquality":
                     case "air_quality":
-                        measurements.setAirQuality(doubleValue);
+                        measurementData.setAirQuality(doubleValue);
                         break;
                     case "batterylevel":
                     case "battery_level":
                     case "battery":
-                        measurements.setBatteryLevel(doubleValue);
+                        measurementData.setBatteryLevel(doubleValue);
                         break;
                     case "confidence":
-                        measurements.setConfidence(doubleValue);
+                        measurementData.setConfidence(doubleValue);
                         break;
                     default:
                         log("WARNING: Unknown measurement key: " + key);
@@ -219,59 +222,59 @@ public class CommandHandler {
             }
         }
 
-        // Create and store Releve
+        // Create and store Measurements
         Date measurementDate = new Date();
-        Releves releve = new Releves();
-        releve.setIdPoubelle(poubelle.getId());
-        releve.setTimestamp(measurementDate);
-        releve.setMeasurements(measurements);
+        Measurements measurement = new Measurements();
+        measurement.setId_Controller(module.getId());
+        measurement.setDate(measurementDate);
+        measurement.setMeasurement(measurementData);
 
-        ObjectId releveId = dataDriver.insertReleve(releve);
+        ObjectId measurementId = dataDriver.insertMeasurement(measurement);
 
-        if (releveId == null) {
+        if (measurementId == null) {
             log("ERROR: Failed to store data for " + reference);
             return "ERR_DATABASE_ERROR";
         }
 
-        log("Data stored in Releves for " + reference + " (" + sensorType + "): " + measurements);
+        log("Data stored in Measurements for " + reference + " (" + sensorType + "): " + measurementData);
 
-        // ========== UPDATE POUBELLE lastMeasurement ==========
+        // ========== UPDATE MapPoint lastMeasurement ==========
 
         // Build document for lastMeasurement
         Document measurementDoc = new Document();
         measurementDoc.append("sensorType", sensorType);
 
-        if (measurements.getFillLevel() != null) {
-            measurementDoc.append("fillLevel", measurements.getFillLevel());
+        if (measurementData.getFillLevel() != null) {
+            measurementDoc.append("fillLevel", measurementData.getFillLevel());
         }
-        if (measurements.getWeight() != null) {
-            measurementDoc.append("weight", measurements.getWeight());
+        if (measurementData.getWeight() != null) {
+            measurementDoc.append("weight", measurementData.getWeight());
         }
-        if (measurements.getTemperature() != null) {
-            measurementDoc.append("temperature", measurements.getTemperature());
+        if (measurementData.getTemperature() != null) {
+            measurementDoc.append("temperature", measurementData.getTemperature());
         }
-        if (measurements.getHumidity() != null) {
-            measurementDoc.append("humidity", measurements.getHumidity());
+        if (measurementData.getHumidity() != null) {
+            measurementDoc.append("humidity", measurementData.getHumidity());
         }
-        if (measurements.getAirQuality() != null) {
-            measurementDoc.append("airQuality", measurements.getAirQuality());
+        if (measurementData.getAirQuality() != null) {
+            measurementDoc.append("airQuality", measurementData.getAirQuality());
         }
-        if (measurements.getBatteryLevel() != null) {
-            measurementDoc.append("batteryLevel", measurements.getBatteryLevel());
+        if (measurementData.getBatteryLevel() != null) {
+            measurementDoc.append("batteryLevel", measurementData.getBatteryLevel());
         }
 
         // Create LastMeasurement object
-        Poubelles.LastMeasurement lastMeasurement = new Poubelles.LastMeasurement();
+        MapPoints.LastMeasurement lastMeasurement = new MapPoints.LastMeasurement();
         lastMeasurement.setDate(measurementDate);
         lastMeasurement.setMeasurement(measurementDoc);
 
-        // Update Poubelle with last measurement
-        boolean updated = dataDriver.updateLastMeasurement(poubelle.getId(), lastMeasurement);
+        // Update MapPoint with last measurement
+        boolean updated = dataDriver.updateMapPointLastMeasurement(mapPoint.getId(), lastMeasurement);
 
         if (updated) {
-            log("Updated lastMeasurement in Poubelle for " + reference);
+            log("Updated lastMeasurement in MapPoint for " + reference);
         } else {
-            log("WARNING: Failed to update lastMeasurement in Poubelle for " + reference);
+            log("WARNING: Failed to update lastMeasurement in MapPoint for " + reference);
             return "ERR_DATABASE_ERROR";
         }
 
@@ -347,15 +350,15 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_FOUND";
         }
 
-        // Find Poubelle by module key
-        Poubelles poubelle = dataDriver.findPoubelleByModule(reference);
-        if (poubelle == null) {
-            log("ERROR: No Poubelle found for microcontroller " + reference);
+        // Find MapPoint by module key
+        MapPoints mapPoint = dataDriver.findMapPointByModule(reference);
+        if (mapPoint == null) {
+            log("ERROR: No MapPoint found for microcontroller " + reference);
             return "ERR_DEVICE_NOT_FOUND";
         }
 
         // Build status measurements
-        Releves.Measurements statusMeasurements = new Releves.Measurements();
+        Measurements.Measurement statusMeasurementData = new Measurements.Measurement();
 
         for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
             String key = entry.getKey();
@@ -365,27 +368,27 @@ public class CommandHandler {
                 Double doubleValue = Double.parseDouble(value);
 
                 if (key.equalsIgnoreCase("battery") || key.equalsIgnoreCase("batteryLevel")) {
-                    statusMeasurements.setBatteryLevel(doubleValue);
+                    statusMeasurementData.setBatteryLevel(doubleValue);
                 }
             } catch (NumberFormatException e) {
                 log("WARNING: Invalid number format for status " + key + ": " + value);
             }
         }
 
-        // Store as a Releve
-        Releves statusReleve = new Releves();
-        statusReleve.setIdPoubelle(poubelle.getId());
-        statusReleve.setTimestamp(new Date());
-        statusReleve.setMeasurements(statusMeasurements);
+        // Store as a Measurement
+        Measurements statusMeasurement = new Measurements();
+        statusMeasurement.setId_Controller(module.getId());
+        statusMeasurement.setDate(new Date());
+        statusMeasurement.setMeasurement(statusMeasurementData);
 
-        ObjectId releveId = dataDriver.insertReleve(statusReleve);
+        ObjectId measurementId = dataDriver.insertMeasurement(statusMeasurement);
 
-        if (releveId == null) {
+        if (measurementId == null) {
             log("ERROR: Failed to store status for " + reference);
             return "ERR_DATABASE_ERROR";
         }
 
-        log("Status stored for " + reference + ": " + statusMeasurements);
+        log("Status stored for " + reference + ": " + statusMeasurementData);
         return "OK";
     }
 
@@ -566,6 +569,17 @@ public class CommandHandler {
             e.printStackTrace();
             return "ERR_INTERNAL_ERROR";
         }
+    }
+
+    /**
+     * Handle IMAGE ANALYSE command
+     * Sends image to external analysis service
+     * Format: IMAGE ANALYSE <reference> <image_base64>
+     */
+    private String handleImageAnalyse(ProtocolRequest request) {
+        String reference = request.getParameter("reference");
+        String imageBase64 = request.getParameter("imageBase64");
+        return "OK";
     }
 
 

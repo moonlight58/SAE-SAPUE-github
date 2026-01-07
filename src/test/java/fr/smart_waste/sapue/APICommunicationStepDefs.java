@@ -108,8 +108,8 @@ public class APICommunicationStepDefs {
 
     @Then("le service de gestion enregistre l'alerte")
     public void leServiceDeGestionEnregistreLAlerte() {
-        assertNotNull(dataDriver.lastInsertedReleve);
-        assertEquals(Double.valueOf(150.0), dataDriver.lastInsertedReleve.getMeasurements().getAirQuality());
+        assertNotNull(dataDriver.lastInsertedMeasurement);
+        assertEquals(Double.valueOf(150.0), dataDriver.lastInsertedMeasurement.getMeasurement().getAirQuality());
     }
 
     @And("le système reçoit une confirmation de transmission")
@@ -307,7 +307,7 @@ public class APICommunicationStepDefs {
     
     @And("les données sont quand même conservées")
     public void lesDonneesSontQuandMemeConservees() {
-         assertNotNull(dataDriver.lastInsertedReleve);
+         assertNotNull(dataDriver.lastInsertedMeasurement);
     }
     
     @And("le système confirme la réussite de la sauvegarde à la poubelle")
@@ -325,14 +325,14 @@ public class APICommunicationStepDefs {
         module.setKey(ref);
         module.setId(new ObjectId());
         
-        Poubelles p = new Poubelles();
+        MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        Poubelles.HardwareConfig config = new Poubelles.HardwareConfig();
-        config.setMicrocontroller(Collections.singletonList(ref));
+        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
+        config.setModules(Collections.singletonList(module.getId()));
         p.setHardwareConfig(config);
         
         dataDriver.addModule(module);
-        dataDriver.addPoubelle(p);
+        dataDriver.addMapPoint(p);
     }
     
     // ==========================================

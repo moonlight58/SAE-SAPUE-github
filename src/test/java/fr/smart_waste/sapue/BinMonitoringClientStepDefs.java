@@ -40,14 +40,14 @@ public class BinMonitoringClientStepDefs {
         module.setKey(ref);
         module.setId(new ObjectId());
         
-        Poubelles p = new Poubelles();
+        MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        Poubelles.HardwareConfig config = new Poubelles.HardwareConfig();
-        config.setMicrocontroller(Collections.singletonList(ref));
+        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
+        config.setModules(Collections.singletonList(module.getId()));
         p.setHardwareConfig(config);
         
         dataDriver.addModule(module);
-        dataDriver.addPoubelle(p);
+        dataDriver.addMapPoint(p);
     }
 
     private void executeCommand(String cmd) {
@@ -107,8 +107,8 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système stocke cette information")
     public void leSystemeStockeCetteInformation() {
-        assertNotNull(dataDriver.lastInsertedReleve);
-        assertNotNull(dataDriver.lastInsertedReleve.getMeasurements().getFillLevel());
+        assertNotNull(dataDriver.lastInsertedMeasurement);
+        assertNotNull(dataDriver.lastInsertedMeasurement.getMeasurement().getFillLevel());
     }
 
     @And("la poubelle reçoit une confirmation que les données ont été sauvegardées")
@@ -123,8 +123,8 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système stocke l'information de poids")
     public void leSystemeStockeLInformationDePoids() {
-        assertNotNull(dataDriver.lastInsertedReleve);
-        assertNotNull(dataDriver.lastInsertedReleve.getMeasurements().getWeight());
+        assertNotNull(dataDriver.lastInsertedMeasurement);
+        assertNotNull(dataDriver.lastInsertedMeasurement.getMeasurement().getWeight());
     }
 
     @And("la poubelle reçoit une confirmation")
@@ -140,8 +140,8 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système enregistre une alerte de qualité d'air")
     public void leSystemeEnregistreUneAlerteDeQualiteDAir() {
-         assertNotNull(dataDriver.lastInsertedReleve);
-         assertNotNull(dataDriver.lastInsertedReleve.getMeasurements().getAirQuality());
+         assertNotNull(dataDriver.lastInsertedMeasurement);
+         assertNotNull(dataDriver.lastInsertedMeasurement.getMeasurement().getAirQuality());
     }
 
     @When("la poubelle envoie des données mais oublie d'inclure le niveau de remplissage")
@@ -215,7 +215,7 @@ public class BinMonitoringClientStepDefs {
     @And("les données sont quand même sauvegardées")
     public void lesDonneesSontQuandMemeSauvegardees() {
         assertEquals("OK", lastResponse);
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @And("les deux systèmes de stockage sont indisponibles")
@@ -323,13 +323,13 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système stocke le type de déchet identifié")
     public void leSystemeStockeLeTypeDeDechetIdentifie() {
-        assertNotNull(dataDriver.lastInsertedReleve);
-        assertEquals("encombrant", dataDriver.lastInsertedReleve.getMeasurements().getWasteType());
+        assertNotNull(dataDriver.lastInsertedMeasurement);
+        assertEquals("encombrant", dataDriver.lastInsertedMeasurement.getMeasurement().getWasteType());
     }
 
     @And("le système stocke le niveau de confiance de l'analyse")
     public void leSystemeStockeLeNiveauDeConfianceDeLAnalyse() {
-         assertEquals(0.95, dataDriver.lastInsertedReleve.getMeasurements().getConfidence(), 0.01);
+          assertEquals(0.95, dataDriver.lastInsertedMeasurement.getMeasurement().getConfidence(), 0.01);
     }
 
     @And("une confirmation est renvoyée")
@@ -349,8 +349,8 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système enregistre le type d'incident")
     public void leSystemeEnregistreLeTypeDIncident() {
-         assertNotNull(dataDriver.lastInsertedReleve);
-         assertEquals("vandalisme", dataDriver.lastInsertedReleve.getMeasurements().getWasteType());
+         assertNotNull(dataDriver.lastInsertedMeasurement);
+         assertEquals("vandalisme", dataDriver.lastInsertedMeasurement.getMeasurement().getWasteType());
     }
 
     @And("le système marque le niveau de gravité")

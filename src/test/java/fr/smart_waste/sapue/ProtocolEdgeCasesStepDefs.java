@@ -4,7 +4,7 @@ import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
 import fr.smart_waste.sapue.model.Modules;
-import fr.smart_waste.sapue.model.Poubelles;
+import fr.smart_waste.sapue.model.MapPoints;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
 import io.cucumber.java.Before;
@@ -41,14 +41,14 @@ public class ProtocolEdgeCasesStepDefs {
         module.setKey(ref);
         module.setId(new ObjectId());
         
-        Poubelles p = new Poubelles();
+        MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        Poubelles.HardwareConfig config = new Poubelles.HardwareConfig();
-        config.setMicrocontroller(Collections.singletonList(ref));
+        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
+        config.setModules(Collections.singletonList(module.getId()));
         p.setHardwareConfig(config);
         
         dataDriver.addModule(module);
-        dataDriver.addPoubelle(p);
+        dataDriver.addMapPoint(p);
     }
     
     private void setupBinWithSensorConfig(String ref, String sensorType) {
@@ -59,14 +59,14 @@ public class ProtocolEdgeCasesStepDefs {
         // Note: SensorConfig is deprecated, chipsets should be used instead
         // For backward compatibility in tests, we'll just create the module
         
-        Poubelles p = new Poubelles();
+        MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        Poubelles.HardwareConfig config = new Poubelles.HardwareConfig();
-        config.setMicrocontroller(Collections.singletonList(ref));
+        MapPoints.HardwareConfig config = new MapPoints.HardwareConfig();
+        config.setModules(Collections.singletonList(module.getId()));
         p.setHardwareConfig(config);
         
         dataDriver.addModule(module);
-        dataDriver.addPoubelle(p);
+        dataDriver.addMapPoint(p);
     }
 
     // Background
@@ -248,7 +248,7 @@ public class ProtocolEdgeCasesStepDefs {
     @Then("le système stocke la valeur \\(pas de validation de plage)")
     public void leSystèmeStockeLaValeurPasDeValidationDePlage() {
         assertEquals("OK", lastResponse);
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @And("un avertissement peut être logué")
@@ -265,13 +265,13 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("les données sont stockées correctement")
     public void lesDonnéesSontStockéesCorrectement() {
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @Then("le système stocke la valeur avec précision double")
     public void leSystèmeStockeLaValeurAvecPrécisionDouble() {
         assertEquals("OK", lastResponse);
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @And("aucune perte de précision significative ne se produit")
@@ -295,7 +295,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("toutes les valeurs reconnues sont stockées")
     public void toutesLesValeursReconnuesSontStockées() {
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @And("les valeurs non reconnues génèrent des avertissements")
@@ -306,7 +306,7 @@ public class ProtocolEdgeCasesStepDefs {
     @Then("le système utilise la dernière valeur \\({double})")
     public void leSystèmeUtiliseLaDernièreValeur(double val) {
         assertEquals("OK", lastResponse);
-        assertEquals(val, dataDriver.lastInsertedReleve.getMeasurements().getTemperature(), 0.001);
+        assertEquals(val, dataDriver.lastInsertedMeasurement.getMeasurement().getTemperature(), 0.001);
     }
     
     @Then("le système utilise la dernière valeur \\({int})") // For 23.0 match logic which cucumber forces as double mostly
@@ -365,7 +365,7 @@ public class ProtocolEdgeCasesStepDefs {
     
     @And("toutes les données sont stockées correctement")
     public void toutesLesDonneesSontStockeesCorrectement() {
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
     @When("{string} existe dans la base")
     public void existeDansLaBase(String ref) {
@@ -406,7 +406,7 @@ public class ProtocolEdgeCasesStepDefs {
     
     @Then("toutes les métriques sont stockées")
     public void toutesLesMétriquesSontStockées() {
-        assertNotNull(dataDriver.lastInsertedReleve);
+        assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
     @Then("le système convertit en majuscules")
