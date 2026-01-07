@@ -1,0 +1,70 @@
+# GitLab CI/CD Pipeline for SAPUE TCP Server
+
+image: maven:3.9-eclipse-temurin-17
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+
+stages:
+  - build
+  - test
+  - package
+  - docker-build
+
+# Stage: Build
+compile:
+  stage: build
+  script:
+    - mvn clean compile
+  artifacts:
+    paths:
+      - target/classes/
+    expire_in: 1 hour
+
+# Stage: Test
+run-tests:
+  stage: test
+  script:
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 1 week
+
+# Stage: Package
+package-jar:
+  stage: package
+  script:
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+# Stage: Docker Build
+# This job requires a Docker runner or Docker-in-Docker service
+docker-build:
+  stage: docker-build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+  script:
+    - docker build -t sapue-server-tcp:$CI_COMMIT_SHORT_SHA .
+    - docker tag sapue-server-tcp:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+    # Uncomment the following line if Registry credentials is configured in GitLab
+    # - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  only:
+    - main
+    - master
+    - develop
