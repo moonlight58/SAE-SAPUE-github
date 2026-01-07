@@ -1,5 +1,7 @@
 package fr.smart_waste.sapue.protocol;
 
+import java.util.List;
+import java.util.ArrayList;
 import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.core.SmartWasteServer;
@@ -48,6 +50,12 @@ public class CommandHandler {
 
                 case "STATUS":
                     return handleStatus(request);
+
+                case "IMAGE_DATABASE":
+                    return handleImageDatabase(request);
+
+                case "IMAGE_UPDATE":
+                    return handleImageUpdate(request);
 
                 case "PING":
                     return handlePing(request);
@@ -380,6 +388,186 @@ public class CommandHandler {
         log("Status stored for " + reference + ": " + statusMeasurements);
         return "OK";
     }
+
+    /**
+     * Handle IMAGE DATABASE command
+     * Creates a new Report (DepotSauvage) with initial photo
+     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+     */
+    private String handleImageDatabase(ProtocolRequest request) {
+        String userId = request.getParameter("userId");
+        String longitude = request.getParameter("longitude");
+        String latitude = request.getParameter("latitude");
+        String nbBboxesStr = request.getParameter("nbBboxes");
+        String bboxData = request.getParameter("bboxData");
+        String imageBase64 = request.getParameter("imageBase64");
+
+        log("Processing IMAGE DATABASE for userId: " + userId);
+
+        try {
+            // 1. Find User by ID
+            ObjectId userObjectId = new ObjectId(userId);
+            Users author = dataDriver.findUserById(userObjectId);
+
+            if (author == null) {
+                log("ERROR: User not found: " + userId);
+                return "ERR_USER_NOT_FOUND";
+            }
+
+            // 2. Parse bounding boxes (flat array)
+            List<Double> coordinates = new ArrayList<>();
+            int nbBboxes = Integer.parseInt(nbBboxesStr);
+
+            if (nbBboxes > 0) {
+                String[] bboxes = bboxData.split(";");
+                for (String bbox : bboxes) {
+                    String[] coords = bbox.split(",");
+                    for (String coord : coords) {
+                        coordinates.add(Double.parseDouble(coord));
+                    }
+                }
+            }
+
+            // 3. Create Reports.UserInfo for author
+            Reports.UserInfo authorInfo = new Reports.UserInfo();
+            authorInfo.setIdUser(author.getId());
+            authorInfo.setName(author.getName());
+            authorInfo.setRole(author.getRole());
+
+            // 4. Create Reports.Location
+            Reports.Location location = new Reports.Location();
+            List<Double> coords = new ArrayList<>();
+            coords.add(Double.parseDouble(longitude));
+            coords.add(Double.parseDouble(latitude));
+            location.setCoordinates(coords);
+
+            // 5. Create Reports.Photo with coordinates
+            Reports.Photo photo = new Reports.Photo();
+            photo.setInitialPhoto(imageBase64);
+            photo.setCoordinates(coordinates);
+            photo.setFinalPhoto(null);
+
+            // 6. Create initial history entry
+            Reports.HistoryEntry initialHistory = new Reports.HistoryEntry();
+            initialHistory.setDate(new Date());
+            initialHistory.setStatus("Ouvert");
+            initialHistory.setByUser(author.getId());
+
+            List<Reports.HistoryEntry> history = new ArrayList<>();
+            history.add(initialHistory);
+
+            // 7. Create Reports document
+            Reports report = new Reports();
+            report.setAuthor(authorInfo);
+            report.setCleaner(null);
+            report.setStatus("Ouvert");
+            report.setMapPoint(null); // Depot sauvage = no mapPoint
+            report.setType("DepotSauvage");
+            report.setIssueType(null); // Only for poubelles
+            report.setLocation(location);
+            report.setPhoto(photo);
+            report.setHistory(history);
+
+            // 8. Insert into database
+            ObjectId reportId = dataDriver.insertReport(report);
+
+            if (reportId == null) {
+                log("ERROR: Failed to insert Report");
+                return "ERR_DATABASE_ERROR";
+            }
+
+            log("Report created successfully: " + reportId);
+            return "OK";
+
+        } catch (IllegalArgumentException e) {
+            log("ERROR: Invalid ObjectId format: " + e.getMessage());
+            return "ERR_INVALID_VALUE";
+        } catch (Exception e) {
+            log("ERROR: Exception in handleImageDatabase: " + e.getMessage());
+            e.printStackTrace();
+            return "ERR_INTERNAL_ERROR";
+        }
+    }
+
+    /**
+     * Handle IMAGE UPDATE command
+     * Updates an existing Report with final photo (cleaner confirmation)
+     * Format: IMAGE UPDATE <cleanerId> <reportId> <image_base64>
+     */
+    private String handleImageUpdate(ProtocolRequest request) {
+        String cleanerId = request.getParameter("cleanerId");
+        String reportId = request.getParameter("reportId");
+        String imageBase64 = request.getParameter("imageBase64");
+
+        log("Processing IMAGE UPDATE for reportId: " + reportId + " by cleanerId: " + cleanerId);
+
+        try {
+            // 1. Find Cleaner by ID
+            ObjectId cleanerObjectId = new ObjectId(cleanerId);
+            Users cleaner = dataDriver.findUserById(cleanerObjectId);
+
+            if (cleaner == null) {
+                log("ERROR: Cleaner not found: " + cleanerId);
+                return "ERR_USER_NOT_FOUND";
+            }
+
+            // 2. Find Report by ID
+            ObjectId reportObjectId = new ObjectId(reportId);
+            Reports report = dataDriver.findReportById(reportObjectId);
+
+            if (report == null) {
+                log("ERROR: Report not found: " + reportId);
+                return "ERR_REPORT_NOT_FOUND";
+            }
+
+            // 3. Create Reports.UserInfo for cleaner
+            Reports.UserInfo cleanerInfo = new Reports.UserInfo();
+            cleanerInfo.setIdUser(cleaner.getId());
+            cleanerInfo.setName(cleaner.getName());
+            cleanerInfo.setRole(cleaner.getRole());
+
+            // 4. Update report fields
+            report.setCleaner(cleanerInfo);
+            report.setStatus("Resolu");
+
+            // 5. Update photo.finalPhoto
+            if (report.getPhoto() == null) {
+                report.setPhoto(new Reports.Photo());
+            }
+            report.getPhoto().setFinalPhoto(imageBase64);
+
+            // 6. Add history entry
+            Reports.HistoryEntry historyEntry = new Reports.HistoryEntry();
+            historyEntry.setDate(new Date());
+            historyEntry.setStatus("Resolu");
+            historyEntry.setByUser(cleaner.getId());
+
+            if (report.getHistory() == null) {
+                report.setHistory(new ArrayList<>());
+            }
+            report.getHistory().add(historyEntry);
+
+            // 7. Update in database
+            boolean updated = dataDriver.updateReport(report);
+
+            if (!updated) {
+                log("ERROR: Failed to update Report");
+                return "ERR_DATABASE_ERROR";
+            }
+
+            log("Report updated successfully: " + reportId);
+            return "OK";
+
+        } catch (IllegalArgumentException e) {
+            log("ERROR: Invalid ObjectId format: " + e.getMessage());
+            return "ERR_INVALID_VALUE";
+        } catch (Exception e) {
+            log("ERROR: Exception in handleImageUpdate: " + e.getMessage());
+            e.printStackTrace();
+            return "ERR_INTERNAL_ERROR";
+        }
+    }
+
 
     /**
      * Handle PING command

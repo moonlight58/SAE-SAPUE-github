@@ -46,6 +46,7 @@ public class MongoDataDriver implements DataDriver {
     private MongoCollection<Poubelles> poubelles;
     private MongoCollection<Modules> modules;
     private MongoCollection<Chipsets> chipsets;
+    private MongoCollection<Users> users;
     private MongoCollection<Signalements> signalements;
     private MongoCollection<Reports> reports;
     private MongoCollection<MapPoints> mapPoints;
@@ -85,6 +86,7 @@ public class MongoDataDriver implements DataDriver {
             poubelles = database.getCollection("poubelles", Poubelles.class);
             modules = database.getCollection("Modules", Modules.class);
             chipsets = database.getCollection("Chipsets", Chipsets.class);
+            users = database.getCollection("Users", Users.class);
             signalements = database.getCollection("signalements", Signalements.class);
             reports = database.getCollection("Reports", Reports.class);
             mapPoints = database.getCollection("MapPoints", MapPoints.class);
@@ -350,6 +352,77 @@ public class MongoDataDriver implements DataDriver {
             return chipsets.find().into(new ArrayList<>());
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding all chipsets: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // ========== Users Operations Implementation ==========
+
+    @Override
+    public Users findUserById(ObjectId id) {
+        if (id == null) return null;
+        try {
+            return users.find(eq("_id", id)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding user by ID: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public Users findUserByMail(String mail) {
+        if (mail == null || mail.isEmpty()) return null;
+        try {
+            return users.find(eq("mail", mail)).first();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding user by mail: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public synchronized ObjectId insertUser(Users user) {
+        if (user == null) return null;
+        try {
+            InsertOneResult result = users.insertOne(user);
+            return result.getInsertedId() != null
+                    ? result.getInsertedId().asObjectId().getValue()
+                    : user.getId();
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error inserting user: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateUser(Users user) {
+        if (user == null || user.getId() == null) return false;
+        try {
+            return users.replaceOne(eq("_id", user.getId()), user).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteUser(ObjectId id) {
+        if (id == null) return false;
+        try {
+            return users.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error deleting user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<Users> findAllUsers() {
+        try {
+            return users.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding all users: " + e.getMessage());
             return new ArrayList<>();
         }
     }

@@ -328,5 +328,35 @@ public class MockDataDriver implements DataDriver {
     }
 
     @Override
+    public List<Users> findAllUsers() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public Users findUserById(ObjectId id) {
+        return null;
+    }
+
+    @Override
+    public Users findUserByMail(String mail) {
+        return null;
+    }
+
+    @Override
+    public ObjectId insertUser(Users user) {
+        return null;
+    }
+
+    @Override
+    public boolean deleteUser(ObjectId id) {
+        return false;
+    }
+
+    @Override
+    public boolean updateUser(Users user) {
+        return false;
+    }
+
+    @Override
     public void close() {}
 }

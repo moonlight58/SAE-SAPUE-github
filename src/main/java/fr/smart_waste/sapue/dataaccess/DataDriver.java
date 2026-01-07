@@ -190,6 +190,48 @@ public interface DataDriver {
     List<MapPoints> findAllMapPoints();
     List<MapPoints> findMapPointsWithActiveAlerts();
 
+    // ========== Users Operations ==========
+
+    /**
+     * Find user by ID
+     * @param id User ObjectId
+     * @return Users object or null if not found
+     */
+    Users findUserById(ObjectId id);
+
+    /**
+     * Find user by email
+     * @param mail User email
+     * @return Users object or null if not found
+     */
+    Users findUserByMail(String mail);
+
+    /**
+     * Insert a new user
+     * @param user Users object to insert
+     * @return ObjectId of inserted user, null if failed
+     */
+    ObjectId insertUser(Users user);
+
+    /**
+     * Update an existing user
+     * @param user Users object with updated fields
+     * @return true if updated successfully, false otherwise
+     */
+    boolean updateUser(Users user);
+
+    /**
+     * Delete a user by ID
+     * @param id User ObjectId
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteUser(ObjectId id);
+
+    /**
+     * Get all users
+     * @return List of all users
+     */
+    List<Users> findAllUsers();
 
     // ========== Signalement Operations ==========
 

@@ -53,7 +53,21 @@ public class ProtocolParser {
 
             case "PING":
                 return parsePing(parts, rawRequest);
-            
+
+            case "IMAGE":
+                // Check subcommand (DATABASE or UPDATE)
+                if (parts.length < 2) {
+                    throw new ProtocolException("ERR_MISSING_PARAMS", "IMAGE requires subcommand (DATABASE or UPDATE)");
+                }
+                String subCommand = parts[1].toUpperCase();
+                if ("DATABASE".equals(subCommand)) {
+                    return parseImageDatabase(parts, rawRequest);
+                } else if ("UPDATE".equals(subCommand)) {
+                    return parseImageUpdate(parts, rawRequest);
+                } else {
+                    throw new ProtocolException("ERR_INVALID_COMMAND", "Unknown IMAGE subcommand: " + subCommand);
+                }
+
             case "HELP":
                 return parseHelp(parts, rawRequest);
 
@@ -237,6 +251,178 @@ public class ProtocolParser {
         }
 
         return new ProtocolRequest("STATUS", reference, params, rawRequest);
+    }
+
+    /**
+     * Parse IMAGE DATABASE command
+     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+     * bbox_data format: x1,y1,x2,y2;x1,y1,x2,y2;...
+     * 
+     * Example: IMAGE DATABASE 507f1f77bcf86cd799439011 6.0240:47.2378 2 100,150,200,250;300,350,400,450 /9j/4AAQ...
+     */
+    private static ProtocolRequest parseImageDatabase(String[] parts, String rawRequest) throws ProtocolException {
+        // IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+        // parts[0] = IMAGE
+        // parts[1] = DATABASE
+        // parts[2] = userId
+        // parts[3] = longitude:latitude
+        // parts[4] = nb_bboxes
+        // parts[5] = bbox_data
+        // parts[6...] = image_base64 (peut contenir des espaces)
+        
+        if (parts.length < 7) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", 
+                "IMAGE DATABASE requires: userId, longitude:latitude, nb_bboxes, bbox_data, image_base64");
+        }
+
+        String userId = parts[2];
+        String coordsStr = parts[3];
+        String nbBboxesStr = parts[4];
+        String bboxData = parts[5];
+        
+        // Reconstruct image_base64 (can span multiple parts if contains spaces)
+        StringBuilder imageBase64 = new StringBuilder();
+        for (int i = 6; i < parts.length; i++) {
+            if (i > 6) imageBase64.append(" ");
+            imageBase64.append(parts[i]);
+        }
+        
+        // Validate userId format (ObjectId = 24 hex chars)
+        if (!isValidObjectId(userId)) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid userId format: " + userId);
+        }
+        
+        // Parse coordinates
+        String[] coords = coordsStr.split(":");
+        if (coords.length != 2) {
+            throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid coordinates format: " + coordsStr + " (expected longitude:latitude)");
+        }
+        
+        double longitude, latitude;
+        try {
+            longitude = Double.parseDouble(coords[0]);
+            latitude = Double.parseDouble(coords[1]);
+        } catch (NumberFormatException e) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid coordinate values: " + coordsStr);
+        }
+        
+        // Parse nb_bboxes
+        int nbBboxes;
+        try {
+            nbBboxes = Integer.parseInt(nbBboxesStr);
+            if (nbBboxes < 0) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "nb_bboxes must be >= 0");
+            }
+        } catch (NumberFormatException e) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid nb_bboxes: " + nbBboxesStr);
+        }
+        
+        // Validate bbox_data format
+        if (nbBboxes > 0) {
+            String[] bboxes = bboxData.split(";");
+            if (bboxes.length != nbBboxes) {
+                throw new ProtocolException("ERR_INVALID_FORMAT", 
+                    "bbox_data mismatch: expected " + nbBboxes + " bboxes, got " + bboxes.length);
+            }
+            
+            // Validate each bbox format (x1,y1,x2,y2)
+            for (String bbox : bboxes) {
+                String[] coords_bbox = bbox.split(",");
+                if (coords_bbox.length != 4) {
+                    throw new ProtocolException("ERR_INVALID_FORMAT", 
+                        "Invalid bbox format: " + bbox + " (expected x1,y1,x2,y2)");
+                }
+                // Validate that all are valid doubles
+                try {
+                    for (String coord : coords_bbox) {
+                        Double.parseDouble(coord);
+                    }
+                } catch (NumberFormatException e) {
+                    throw new ProtocolException("ERR_INVALID_VALUE", "Invalid bbox coordinates: " + bbox);
+                }
+            }
+        }
+        
+        // Validate base64 (basic check - not empty and valid chars)
+        String imageBase64Str = imageBase64.toString().trim();
+        if (imageBase64Str.isEmpty()) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
+        }
+        
+        // Store in parameters
+        Map<String, String> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("longitude", String.valueOf(longitude));
+        params.put("latitude", String.valueOf(latitude));
+        params.put("nbBboxes", String.valueOf(nbBboxes));
+        params.put("bboxData", bboxData);
+        params.put("imageBase64", imageBase64Str);
+        
+        return new ProtocolRequest("IMAGE_DATABASE", "", params, rawRequest);
+    }
+
+    /**
+     * Parse IMAGE UPDATE command
+     * Format: IMAGE UPDATE <cleanerId> <reportId> <image_base64>
+     * 
+     * Example: IMAGE UPDATE 507f1f77bcf86cd799439011 507f191e810c19729de860ea /9j/4AAQ...
+     */
+    private static ProtocolRequest parseImageUpdate(String[] parts, String rawRequest) throws ProtocolException {
+        // IMAGE UPDATE <cleanerId> <reportId> <image_base64>
+        // parts[0] = IMAGE
+        // parts[1] = UPDATE
+        // parts[2] = cleanerId
+        // parts[3] = reportId
+        // parts[4...] = image_base64 (peut contenir des espaces)
+        
+        if (parts.length < 5) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", 
+                "IMAGE UPDATE requires: cleanerId, reportId, image_base64");
+        }
+
+        String cleanerId = parts[2];
+        String reportId = parts[3];
+        
+        // Reconstruct image_base64
+        StringBuilder imageBase64 = new StringBuilder();
+        for (int i = 4; i < parts.length; i++) {
+            if (i > 4) imageBase64.append(" ");
+            imageBase64.append(parts[i]);
+        }
+        
+        // Validate cleanerId format (ObjectId)
+        if (!isValidObjectId(cleanerId)) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid cleanerId format: " + cleanerId);
+        }
+        
+        // Validate reportId format (ObjectId)
+        if (!isValidObjectId(reportId)) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reportId format: " + reportId);
+        }
+        
+        // Validate base64
+        String imageBase64Str = imageBase64.toString().trim();
+        if (imageBase64Str.isEmpty()) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
+        }
+        
+        // Store in parameters
+        Map<String, String> params = new HashMap<>();
+        params.put("cleanerId", cleanerId);
+        params.put("reportId", reportId);
+        params.put("imageBase64", imageBase64Str);
+        
+        return new ProtocolRequest("IMAGE_UPDATE", "", params, rawRequest);
+    }
+
+    /**
+     * Validate ObjectId format (24 hexadecimal characters)
+     */
+    private static boolean isValidObjectId(String objectId) {
+        if (objectId == null || objectId.length() != 24) {
+            return false;
+        }
+        return objectId.matches("^[a-fA-F0-9]{24}$");
     }
 
     /**

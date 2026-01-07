@@ -130,13 +130,15 @@ public class Reports {
 
     public static class Photo {
         private String initialPhoto;
+        private List<Double> coordinates; // Flattened coordinates array
         private String finalPhoto;
 
         public Photo() {
         }
 
-        public Photo(String initialPhoto, String finalPhoto) {
+        public Photo(String initialPhoto, List<Double> coordinates, String finalPhoto) {
             this.initialPhoto = initialPhoto;
+            this.coordinates = coordinates;
             this.finalPhoto = finalPhoto;
         }
 
@@ -146,6 +148,14 @@ public class Reports {
 
         public void setInitialPhoto(String initialPhoto) {
             this.initialPhoto = initialPhoto;
+        }
+
+        public List<Double> getCoordinates() {
+            return coordinates;
+        }
+
+        public void setCoordinates(List<Double> coordinates) {
+            this.coordinates = coordinates;
         }
 
         public String getFinalPhoto() {
@@ -160,6 +170,7 @@ public class Reports {
         public String toString() {
             return "Photo{" +
                     "initialPhoto='" + initialPhoto + '\'' +
+                    ", coordinates=" + coordinates +
                     ", finalPhoto='" + finalPhoto + '\'' +
                     '}';
         }
