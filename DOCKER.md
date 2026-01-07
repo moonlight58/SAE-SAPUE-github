@@ -8,5 +8,5 @@ docker build -t sapue-server-tcp:latest .
 ##
 2. Run Container
 ```bash
-docker run --network sae sapue-server-tcp:latest
+docker run --network sae -p 50010:50010 sapue-server-tcp:latest
 ```
