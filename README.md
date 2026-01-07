@@ -567,7 +567,7 @@ mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main" -Dexec.args="/path/to
 
 Le serveur utilise un **protocole texte délimité par espaces**. Chaque commande suit le format :
 
-```
+```bash
 COMMAND REFERENCE [PARAMETERS]
 ```
 
@@ -579,7 +579,7 @@ Où les paramètres clé-valeur sont séparés par `:` (ex: `key:value`)
 
 **Enregistrer un microcontrôleur**
 
-```
+```bash
 REGISTER <reference> <ipAddress>
 ```
 
@@ -588,7 +588,7 @@ REGISTER <reference> <ipAddress>
 - `ipAddress` : Adresse IP du microcontrôleur
 
 **Exemple:**
-```
+```bash
 REGISTER MC-001 192.168.1.100
 ```
 
@@ -604,7 +604,7 @@ REGISTER MC-001 192.168.1.100
 
 **Envoyer des données de capteurs**
 
-```
+```bash
 DATA <reference> <sensorType> <key>:<value> [<key>:<value> ...]
 ```
 
@@ -622,7 +622,7 @@ DATA <reference> <sensorType> <key>:<value> [<key>:<value> ...]
   - `confidence` : Confiance de la mesure
 
 **Exemple:**
-```
+```bash
 DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25 battery:87
 ```
 
@@ -643,12 +643,12 @@ DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25 battery:87
 
 **Récupérer la configuration actuelle**
 
-```
+```bash
 CONFIG_GET <reference>
 ```
 
 **Exemple:**
-```
+```bash
 CONFIG_GET MC-001
 ```
 
@@ -661,12 +661,12 @@ CONFIG_GET MC-001
 
 **Mettre à jour la configuration des capteurs**
 
-```
+```bash
 CONFIG_UPDATE <reference> <key>:<value> [<key>:<value> ...]
 ```
 
 **Exemple:**
-```
+```bash
 CONFIG_UPDATE MC-001 samplingInterval:600 enabled:true
 ```
 
@@ -679,7 +679,7 @@ CONFIG_UPDATE MC-001 samplingInterval:600 enabled:true
 
 **Envoyer l'état du microcontrôleur**
 
-```
+```bash
 STATUS <reference> <key>:<value> [<key>:<value> ...]
 ```
 
@@ -689,7 +689,7 @@ STATUS <reference> <key>:<value> [<key>:<value> ...]
 - `freeMemory` : Mémoire libre (bytes)
 
 **Exemple:**
-```
+```bash
 STATUS MC-001 batteryLevel:87 uptime:3600 freeMemory:45000
 ```
 
@@ -704,12 +704,12 @@ STATUS MC-001 batteryLevel:87 uptime:3600 freeMemory:45000
 
 **Signal de maintien de connexion (keep-alive)**
 
-```
+```bash
 PING <reference>
 ```
 
 **Exemple:**
-```
+```bash
 PING MC-001
 ```
 
@@ -722,12 +722,12 @@ PING MC-001
 
 **Déconnexion gracieuse**
 
-```
+```bash
 DISCONNECT <reference>
 ```
 
 **Exemple:**
-```
+```bash
 DISCONNECT MC-001
 ```
 
@@ -740,14 +740,28 @@ DISCONNECT MC-001
 
 **Afficher l'aide des commandes**
 
-```
+```bash
 HELP [COMMAND]
 ```
 
 **Exemple:**
-```
+```bash
 HELP REGISTER
 HELP        # Affiche toutes les commandes
+```
+
+#### 9. IMAGE
+**Envoyer une image (base64) à la bdd ou service d'analyse**
+
+```bash
+# envoyer une image à la base de données - créant la première partie du rapport
+IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+
+# update le rapport avec l'image finale après intervention
+IMAGE UPDATE <cleanerId> <reportId> <image_base64>
+
+# envoyer une image au serveur d'analyse d'images
+IMAGE ANALYSE <reference> <imageData>
 ```
 
 ---
