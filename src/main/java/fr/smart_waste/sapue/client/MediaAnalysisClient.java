@@ -73,8 +73,8 @@ public class MediaAnalysisClient {
 
                 if (response != null) {
                     // Extract waste type or handle echo
-                    if (response.startsWith("OK type:")) {
-                        return response.substring("OK type:".length()).trim();
+                    if (response.startsWith("OK")) {
+                        return response.substring("OK".length()).trim();
                     } 
                     return response;
                 }
