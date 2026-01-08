@@ -28,9 +28,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Copier le JAR depuis le stage de build
 COPY --from=build /app/target/*.jar app.jar
 
-# Copier les fichiers de configuration
-COPY config.yml /app/
-
 # Changer le propriétaire des fichiers
 RUN chown -R appuser:appgroup /app
 

@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  sapue-server-tcp:
+    container_name: sapue-server-tcp
+    build: .
+    ports:
+      - "50010:50010"
+    networks:
+      - sapue-network
+    environment:
+      - SERVER_PORT=50010
+      - MONGO_CONNECTION_STRING=mongodb://admin:admin-mdp@sapue-mongodb:50000/
+      - MONGO_DATABASE_NAME=sae_db
+      - ENVIRONMENT=prod
+      - ENABLE_METRICS=true
+      - VERBOSE_LOGGING=true
+
+networks:
+  sapue-network:
+    external: true
