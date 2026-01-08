@@ -589,7 +589,7 @@ public class CommandHandler {
         }
 
         log("Performing image analysis for reference: " + reference);
-        String result = mediaAnalysisClient.analyzeImage(reference, imageBase64);
+        String result = mediaAnalysisClient.analyzeImage(imageBase64);
         log("Image analysis result: " + result);
 
         if (result == null) {

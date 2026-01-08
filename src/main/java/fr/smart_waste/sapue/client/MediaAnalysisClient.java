@@ -37,7 +37,7 @@ public class MediaAnalysisClient {
      * @param imageBase64 Base64 encoded image
      * @return The analysis result (waste type)
      */
-    public String analyzeImage(String reference, String imageBase64) {
+    public String analyzeImage(String imageBase64) {
         if (mockResponse != null) {
             return mockResponse;
         }
@@ -53,10 +53,10 @@ public class MediaAnalysisClient {
             try (PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
                  BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
 
-                log("Sending image analysis request for reference: " + reference + " (" + imageBase64.length() + " bytes)");
+                log("Sending image analysis request for reference: " + " (" + imageBase64.length() + " bytes)");
                 
-                // Format: IMAGE ANALYSE <reference> <imageBase64>
-                out.print("IMAGE ANALYSE " + reference + " " + imageBase64 + "\n");
+                // Format: IMAGE ANALYSE <imageBase64>
+                out.print("IMAGE ANALYSE " + imageBase64 + "\n");
                 out.flush();
 
                 // The current python server echoes fragments back without newlines if it strips them.

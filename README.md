@@ -726,7 +726,7 @@ IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_ba
 IMAGE UPDATE <cleanerId> <reportId> <image_base64>
 
 # envoyer une image au serveur d'analyse d'images
-IMAGE ANALYSE <reference> <imageData>
+IMAGE ANALYSE <imageData>
 ```
 
 ---

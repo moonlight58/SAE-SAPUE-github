@@ -71,7 +71,7 @@ public class ImageStreamHandler {
         String imageBase64 = imageBuffer.toString();
         
         // Analyser via le service d'analyse
-        String wasteType = mediaAnalysisClient.analyzeImage(deviceReference, imageBase64);
+        String wasteType = mediaAnalysisClient.analyzeImage(imageBase64);
         
         if (wasteType == null) {
             log("ERROR: Image analysis failed");
