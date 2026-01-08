@@ -256,6 +256,14 @@ public interface DataDriver {
     List<Measurements> findMeasurementsByModuleId(ObjectId idController, java.util.Date startDate, java.util.Date endDate);
 
     /**
+     * Find ALL measurements within a date range (across all modules)
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return List of all measurements within the date range
+     */
+    List<Measurements> findMeasurementsByDateRange(java.util.Date startDate, java.util.Date endDate);
+
+    /**
      * Update an existing measurement
      * @param measurement Measurements object with updated fields
      * @return true if updated successfully, false otherwise

@@ -783,6 +783,11 @@ public class ProtocolParser {
         if (reference == null || reference.isEmpty()) {
             return false;
         }
+        // Allow wildcard '*' for MEASUREMENT command (single character)
+        if ("*".equals(reference)) {
+            return true;
+        }
+        // Standard module reference: alphanumeric, underscore, hyphen, 3-50 characters
         return reference.matches("^[a-zA-Z0-9_-]{3,50}$");
     }
 

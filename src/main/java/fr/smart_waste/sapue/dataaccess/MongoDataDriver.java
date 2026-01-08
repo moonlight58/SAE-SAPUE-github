@@ -372,6 +372,25 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
+    public List<Measurements> findMeasurementsByDateRange(java.util.Date startDate, java.util.Date endDate) {
+        if (startDate == null || endDate == null) return new ArrayList<>();
+        try {
+            // Build filter: date range only (no module filter - retrieves from ALL modules)
+            org.bson.conversions.Bson filter = com.mongodb.client.model.Filters.and(
+                com.mongodb.client.model.Filters.gte("date", startDate),
+                com.mongodb.client.model.Filters.lte("date", endDate)
+            );
+            
+            return measurements.find(filter)
+                .sort(com.mongodb.client.model.Sorts.descending("date"))
+                .into(new ArrayList<>());
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding measurements by date range: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
     public boolean updateMeasurement(Measurements measurement) {
         if (measurement == null || measurement.getId() == null) return false;
         try {

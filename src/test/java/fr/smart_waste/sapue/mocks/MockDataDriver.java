@@ -319,6 +319,19 @@ public class MockDataDriver implements DataDriver {
         return new ArrayList<>(measurements.values());
     }
 
+    @Override
+    public List<Measurements> findMeasurementsByDateRange(java.util.Date startDate, java.util.Date endDate) {
+        return measurements.values().stream()
+                .filter(m -> {
+                    if (m.getDate() == null) return false;
+                    if (startDate != null && m.getDate().before(startDate)) return false;
+                    if (endDate != null && m.getDate().after(endDate)) return false;
+                    return true;
+                })
+                .toList();
+    }
+
+
     // ========== Users Operations (Mock) ==========
 
     @Override

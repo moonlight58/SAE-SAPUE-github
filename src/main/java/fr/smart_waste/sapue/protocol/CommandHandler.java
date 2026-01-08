@@ -438,20 +438,16 @@ public class CommandHandler {
 
     /**
      * Handle MEASUREMENT command
-     * Retrieve measurements from database for a specific module
+     * Retrieve measurements from database for a specific module or all modules
+     * Use '*' as reference to retrieve ALL measurements
      * Optionally filter by date range (startDate and endDate)
-     * Format: MEASUREMENT <reference> [startDate:<date>] [endDate:<date>]
+     * Format: MEASUREMENT <reference|*> [startDate:<date>] [endDate:<date>]
      */
     private String handleMeasurement(ProtocolRequest request) {
         String reference = request.getReference();
+        boolean fetchAllModules = "*".equals(reference);
 
-        // Get Module from database
-        Modules module = dataDriver.findModuleByKey(reference);
-        if (module == null) {
-            return "ERR_DEVICE_NOT_FOUND";
-        }
-
-        log("Retrieving measurements for module: " + reference);
+        log("Retrieving measurements for: " + (fetchAllModules ? "ALL modules" : "module " + reference));
 
         // Parse date parameters if provided
         String startDateStr = request.getParameter("startDate");
@@ -490,18 +486,35 @@ public class CommandHandler {
 
         // Retrieve measurements from database
         try {
-            java.util.List<Measurements> measurements = dataDriver.findMeasurementsByModuleId(
-                module.getId(), 
-                new Date(startDate), 
-                new Date(endDate)
-            );
+            java.util.List<Measurements> measurements;
+
+            if (fetchAllModules) {
+                // Fetch ALL measurements within the date range
+                log("Fetching ALL measurements in date range");
+                measurements = dataDriver.findMeasurementsByDateRange(
+                    new Date(startDate), 
+                    new Date(endDate)
+                );
+            } else {
+                // Fetch measurements for a specific module
+                Modules module = dataDriver.findModuleByKey(reference);
+                if (module == null) {
+                    return "ERR_DEVICE_NOT_FOUND";
+                }
+
+                measurements = dataDriver.findMeasurementsByModuleId(
+                    module.getId(), 
+                    new Date(startDate), 
+                    new Date(endDate)
+                );
+            }
 
             if (measurements == null || measurements.isEmpty()) {
-                log("No measurements found for module " + reference);
+                log("No measurements found for: " + (fetchAllModules ? "all modules" : reference));
                 return "ERR_NO_DATA";
             }
 
-            log("Found " + measurements.size() + " measurements for " + reference);
+            log("Found " + measurements.size() + " measurements");
 
             // Format response: send measurements to media analysis server
             return formatMeasurementsResponse(measurements, reference);
