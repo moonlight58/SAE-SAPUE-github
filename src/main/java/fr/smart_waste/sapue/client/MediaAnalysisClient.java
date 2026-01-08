@@ -75,10 +75,7 @@ public class MediaAnalysisClient {
                     // Extract waste type or handle echo
                     if (response.startsWith("OK type:")) {
                         return response.substring("OK type:".length()).trim();
-                    } else if (response.contains("TCP Server says:")) {
-                        // Placeholder logic: if we get an echo, return "ordures_menageres"
-                        return "ordures_menageres";
-                    }
+                    } 
                     return response;
                 }
             } // Close inner try with resources (PrintWriter, BufferedReader)

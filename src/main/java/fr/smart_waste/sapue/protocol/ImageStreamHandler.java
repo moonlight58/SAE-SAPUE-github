@@ -58,9 +58,10 @@ public class ImageStreamHandler {
     /**
      * Analyse l'image accumulée et retourne la réponse pour le µC
      * Format de réponse attendu par le µC:
-     * Ligne 1: Type de déchet (JAUNE, VERT, GRIS, MARRON)
+     * Ligne 1: Icône hex (00)   
      * Ligne 2: Distance de détection (45)
-     * Ligne 3: Icône hex (00)
+     * Ligne 3: Type de déchet (JAUNE, VERT, GRIS, MARRON)
+
      */
     public String analyzeAndGetResponse(String deviceReference) {
         if (imageBuffer.length() == 0) {
@@ -80,7 +81,7 @@ public class ImageStreamHandler {
 
         // Mapper le type de déchet vers le format µC
         String response = mapWasteTypeToLegacyResponse(wasteType);
-        log("Analysis result: " + wasteType + " -> " + response);
+        log("Analysis result: " + response);
         
         return response;
     }
@@ -133,8 +134,8 @@ public class ImageStreamHandler {
                 break;
         }
         
-        // Format: COULEUR\nDISTANCE\nICONE\n
-        return color + "\n" + distance + "\n" + icon + "\n";
+        // Format: ICONE\nDISTANCE\nCOULEUR\n
+        return icon + "\n" + distance + "\n" + color + "\n";
     }
 
     /**
