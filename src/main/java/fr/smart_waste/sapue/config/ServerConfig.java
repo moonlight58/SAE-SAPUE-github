@@ -2,13 +2,14 @@ package fr.smart_waste.sapue.config;
 
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
 
 /**
  * Configuration holder for Smart Waste TCP Server
- * Loads settings from YAML configuration file with environment variable overrides
+ * Loads settings from environment variables first, then YAML file as fallback
  */
 public class ServerConfig {
 
@@ -31,58 +32,93 @@ public class ServerConfig {
     private boolean verboseLogging;
 
     /**
-     * Load configuration from YAML file with environment variable overrides
-     * @param configFilePath Path to config.yml file
+     * Load configuration from environment variables or YAML file
+     * Priority: ENV > YAML > defaults
+     * @param configFilePath Path to config.yml file (optional, can be null)
      * @return ServerConfig instance
-     * @throws Exception if file not found or invalid
+     * @throws Exception if configuration is invalid
      */
     public static ServerConfig loadFromFile(String configFilePath) throws Exception {
         ServerConfig config = new ServerConfig();
 
-        try (InputStream input = new FileInputStream(configFilePath)) {
-            Yaml yaml = new Yaml();
-            Map<String, Object> data = yaml.load(input);
+        // Check if YAML file exists
+        boolean yamlExists = configFilePath != null && new File(configFilePath).exists();
+        Map<String, Object> yamlData = null;
 
-            // Load server settings
-            Map<String, Object> serverData = (Map<String, Object>) data.get("server");
-            config.serverPort = getEnvAsInt("SERVER_PORT",
-                    (Integer) serverData.get("port"));
-            config.maxConnections = getEnvAsInt("MAX_CONNECTIONS",
-                    (Integer) serverData.getOrDefault("maxConnections", 100));
-            config.socketTimeout = getEnvAsInt("SOCKET_TIMEOUT",
-                    (Integer) serverData.getOrDefault("socketTimeout", 30000));
-
-            // Load MongoDB settings
-            Map<String, Object> mongoData = (Map<String, Object>) data.get("mongodb");
-            config.mongoConnectionString = getEnv("MONGO_CONNECTION_STRING",
-                    (String) mongoData.get("connectionString"));
-            config.databaseName = getEnv("MONGO_DATABASE_NAME",
-                    (String) mongoData.get("databaseName"));
-            config.environment = getEnv("ENVIRONMENT",
-                    (String) mongoData.getOrDefault("environment", "dev"));
-
-            // Load Media Analysis settings
-            Map<String, Object> mediaData = (Map<String, Object>) data.get("mediaAnalysis");
-            if (mediaData != null) {
-                config.mediaServerHost = getEnv("MEDIA_SERVER_HOST",
-                        (String) mediaData.getOrDefault("host", "localhost"));
-                config.mediaServerPort = getEnvAsInt("MEDIA_SERVER_PORT",
-                        (Integer) mediaData.getOrDefault("port", 50060));
-            } else {
-                config.mediaServerHost = getEnv("MEDIA_SERVER_HOST", "localhost");
-                config.mediaServerPort = getEnvAsInt("MEDIA_SERVER_PORT", 50060);
+        if (yamlExists) {
+            try (InputStream input = new FileInputStream(configFilePath)) {
+                Yaml yaml = new Yaml();
+                yamlData = yaml.load(input);
+                System.out.println("✓ Loaded YAML configuration from: " + configFilePath);
+            } catch (Exception e) {
+                System.err.println("⚠ Warning: Could not load YAML file, using environment variables only");
             }
-
-            // Load logging settings
-            Map<String, Object> loggingData = (Map<String, Object>) data.get("logging");
-            config.enableMetrics = getEnvAsBoolean("ENABLE_METRICS",
-                    (Boolean) loggingData.getOrDefault("enableMetrics", true));
-            config.verboseLogging = getEnvAsBoolean("VERBOSE_LOGGING",
-                    (Boolean) loggingData.getOrDefault("verbose", false));
-
+        } else {
+            System.out.println("ℹ No YAML file found, using environment variables");
         }
 
+        // Load server settings
+        config.serverPort = getEnvAsInt("SERVER_PORT",
+                getFromYaml(yamlData, "server.port", 50010));
+        config.maxConnections = getEnvAsInt("MAX_CONNECTIONS",
+                getFromYaml(yamlData, "server.maxConnections", 100));
+        config.socketTimeout = getEnvAsInt("SOCKET_TIMEOUT",
+                getFromYaml(yamlData, "server.socketTimeout", 30000));
+
+        // Load MongoDB settings
+        config.mongoConnectionString = getEnv("MONGO_CONNECTION_STRING",
+                getFromYaml(yamlData, "mongodb.connectionString", "mongodb://localhost:27017/"));
+        config.databaseName = getEnv("MONGO_DATABASE_NAME",
+                getFromYaml(yamlData, "mongodb.databaseName", "sae_db"));
+        config.environment = getEnv("ENVIRONMENT",
+                getFromYaml(yamlData, "mongodb.environment", "dev"));
+
+        // Load Media Analysis settings
+        config.mediaServerHost = getEnv("MEDIA_SERVER_HOST",
+                getFromYaml(yamlData, "mediaAnalysis.host", "localhost"));
+        config.mediaServerPort = getEnvAsInt("MEDIA_SERVER_PORT",
+                getFromYaml(yamlData, "mediaAnalysis.port", 50060));
+
+        // Load logging settings
+        config.enableMetrics = getEnvAsBoolean("ENABLE_METRICS",
+                getFromYaml(yamlData, "logging.enableMetrics", true));
+        config.verboseLogging = getEnvAsBoolean("VERBOSE_LOGGING",
+                getFromYaml(yamlData, "logging.verbose", false));
+
+        // Log configuration source
+        System.out.println("Configuration loaded - Environment: " + config.environment);
+
         return config;
+    }
+
+    /**
+     * Get value from nested YAML structure
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T getFromYaml(Map<String, Object> yamlData, String path, T defaultValue) {
+        if (yamlData == null) {
+            return defaultValue;
+        }
+
+        try {
+            String[] keys = path.split("\\.");
+            Object current = yamlData;
+
+            for (String key : keys) {
+                if (current instanceof Map) {
+                    current = ((Map<String, Object>) current).get(key);
+                    if (current == null) {
+                        return defaultValue;
+                    }
+                } else {
+                    return defaultValue;
+                }
+            }
+
+            return (T) current;
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     /**
@@ -90,7 +126,11 @@ public class ServerConfig {
      */
     private static String getEnv(String envVar, String defaultValue) {
         String value = System.getenv(envVar);
-        return (value != null && !value.isEmpty()) ? value : defaultValue;
+        if (value != null && !value.isEmpty()) {
+            System.out.println("  ✓ Using ENV: " + envVar);
+            return value;
+        }
+        return defaultValue;
     }
 
     /**
@@ -100,9 +140,10 @@ public class ServerConfig {
         String value = System.getenv(envVar);
         if (value != null && !value.isEmpty()) {
             try {
+                System.out.println("  ✓ Using ENV: " + envVar);
                 return Integer.parseInt(value);
             } catch (NumberFormatException e) {
-                System.err.println("Warning: Invalid integer for " + envVar +
+                System.err.println("⚠ Warning: Invalid integer for " + envVar +
                         ", using default: " + defaultValue);
             }
         }
@@ -115,6 +156,7 @@ public class ServerConfig {
     private static boolean getEnvAsBoolean(String envVar, boolean defaultValue) {
         String value = System.getenv(envVar);
         if (value != null && !value.isEmpty()) {
+            System.out.println("  ✓ Using ENV: " + envVar);
             return Boolean.parseBoolean(value);
         }
         return defaultValue;
@@ -136,12 +178,6 @@ public class ServerConfig {
         }
         if (databaseName == null || databaseName.isEmpty()) {
             throw new IllegalArgumentException("Database name cannot be empty");
-        }
-        if (mediaServerHost == null || mediaServerHost.isEmpty()) {
-            throw new IllegalArgumentException("Media server host cannot be empty");
-        }
-        if (mediaServerPort < 1024 || mediaServerPort > 65535) {
-            throw new IllegalArgumentException("Media server port must be between 1024 and 65535");
         }
     }
 
@@ -206,7 +242,7 @@ public class ServerConfig {
      * Mask sensitive information for logging
      */
     private String maskSensitive(String value) {
-        if (value == null || value.length() < 10) return "***";
-        return value.substring(0, 10) + "***";
+        if (value == null || value.length() < 15) return "***";
+        return value.substring(0, 15) + "***";
     }
 }
