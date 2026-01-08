@@ -58,7 +58,7 @@ public class ImageStreamingTest {
     @Test
     public void testImageStreamingFlow() throws IOException, InterruptedException {
         // Mock analysis response
-        when(mediaAnalysisClient.analyzeImage(anyString(), anyString())).thenReturn("recyclage");
+        when(mediaAnalysisClient.analyzeImage(anyString())).thenReturn("recyclage");
 
         // Start handler in a separate thread
         Thread handlerThread = new Thread(handler);
@@ -87,6 +87,6 @@ public class ImageStreamingTest {
         assertTrue(line2.equals("45"), "Expected distance 45, got: " + line2);
         assertTrue(line3.equals("00"), "Expected icon 00, got: " + line3);
         
-        verify(mediaAnalysisClient).analyzeImage(eq("legacy-device"), contains("line1base64line2base64"));
+        verify(mediaAnalysisClient).analyzeImage(contains("line1base64line2base64"));
     }
 }
