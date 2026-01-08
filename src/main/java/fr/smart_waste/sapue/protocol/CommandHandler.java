@@ -598,7 +598,7 @@ public class CommandHandler {
         }
 
         log("Image analysis successful. Result: " + result);
-        return "OK type:" + result;
+        return "OK" + result;
     }
 
 

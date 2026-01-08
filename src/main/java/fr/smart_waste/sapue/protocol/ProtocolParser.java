@@ -419,20 +419,19 @@ public class ProtocolParser {
 
     /**
      * Parse IMAGE ANALYSE command
-     * Format: IMAGE ANALYSE <reference> <image_base64>
+     * Format: IMAGE ANALYSE <image_base64>
      * 
-     * Example: IMAGE ANALYSE MC-001 /9j/4AAQ...
+     * Example: IMAGE ANALYSE /9j/4AAQ...
      */
     private static ProtocolRequest parseImageAnalyse(String[] parts, String rawRequest) throws ProtocolException {
-        // IMAGE ANALYSE <reference> <image_base64>
+        // IMAGE ANALYSE <image_base64>
         // parts[0] = IMAGE
         // parts[1] = ANALYSE
-        // parts[2] = reference
-        // parts[3...] = image_base64 (peut contenir des espaces)
+        // parts[2...] = image_base64 (peut contenir des espaces)
         
-        if (parts.length < 4) {
+        if (parts.length < 3) {
             throw new ProtocolException("ERR_MISSING_PARAMS", 
-                "IMAGE ANALYSE requires: reference, image_base64");
+                "IMAGE ANALYSE requires: image_base64");
         }
 
         String reference = parts[2];
@@ -444,11 +443,6 @@ public class ProtocolParser {
             imageBase64.append(parts[i]);
         }
         
-        // Validate reference
-        if (!isValidReference(reference)) {
-            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reference format: " + reference);
-        }
-        
         // Validate base64
         String imageBase64Str = imageBase64.toString().trim();
         if (imageBase64Str.isEmpty()) {
@@ -457,7 +451,6 @@ public class ProtocolParser {
         
         // Store in parameters
         Map<String, String> params = new HashMap<>();
-        params.put("reference", reference);
         params.put("imageBase64", imageBase64Str);
         
         return new ProtocolRequest("IMAGE_ANALYSE", reference, params, rawRequest);
