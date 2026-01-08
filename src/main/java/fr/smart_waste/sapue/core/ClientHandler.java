@@ -6,6 +6,7 @@ import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolParser;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
 import fr.smart_waste.sapue.protocol.ProtocolException;
+import fr.smart_waste.sapue.protocol.ImageStreamHandler;
 import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import java.io.*;
 import java.net.Socket;
@@ -28,6 +29,7 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
     private String microcontrollerReference;
     private boolean running;
+    private final ImageStreamHandler imageStreamHandler;
 
     public ClientHandler(Socket clientSocket, DataDriver dataDriver,
                          ServerConfig config, ServerMetrics metrics,
@@ -39,6 +41,7 @@ public class ClientHandler implements Runnable {
         this.server = server;
         this.mediaAnalysisClient = mediaAnalysisClient;
         this.running = true;
+        this.imageStreamHandler = new ImageStreamHandler(mediaAnalysisClient);
     }
 
     @Override
@@ -70,10 +73,34 @@ public class ClientHandler implements Runnable {
                 metrics.addDataReceived(request.length());
 
                 if (config.isVerboseLogging()) {
-                    log("Received from " + clientAddress + ": " + request);
+                    log("Received from " + clientAddress + ": " + (request.length() > 50 ? request.substring(0, 50) + "..." : request));
                 }
 
-                // Process request
+                // Handle image streaming
+                if (imageStreamHandler.isStreaming()) {
+                    if (imageStreamHandler.appendLine(request)) {
+                        // Stream finished, get analysis result
+                        String deviceRef = (microcontrollerReference != null) ? microcontrollerReference : "legacy-device";
+                        String response = imageStreamHandler.analyzeAndGetResponse(deviceRef);
+                        
+                        out.print(response);
+                        out.flush();
+                        metrics.addDataSent(response.length());
+                        
+                        if (config.isVerboseLogging()) {
+                            log("Sent response to " + clientAddress + " (analysis result)");
+                        }
+                    }
+                    continue;
+                }
+
+                // Detect start of image stream
+                if ("IMG_B64".equals(request.trim())) {
+                    imageStreamHandler.startStream();
+                    continue;
+                }
+
+                // Process regular request
                 String response = processRequest(request);
 
                 // Send response
