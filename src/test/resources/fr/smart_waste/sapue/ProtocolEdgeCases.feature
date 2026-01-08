@@ -129,6 +129,12 @@ Feature: TCP Protocol Edge Cases and Robustness
     Then le système utilise la dernière valeur (23.0)
     And un avertissement de doublon peut être logué
 
+  Scenario: DATA with multiple sensor dictionaries
+    Given "MC-001" est enregistré
+    When un client envoie "DATA MC-001 {\"BME280\": temperature:22.5 humidity:65.0} {\"MQ135\": airqual:2340}"
+    Then le système retourne "OK"
+    And toutes les données sont stockées correctement
+
   Scenario: DATA with malformed key:value separator
     Given "MC-001" est enregistré
     When un client envoie "DATA MC-001 BME280 temperature=22.5"
@@ -140,12 +146,13 @@ Feature: TCP Protocol Edge Cases and Robustness
     Given "MC-001" est enregistré
     And "MC-001" n'a pas de configSensor dans la base
     When un client envoie "CONFIG_GET MC-001"
-    Then le système retourne "OK sensorType:none enabled:false"
+    Then le système retourne "OK"
 
   Scenario: CONFIG_GET with extra parameters (ignored)
     Given "MC-001" est enregistré
     When un client envoie "CONFIG_GET MC-001 extra:param"
-    Then les paramètres supplémentaires sont ignorés
+    Then le système retourne "OK"
+    And les paramètres supplémentaires sont ignorés
     And le système retourne la configuration correctement
 
   Scenario: CONFIG_UPDATE with boolean as string
@@ -303,15 +310,15 @@ Feature: TCP Protocol Edge Cases and Robustness
 
   Scenario: IMAGE ANALYSE identifies waste type
     Given "MC-001" est enregistré
-    When un client envoie "IMAGE ANALYSE MC-001 /9j/4AAQ...imageBase64Content..."
-    Then le système retourne "OK type:ordures_menageres"
+    When un client envoie "IMAGE ANALYSE /9j/4AAQ...imageBase64Content..."
+    Then le système retourne "OK ordures_menageres"
 
   Scenario: IMAGE ANALYSE returns specific waste type
     Given "MC-001" est enregistré
-    When un client envoie "IMAGE ANALYSE MC-001 /9j/4AAQ...recyclage...imageBase64Content..."
-    Then le système retourne "OK type:recyclage"
+    When un client envoie "IMAGE ANALYSE /9j/4AAQ...recyclage...imageBase64Content..."
+    Then le système retourne "OK recyclage"
 
   Scenario: IMAGE ANALYSE with missing image data
     Given "MC-001" est enregistré
-    When un client envoie "IMAGE ANALYSE MC-001"
+    When un client envoie "IMAGE ANALYSE"
     Then le système rejette avec "ERR_MISSING_PARAMS"

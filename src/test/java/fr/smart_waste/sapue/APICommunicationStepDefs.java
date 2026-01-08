@@ -72,12 +72,12 @@ public class APICommunicationStepDefs {
 
     @Then("le service de gestion confirme la réception")
     public void leServiceDeGestionConfirmeLaReception() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("le système notifie la poubelle de la réussite de la transmission")
     public void leSystemeNotifieLaPoubelleDeLaReussiteDeLaTransmission() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     // ==========================================
@@ -115,7 +115,7 @@ public class APICommunicationStepDefs {
 
     @And("le système reçoit une confirmation de transmission")
     public void leSystemeRecoitUneConfirmationDeTransmission() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     // ==========================================
@@ -162,7 +162,7 @@ public class APICommunicationStepDefs {
         // Ideally we would check if dataDriver received the custom fields, 
         // but Releve.Measurements object might not support them yet.
         // For now checking basic success
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     // ==========================================
@@ -282,7 +282,7 @@ public class APICommunicationStepDefs {
     @And("le système confirme à la poubelle que les données sont enregistrées via l'alternative")
     public void leSystemeConfirmeALaPoubelleQueLesDonneesSontEnregistreesViaLAlternative() {
          // Logic should check if we chose to return OK even if failed primary
-         assertEquals("OK", lastResponse);
+         assertTrue(lastResponse.startsWith("OK"));
     }
 
     // ==========================================
@@ -317,7 +317,7 @@ public class APICommunicationStepDefs {
     
     @And("le système confirme la réussite de la sauvegarde à la poubelle")
     public void leSystemeConfirmeLaReussiteDeLaSauvegardeALaPoubelle() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
 

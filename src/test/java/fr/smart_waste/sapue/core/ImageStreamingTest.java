@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.Socket;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -82,10 +83,10 @@ public class ImageStreamingTest {
         handler.disconnect();
         handlerThread.join(1000);
 
-        // Verify response (JAUNE = recyclage)
-        assertTrue(line1.contains("JAUNE"), "Expected JAUNE for recyclage, got: " + line1);
-        assertTrue(line2.equals("45"), "Expected distance 45, got: " + line2);
-        assertTrue(line3.equals("00"), "Expected icon 00, got: " + line3);
+        // Verify response (ICONE\nDISTANCE\nCOULEUR)
+        assertEquals("00", line1, "Expected icon 00, got: " + line1);
+        assertEquals("45", line2, "Expected distance 45, got: " + line2);
+        assertTrue(line3.contains("JAUNE"), "Expected JAUNE for recyclage, got: " + line3);
         
         verify(mediaAnalysisClient).analyzeImage(contains("line1base64line2base64"));
     }

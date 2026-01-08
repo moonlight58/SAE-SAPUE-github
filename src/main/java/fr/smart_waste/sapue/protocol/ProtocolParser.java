@@ -2,6 +2,10 @@ package fr.smart_waste.sapue.protocol;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parser for Smart Waste TCP protocol
@@ -115,17 +119,28 @@ public class ProtocolParser {
      * Example: DATA MC-001 BME280 temperature:22.5 humidity:65.0 pressure:1013.25
      */
     private static ProtocolRequest parseData(String[] parts, String rawRequest) throws ProtocolException {
-        if (parts.length < 4) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", "DATA requires: reference, sensorType, at least one data pair");
+        if (parts.length < 3) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", "DATA requires: reference, and either sensorType + pairs OR sensor dictionaries");
         }
 
         String reference = parts[1];
-        String sensorType = parts[2];
 
         // Validate reference
         if (!isValidReference(reference)) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reference format: " + reference);
         }
+
+        // Check if it's the new multi-dictionary format
+        if (rawRequest.contains("{")) {
+            return parseMultiSensorData(reference, rawRequest);
+        }
+
+        // Traditional format: DATA <reference> <sensorType> <key>:<value> ...
+        if (parts.length < 4) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", "Traditional DATA requires: sensorType, at least one data pair");
+        }
+
+        String sensorType = parts[2];
 
         // Validate sensor type
         if (!isValidSensorType(sensorType)) {
@@ -155,6 +170,78 @@ public class ProtocolParser {
         }
 
         return new ProtocolRequest("DATA", reference, params, rawRequest);
+    }
+
+    /**
+     * Parse multi-sensor DATA format
+     * Format: DATA <reference> {"Sensor": "key":val "key":val} {...}
+     */
+    private static ProtocolRequest parseMultiSensorData(String reference, String rawRequest) throws ProtocolException {
+        List<ProtocolRequest.SensorData> multiSensorData = new ArrayList<>();
+        
+        // Find all blocks within curly braces
+        Pattern pattern = Pattern.compile("\\{([^}]*)\\}");
+        Matcher matcher = pattern.matcher(rawRequest);
+        
+        while (matcher.find()) {
+            String content = matcher.group(1).trim();
+            if (content.isEmpty()) continue;
+            
+            // Expected format: "SensorType": "key":val "key":val ...
+            // or maybe just: "SensorType": key:val key:val ...
+            // The user's example: {"BME280": "temperature":22.5 "humidity":65.0}
+            
+            int firstColon = content.indexOf(':');
+            if (firstColon == -1) {
+                throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid sensor block format: " + content + " (expected SensorType: data)");
+            }
+            
+            String sensorType = content.substring(0, firstColon).trim();
+            // Remove quotes if present
+            if (sensorType.startsWith("\"") && sensorType.endsWith("\"") && sensorType.length() > 1) {
+                sensorType = sensorType.substring(1, sensorType.length() - 1);
+            }
+            
+            if (!isValidSensorType(sensorType)) {
+                 throw new ProtocolException("ERR_SENSOR_NOT_FOUND", "Unknown sensor type in block: " + sensorType);
+            }
+            
+            String dataPart = content.substring(firstColon + 1).trim();
+            Map<String, String> params = new HashMap<>();
+            
+            // Split dataPart by space, but handle potential quotes?
+            // For now assume spaces between key:value pairs as in example
+            String[] pairs = dataPart.split("\\s+");
+            for (String pair : pairs) {
+                if (pair.isEmpty()) continue;
+                
+                String[] keyValue = pair.split(":", 2);
+                if (keyValue.length != 2) {
+                    // Could be a quoted string with spaces, but protocol is usually simple
+                    continue; 
+                }
+                
+                String key = keyValue[0].trim();
+                if (key.startsWith("\"") && key.endsWith("\"") && key.length() > 1) key = key.substring(1, key.length() - 1);
+                
+                String value = keyValue[1].trim();
+                if (value.startsWith("\"") && value.endsWith("\"") && value.length() > 1) value = value.substring(1, value.length() - 1);
+                
+                if (!key.isEmpty() && !value.isEmpty()) {
+                    params.put(key, value);
+                }
+            }
+            
+            if (!params.isEmpty()) {
+                multiSensorData.add(new ProtocolRequest.SensorData(sensorType, params));
+            }
+        }
+        
+        if (multiSensorData.isEmpty()) {
+             throw new ProtocolException("ERR_INVALID_FORMAT", "No valid sensor data found in blocks");
+        }
+        
+        return new ProtocolRequest("DATA", reference, new HashMap<>(), multiSensorData, rawRequest);
     }
 
     /**
@@ -427,33 +514,32 @@ public class ProtocolParser {
         // IMAGE ANALYSE <image_base64>
         // parts[0] = IMAGE
         // parts[1] = ANALYSE
-        // parts[2...] = image_base64 (peut contenir des espaces)
+        // parts[2...] = image_base64 (may contain spaces)
         
         if (parts.length < 3) {
             throw new ProtocolException("ERR_MISSING_PARAMS", 
                 "IMAGE ANALYSE requires: image_base64");
         }
-
-        String reference = parts[2];
         
-        // Reconstruct image_base64
+        // Reconstruct image_base64 from all parts after 'ANALYSE'
         StringBuilder imageBase64 = new StringBuilder();
-        for (int i = 3; i < parts.length; i++) {
-            if (i > 3) imageBase64.append(" ");
+        for (int i = 2; i < parts.length; i++) {
+            if (i > 2) imageBase64.append(" ");
             imageBase64.append(parts[i]);
         }
         
         // Validate base64
         String imageBase64Str = imageBase64.toString().trim();
         if (imageBase64Str.isEmpty()) {
-            throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
+            throw new ProtocolException("ERR_MISSING_PARAMS", "image_base64 is empty");
         }
         
         // Store in parameters
         Map<String, String> params = new HashMap<>();
         params.put("imageBase64", imageBase64Str);
         
-        return new ProtocolRequest("IMAGE_ANALYSE", reference, params, rawRequest);
+        // Reference is not provided in command, use empty string
+        return new ProtocolRequest("IMAGE_ANALYSE", "", params, rawRequest);
     }
 
     /**

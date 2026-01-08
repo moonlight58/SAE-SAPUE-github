@@ -82,6 +82,25 @@ public class CommandHandler {
     }
 
     /**
+     * Format success response according to microcontroller requirements:
+     * OK\n[interval]\nNAMES:Temp:Air:Dist:Poids
+     * Note: trailing newline is added by ClientHandler.println()
+     */
+    private String formatSuccessResponse(String reference) {
+        // Default values as per requirements
+        int samplingInterval = 300; 
+        
+        // In the future, this could be fetched from the database based on the reference
+        // For now, we use the values requested by the user
+        
+        return "OK\n" + samplingInterval + "\nNAMES:Temp:Air:Dist:Poids";
+    }
+
+    private String formatSuccessResponseAnalyse(String ColorPoubelle) {
+        return "OK\n" + ColorPoubelle + "\n";
+    }
+
+    /**
      * Handle REGISTER command
      * Checks if Module exists in database, validates registration
      */
@@ -123,7 +142,7 @@ public class CommandHandler {
         }
 
         log("Registration successful: " + reference);
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     /**
@@ -133,12 +152,7 @@ public class CommandHandler {
      */
     private String handleData(ProtocolRequest request) {
         String reference = request.getReference();
-        String sensorType = request.getParameter("sensorType");
         
-        if (sensorType == null || sensorType.trim().isEmpty()) {
-            return "ERR_MISSING_PARAMS";
-        }
-
         // Verify Module is registered
         if (!server.isClientRegistered(reference)) {
             return "ERR_DEVICE_NOT_REGISTERED";
@@ -157,15 +171,39 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_FOUND";
         }
 
-        // Note: Module configuration is now more complex with chipsets
-        // For backward compatibility, we'll skip sensor type verification
-        // TODO: Update this logic to work with Chipsets collection
+        if (request.hasMultiSensorData()) {
+            log("Processing multi-sensor data for " + reference);
+            for (ProtocolRequest.SensorData sensorData : request.getMultiSensorData()) {
+                String result = processSensorData(module, mapPoint, sensorData.getSensorType(), sensorData.getParameters());
+                if (result.startsWith("ERR")) {
+                    return result;
+                }
+            }
+            return formatSuccessResponse(reference);
+        } else {
+            String sensorType = request.getParameter("sensorType");
+            if (sensorType == null || sensorType.trim().isEmpty()) {
+                return "ERR_MISSING_PARAMS";
+            }
+            String result = processSensorData(module, mapPoint, sensorType, request.getParameters());
+            if (result.startsWith("ERR")) {
+                return result;
+            }
+            return formatSuccessResponse(reference);
+        }
+    }
+
+    /**
+     * Process data for a single sensor and update database
+     */
+    private String processSensorData(Modules module, MapPoints mapPoint, String sensorType, Map<String, String> parameters) {
+        String reference = module.getKey();
 
         // Build measurements object
         Measurements.Measurement measurementData = new Measurements.Measurement();
 
         // Parse parameters and populate measurements
-        for (Map.Entry<String, String> entry : request.getParameters().entrySet()) {
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
             
@@ -205,6 +243,7 @@ public class CommandHandler {
                         break;
                     case "airquality":
                     case "air_quality":
+                    case "airqual":
                         measurementData.setAirQuality(doubleValue);
                         break;
                     case "batterylevel":
@@ -281,7 +320,7 @@ public class CommandHandler {
             return "ERR_DATABASE_ERROR";
         }
 
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     /**
@@ -304,9 +343,8 @@ public class CommandHandler {
         }
 
         // Note: Configuration is now managed through Chipsets
-        // For backward compatibility, return empty config
-        // TODO: Update this to query Chipsets collection
-        return "OK sensorType:none enabled:false";
+        // For backward compatibility, return formatted config
+        return formatSuccessResponse(reference);
     }
 
     /**
@@ -332,7 +370,7 @@ public class CommandHandler {
         // For backward compatibility, we'll skip configuration updates
         // TODO: Update this to modify Chipsets collection
         log("Config update received for " + reference + " (not applied - needs Chipsets integration)");
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     /**
@@ -392,7 +430,7 @@ public class CommandHandler {
         }
 
         log("Status stored for " + reference + ": " + statusMeasurementData);
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     /**
@@ -498,7 +536,7 @@ public class CommandHandler {
             }
 
             log("Report created successfully: " + reportId);
-            return "OK";
+            return formatSuccessResponse(null);
 
         } catch (IllegalArgumentException e) {
             log("ERROR: Invalid ObjectId format: " + e.getMessage());
@@ -577,7 +615,7 @@ public class CommandHandler {
             }
 
             log("Report updated successfully: " + reportId);
-            return "OK";
+            return formatSuccessResponse(null);
 
         } catch (IllegalArgumentException e) {
             log("ERROR: Invalid ObjectId format: " + e.getMessage());
@@ -613,7 +651,7 @@ public class CommandHandler {
         }
 
         log("Image analysis successful. Result: " + result);
-        return "OK" + result;
+        return formatSuccessResponseAnalyse(reference) + "\n" + result;
     }
 
 
@@ -629,7 +667,7 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_REGISTERED";
         }
 
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     private String handleHelp(ProtocolRequest request) {
@@ -678,7 +716,7 @@ public class CommandHandler {
         String reference = request.getReference();
 
         log("Disconnect requested by " + reference);
-        return "OK";
+        return formatSuccessResponse(reference);
     }
 
     /**

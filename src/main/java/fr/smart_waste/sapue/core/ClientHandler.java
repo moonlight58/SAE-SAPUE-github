@@ -138,12 +138,12 @@ public class ClientHandler implements Runnable {
             String response = commandHandler.execute(parsedRequest);
 
             // Register client ONLY after successful REGISTER command
-            if ("REGISTER".equals(parsedRequest.getCommand()) && "OK".equals(response)) {
+            if ("REGISTER".equals(parsedRequest.getCommand()) && response.startsWith("OK")) {
                 this.microcontrollerReference = parsedRequest.getReference();
                 server.registerClient(microcontrollerReference, this);
             }
 
-            if ("DATA".equals(parsedRequest.getCommand()) && "OK".equals(response)) {
+            if ("DATA".equals(parsedRequest.getCommand()) && response.startsWith("OK")) {
                 // Data received successfully
             }
 
@@ -156,7 +156,7 @@ public class ClientHandler implements Runnable {
             }
 
             // Handle DISCONNECT command
-            if ("DISCONNECT".equals(parsedRequest.getCommand()) && "OK".equals(response)) {
+            if ("DISCONNECT".equals(parsedRequest.getCommand()) && response.startsWith("OK")) {
                 running = false;
             }
 

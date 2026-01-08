@@ -81,7 +81,7 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système accepte la connexion")
     public void leSystemeAccepteLaConnexion() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("la poubelle est prête à envoyer des données")
@@ -109,7 +109,7 @@ public class BinMonitoringClientStepDefs {
 
     @And("la poubelle reçoit une confirmation que les données ont été sauvegardées")
     public void laPoubelleRecoitUneConfirmationQueLesDonneesOntEteSauvegardees() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @When("la poubelle envoie une mesure de poids de {double} kg")
@@ -125,7 +125,7 @@ public class BinMonitoringClientStepDefs {
 
     @And("la poubelle reçoit une confirmation")
     public void laPoubelleRecoitUneConfirmation() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @When("la poubelle détecte une mauvaise qualité d'air")
@@ -210,7 +210,7 @@ public class BinMonitoringClientStepDefs {
 
     @And("les données sont quand même sauvegardées")
     public void lesDonneesSontQuandMemeSauvegardees() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
         assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
@@ -330,7 +330,7 @@ public class BinMonitoringClientStepDefs {
 
     @And("une confirmation est renvoyée")
     public void uneConfirmationEstRenvoyee() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Given("une photo d'une poubelle endommagée a été analysée")

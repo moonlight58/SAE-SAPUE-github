@@ -136,7 +136,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système accepte l'enregistrement")
     public void leSystèmeAccepteLEnregistrement() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     // Scenario 2: REGISTER with maximum valid reference length
@@ -153,19 +153,19 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("le système accepte si la référence existe en base")
     public void leSystèmeAccepteSiLaRéférenceExisteEnBase() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     // Scenario 3: Special characters
     
     @Then("le système accepte les underscores")
     public void leSystèmeAccepteLesUnderscores() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système accepte les hyphens")
     public void leSystèmeAccepteLesHyphens() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système rejette avec {string}")
@@ -189,7 +189,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("le système traite la commande correctement")
     public void leSystèmeTraiteLaCommandeCorrectement() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système supprime les espaces de fin")
@@ -218,9 +218,14 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système retourne {string}")
     public void leSystèmeRetourne(String response) {
-        // Partial match for config response, exact for others
-        if (response.startsWith("OK sensorType")) {
-            assertTrue(lastResponse.startsWith("OK"));
+        // Handle new multi-line format
+        if (response.equals("OK") || response.startsWith("OK ")) {
+            assertTrue(lastResponse.startsWith("OK"), "Expected response to start with OK but was: " + lastResponse);
+            // If there's extra info expected (like in IMAGE ANALYSE), check it
+            if (response.startsWith("OK ")) {
+                String extra = response.substring(3);
+                assertTrue(lastResponse.contains(extra), "Expected response to contain " + extra + " but was: " + lastResponse);
+            }
         } else {
             assertEquals(response, lastResponse);
         }
@@ -260,7 +265,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système stocke la valeur \\(pas de validation de plage)")
     public void leSystèmeStockeLaValeurPasDeValidationDePlage() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
         assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
@@ -273,7 +278,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système accepte les valeurs négatives")
     public void leSystèmeAccepteLesValeursNégatives() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("les données sont stockées correctement")
@@ -283,7 +288,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système stocke la valeur avec précision double")
     public void leSystèmeStockeLaValeurAvecPrécisionDouble() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
         assertNotNull(dataDriver.lastInsertedMeasurement);
     }
 
@@ -303,7 +308,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système traite tous les paramètres")
     public void leSystèmeTraiteTousLesParamètres() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("toutes les valeurs reconnues sont stockées")
@@ -318,7 +323,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système utilise la dernière valeur \\({double})")
     public void leSystèmeUtiliseLaDernièreValeur(double val) {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
         assertEquals(val, dataDriver.lastInsertedMeasurement.getMeasurement().getTemperature(), 0.001);
     }
     
@@ -345,12 +350,13 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("le système retourne la configuration correctement")
     public void leSystèmeRetourneLaConfigurationCorrectement() {
-        assertTrue(lastResponse.contains("sensorType:"));
+        assertTrue(lastResponse.contains("300"));
+        assertTrue(lastResponse.contains("NAMES:"));
     }
 
     @Then("le système parse {string} comme boolean")
     public void leSystèmeParseCommeBoolean(String val) {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("la configuration est mise à jour")
@@ -361,12 +367,12 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système accepte aussi \\(case-insensitive)")
     public void leSystèmeAccepteAussiCaseInsensitive() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système parse {string} comme string \\(pas boolean)")
     public void leSystèmeParseCommeStringPasBoolean(String val) {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @And("stocke dans parameters")
@@ -389,12 +395,12 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système accepte mais peut loguer un avertissement")
     public void leSystèmeAccepteMaisPeutLoguerUnAvertissement() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système accepte la valeur")
     public void leSystèmeAccepteLaValeur() {
-        assertEquals("OK", lastResponse);
+        assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système stocke dans configSensor.parameters")
@@ -409,12 +415,12 @@ public class ProtocolEdgeCasesStepDefs {
 
     @Then("le système stocke la valeur \\(validation optionnelle)")
     public void leSystèmeStockeLaValeurValidationOptionnelle() {
-         assertEquals("OK", lastResponse);
+         assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système stocke la valeur")
     public void leSystèmeStockeLaValeur() {
-         assertEquals("OK", lastResponse);
+         assertTrue(lastResponse.startsWith("OK"));
     }
     
     @Then("toutes les métriques sont stockées")
@@ -430,7 +436,7 @@ public class ProtocolEdgeCasesStepDefs {
 
     @And("traite la commande normalement")
     public void traiteLaCommandeNormalement() {
-         assertEquals("OK", lastResponse);
+         assertTrue(lastResponse.startsWith("OK"));
     }
 
     @Then("le système traite jusqu'au line break")
@@ -511,13 +517,13 @@ public class ProtocolEdgeCasesStepDefs {
     public void lesRessourcesSontLibérées() {}
 
     @Then("le système accepte \\(alphanumeric valide)")
-    public void leSystèmeAccepteAlphanumericValide() { assertEquals("OK", lastResponse); }
+    public void leSystèmeAccepteAlphanumericValide() { assertTrue(lastResponse.startsWith("OK")); }
 
     @Then("le système accepte \\(regex permet hyphen)")
-    public void leSystèmeAccepteRegexPermetHyphen() { assertEquals("OK", lastResponse); }
+    public void leSystèmeAccepteRegexPermetHyphen() { assertTrue(lastResponse.startsWith("OK")); }
 
     @Then("le système accepte \\(pas de restriction)")
-    public void leSystèmeAcceptePasDeRestriction() { assertEquals("OK", lastResponse); }
+    public void leSystèmeAcceptePasDeRestriction() { assertTrue(lastResponse.startsWith("OK")); }
 
     @When("un client non enregistré envoie {string}")
     public void unClientNonEnregistréEnvoie(String cmd) {
