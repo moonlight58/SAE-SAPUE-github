@@ -105,15 +105,9 @@ public class ImageStreamHandler {
         
         switch (normalizedType) {
             case "jaune":
-            case "recyclage":
-            case "papier":
-            case "carton":
                 color = "JAUNE";
                 break;
             case "verte":
-            case "vert":
-            case "verre":
-            case "bouteille":
                 color = "VERTE";
                 break;
             case "marron":
@@ -123,10 +117,6 @@ public class ImageStreamHandler {
                 color = "MARRON";
                 break;
             case "grise":
-            case "gris":
-            case "ordures_menageres":
-            case "ordures":
-            case "general":
             default:
                 color = "GRISE";
                 break;

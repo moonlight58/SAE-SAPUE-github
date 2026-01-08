@@ -482,15 +482,15 @@ public class MongoDataDriver implements DataDriver {
     private String mapWasteBinTypeToConfigKey(String wasteBinType) {
         switch (wasteBinType.toLowerCase()) {
             case "jaune":
-                return "yellow_bin";
+                return "icon_yellow_bin";
             case "verte":
-                return "green_bin";
+                return "icon_green_bin";
             case "grise":
-                return "grey_bin";
+                return "icon_grey_bin";
             case "marron":
-                return "brown_bin";
+                return "icon_brown_bin";
             default:
-                return "grey_bin"; // Default
+                return "icon_grey_bin"; // Default
         }
     }
 
