@@ -408,6 +408,21 @@ public class CommandHandler {
         String bboxData = request.getParameter("bboxData");
         String imageBase64 = request.getParameter("imageBase64");
 
+        if (userId == null ) {
+            log("ERROR: Missing userId for IMAGE DATABASE");
+            return "ERR_MISSING_PARAMS";
+        }
+
+        if (longitude == null || latitude == null) {
+            log("ERROR: Missing longitude or latitude for IMAGE DATABASE");
+            return "ERR_MISSING_PARAMS";
+        }
+
+        if (nbBboxesStr == null || bboxData == null || imageBase64 == null) {
+            log("ERROR: Missing nbBboxes, bboxData or imageBase64 for IMAGE DATABASE");
+            return "ERR_MISSING_PARAMS";
+        }
+
         log("Processing IMAGE DATABASE for userId: " + userId);
 
         try {
