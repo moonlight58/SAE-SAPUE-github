@@ -289,6 +289,20 @@ public class MockDataDriver implements DataDriver {
     }
 
     @Override
+    public List<Measurements> findMeasurementsByModuleId(ObjectId idController, java.util.Date startDate, java.util.Date endDate) {
+        // Mock implementation that filters by controller and date range
+        return measurements.values().stream()
+                .filter(m -> idController != null && idController.equals(m.getId_Controller()))
+                .filter(m -> {
+                    if (m.getDate() == null) return false;
+                    if (startDate != null && m.getDate().before(startDate)) return false;
+                    if (endDate != null && m.getDate().after(endDate)) return false;
+                    return true;
+                })
+                .toList();
+    }
+
+    @Override
     public boolean updateMeasurement(Measurements measurement) {
         if (measurement == null || measurement.getId() == null) return false;
         measurements.put(measurement.getId(), measurement);
@@ -370,6 +384,27 @@ public class MockDataDriver implements DataDriver {
     @Override
     public List<AnalyseMedia> findAllAnalyseMedias() {
         return new ArrayList<>();
+    }
+
+    @Override
+    public String getHexaIconByWasteBinType(String wasteBinType) {
+        // Mock: return a default hex icon for testing
+        if (wasteBinType == null || wasteBinType.isEmpty()) {
+            return "00";
+        }
+        // Simple mock that returns predictable values for testing
+        switch (wasteBinType.toLowerCase()) {
+            case "jaune":
+                return "01";
+            case "verte":
+                return "02";
+            case "grise":
+                return "03";
+            case "marron":
+                return "04";
+            default:
+                return "00";
+        }
     }
 
     @Override
