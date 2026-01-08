@@ -9,11 +9,15 @@ services:
       - sapue-network
     environment:
       - SERVER_PORT=50010
+      - MAX_CONNECTIONS=100
+      - SOCKET_TIMEOUT=30000
       - MONGO_CONNECTION_STRING=mongodb://admin:admin-mdp@sapue-mongodb:50000/
       - MONGO_DATABASE_NAME=sae_db
       - ENVIRONMENT=prod
+      - MEDIA_SERVER_HOST=sapue-analyse-media
+      - MEDIA_SERVER_PORT=50060
       - ENABLE_METRICS=true
-      - VERBOSE_LOGGING=true
+      - VERBOSE_LOGGING=false
 
 networks:
   sapue-network:
