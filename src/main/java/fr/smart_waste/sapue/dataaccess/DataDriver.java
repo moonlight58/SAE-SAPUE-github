@@ -343,6 +343,13 @@ public interface DataDriver {
 
     List<AnalyseMedia> findAllAnalyseMedias();
 
+    /**
+     * Get the hexa icon by waste bin type
+     * @param wasteBinType Waste bin type
+     * @return Hexa icon
+     */
+    String getHexaIconByWasteBinType(String wasteBinType);
+
     // ========== Connection Management ==========
 
     /**

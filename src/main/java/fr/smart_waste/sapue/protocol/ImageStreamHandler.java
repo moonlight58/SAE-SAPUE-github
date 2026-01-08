@@ -3,6 +3,7 @@ package fr.smart_waste.sapue.protocol;
 import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import java.io.BufferedReader;
 import java.io.IOException;
+import fr.smart_waste.sapue.dataaccess.DataDriver;
 
 /**
  * Gère la réception d'images en streaming depuis les µC legacy
@@ -13,11 +14,13 @@ import java.io.IOException;
  */
 public class ImageStreamHandler {
 
+    private final DataDriver dataDriver;
     private final MediaAnalysisClient mediaAnalysisClient;
     private StringBuilder imageBuffer;
     private boolean streamingActive;
 
-    public ImageStreamHandler(MediaAnalysisClient mediaAnalysisClient) {
+    public ImageStreamHandler(DataDriver dataDriver, MediaAnalysisClient mediaAnalysisClient) {
+        this.dataDriver = dataDriver;
         this.mediaAnalysisClient = mediaAnalysisClient;
         this.imageBuffer = new StringBuilder();
         this.streamingActive = false;
@@ -58,9 +61,9 @@ public class ImageStreamHandler {
     /**
      * Analyse l'image accumulée et retourne la réponse pour le µC
      * Format de réponse attendu par le µC:
-     * Ligne 1: Icône hex (00)   
+     * Ligne 1: Type de déchet (JAUNE, VERT, GRIS, MARRON)
      * Ligne 2: Distance de détection (45)
-     * Ligne 3: Type de déchet (JAUNE, VERT, GRIS, MARRON)
+     * Ligne 3: Icône hex (00)
 
      */
     public String analyzeAndGetResponse(String deviceReference) {
@@ -72,15 +75,15 @@ public class ImageStreamHandler {
         String imageBase64 = imageBuffer.toString();
         
         // Analyser via le service d'analyse
-        String wasteType = mediaAnalysisClient.analyzeImage(imageBase64);
+        String wasteBinType = mediaAnalysisClient.analyzeImage(imageBase64);
         
-        if (wasteType == null) {
+        if (wasteBinType == null) {
             log("ERROR: Image analysis failed");
             return "ERREUR\n00\n00\n";
         }
 
         // Mapper le type de déchet vers le format µC
-        String response = mapWasteTypeToLegacyResponse(wasteType);
+        String response = mapWasteBinTypeToResponse(wasteBinType);
         log("Analysis result: " + response);
         
         return response;
@@ -91,51 +94,49 @@ public class ImageStreamHandler {
      * @param wasteType Type retourné par le service (ex: "recyclage", "ordures_menageres")
      * @return Réponse au format legacy (3 lignes)
      */
-    private String mapWasteTypeToLegacyResponse(String wasteType) {
-        // Distance par défaut (peut être configuré différemment selon le type)
-        String distance = "45";
-        
-        // Icônes hex (de CvnEITM.py)
-        final String ICON_RECYCLE = "00"; // Jaune - Recyclage
-        final String ICON_TRASH = "00";   // Gris - Ordures ménagères
-        final String ICON_BOTTLE = "00";  // Vert - Bouteille
-        final String ICON_PLANT = "00";   // Marron - Compost
-        
+    private String mapWasteBinTypeToResponse(String wasteBinType) {
+        String distance = "45"; // Distance par défaut
+
         String color;
         String icon;
+
+        // Normaliser le type de déchet (au cas où le service d'analyse renvoie différents formats)
+        String normalizedType = wasteBinType.toLowerCase().trim();
         
-        switch (wasteType.toLowerCase()) {
+        switch (normalizedType) {
+            case "jaune":
             case "recyclage":
             case "papier":
             case "carton":
                 color = "JAUNE";
-                icon = ICON_RECYCLE;
                 break;
-                
+            case "verte":
+            case "vert":
             case "verre":
             case "bouteille":
                 color = "VERTE";
-                icon = ICON_BOTTLE;
                 break;
-                
+            case "marron":
             case "compost":
             case "organique":
             case "biodechet":
                 color = "MARRON";
-                icon = ICON_PLANT;
                 break;
-                
+            case "grise":
+            case "gris":
             case "ordures_menageres":
             case "ordures":
             case "general":
             default:
                 color = "GRISE";
-                icon = ICON_TRASH;
                 break;
         }
         
-        // Format: ICONE\nDISTANCE\nCOULEUR\n
-        return icon + "\n" + distance + "\n" + color + "\n";
+        // Récupérer l'icône depuis la BDD en utilisant la couleur normalisée
+        icon = dataDriver.getHexaIconByWasteBinType(color.toLowerCase());
+        
+        // Format: COLOR\nDISTANCE\nICONE\n
+        return color + "\n" + distance + "\n" + icon + "\n";
     }
 
     /**

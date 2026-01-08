@@ -641,17 +641,87 @@ public class CommandHandler {
             return "ERR_MISSING_PARAMS";
         }
 
-        log("Performing image analysis for reference: " + reference);
-        String result = mediaAnalysisClient.analyzeImage(imageBase64);
-        log("Image analysis result: " + result);
+        // Get Module from database
+        Modules module = dataDriver.findModuleByKey(reference);
+        if (module == null) {
+            return "ERR_DEVICE_NOT_FOUND";
+        }
 
-        if (result == null) {
+        // Find MapPoint by module key
+        MapPoints mapPoint = dataDriver.findMapPointByModule(reference);
+        if (mapPoint == null) {
+            log("ERROR: No MapPoint found for microcontroller " + reference);
+            return "ERR_DEVICE_NOT_FOUND";
+        }
+
+        log("Performing image analysis for reference: " + reference);
+        String analysisResult = mediaAnalysisClient.analyzeImage(imageBase64);
+        log("Image analysis result: " + analysisResult);
+
+        if (analysisResult == null || analysisResult.isEmpty()) {
             log("ERROR: Image analysis failed");
             return "ERR_ANALYSIS_FAILED";
         }
 
-        log("Image analysis successful. Result: " + result);
-        return formatSuccessResponseAnalyse(reference) + "\n" + result;
+        // Extract bin color from analysis result
+        // Expected format: "OK JAUNE", "OK VERTE", etc.
+        String binColor = extractColorFromAnalysisResult(analysisResult);
+        if (binColor == null || binColor.isEmpty()) {
+            log("ERROR: Could not extract color from analysis result: " + analysisResult);
+            return "ERR_INVALID_ANALYSIS_RESULT";
+        }
+
+        log("Detected bin color: " + binColor);
+
+        // Get hexadecimal image for the bin color
+        String hexImage = getBinHexImage(module, binColor);
+        if (hexImage.isEmpty()) {
+            log("WARNING: Could not retrieve hex image for color " + binColor);
+            return "ERR_HEX_IMAGE_NOT_FOUND";
+        }
+
+        // Get latest distance measurement
+        String distance = getLatestDistance(mapPoint);
+
+        // Build response: OK\n + couleur\n + distance\n + icon hexadécimale\n
+        StringBuilder response = new StringBuilder();
+        response.append("OK\n");
+        response.append(binColor).append("\n");
+        response.append(distance).append("\n");
+        response.append(hexImage).append("\n");
+
+
+        log("Image analysis successful. Response ready for " + reference);
+        return response.toString();
+    }
+
+    /**
+     * Extract bin color from media analysis result
+     * Expected format: "OK JAUNE", "OK VERTE", "JAUNE", "VERTE", etc.
+     * @param analysisResult The result string from media analysis
+     * @return The color name or null if not found
+     */
+    private String extractColorFromAnalysisResult(String analysisResult) {
+        if (analysisResult == null || analysisResult.isEmpty()) {
+            return null;
+        }
+
+        String result = analysisResult.toUpperCase().trim();
+
+        // Remove "OK" prefix if present
+        if (result.startsWith("OK ")) {
+            result = result.substring(3).trim();
+        }
+
+        // Validate that it's one of the known colors
+        if (result.equals("JAUNE") || result.equals("VERTE") || 
+            result.equals("MARRON") || result.equals("BRUN") || result.equals("BROWN") ||
+            result.equals("GRISE") || result.equals("GRIS") || 
+            result.equals("GREY") || result.equals("GRAY")) {
+            return result;
+        }
+
+        return null;
     }
 
 
@@ -717,6 +787,131 @@ public class CommandHandler {
 
         log("Disconnect requested by " + reference);
         return formatSuccessResponse(reference);
+    }
+
+    /**
+     * Retrieve hexadecimal image for a bin color from OLED Chipset configuration
+     * @param module The module containing the chipsets
+     * @param binColor The color of the bin (JAUNE, VERTE, MARRON, GRISE)
+     * @return Hexadecimal image string or empty string if not found
+     */
+    private String getBinHexImage(Modules module, String binColor) {
+        if (module == null || binColor == null || binColor.isEmpty()) {
+            return "";
+        }
+
+        try {
+            // Find all chipsets for this module
+            java.util.List<Chipsets> chipsets = dataDriver.findChipsetsByModuleId(module.getId());
+            
+            if (chipsets == null || chipsets.isEmpty()) {
+                log("WARNING: No chipsets found for module " + module.getKey());
+                return "";
+            }
+
+            // Look for OLED display chipset (contains Display capability)
+            for (Chipsets chipset : chipsets) {
+                if (chipset.getCaps() != null && chipset.getCaps().contains("Display")) {
+                    Document config = chipset.getConfig();
+                    if (config == null) {
+                        log("WARNING: OLED chipset has no config");
+                        continue;
+                    }
+
+                    // Map color to config key
+                    String colorKey = mapColorToConfigKey(binColor);
+                    if (colorKey == null) {
+                        log("WARNING: Unknown bin color: " + binColor);
+                        return "";
+                    }
+
+                    // Extract hexadecimal image
+                    String hexImage = config.getString(colorKey);
+                    if (hexImage != null && !hexImage.isEmpty()) {
+                        log("Found hex image for color " + binColor);
+                        return hexImage;
+                    }
+                }
+            }
+
+            log("WARNING: No OLED display chipset found with color " + binColor);
+            return "";
+        } catch (Exception e) {
+            log("ERROR: Failed to retrieve hex image: " + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    /**
+     * Map bin color name to configuration key
+     * @param binColor The color name returned by media analysis (e.g., "JAUNE", "VERTE")
+     * @return The configuration key (e.g., "yellow_bin", "green_bin")
+     */
+    private String mapColorToConfigKey(String binColor) {
+        if (binColor == null) {
+            return null;
+        }
+
+        String colorUpper = binColor.toUpperCase().trim();
+        
+        switch (colorUpper) {
+            case "JAUNE":
+                return "yellow_bin";
+            case "VERTE":
+                return "green_bin";
+            case "MARRON":
+            case "BRUN":
+            case "BROWN":
+                return "brown_bin";
+            case "GRISE":
+            case "GRIS":
+            case "GREY":
+            case "GRAY":
+                return "grey_bin";
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Get the latest distance measurement from a MapPoint
+     * @param mapPoint The MapPoint to extract distance from
+     * @return The distance value or empty string if not found
+     */
+    private String getLatestDistance(MapPoints mapPoint) {
+        if (mapPoint == null) {
+            return "";
+        }
+
+        try {
+            java.util.List<MapPoints.LastMeasurement> measurements = mapPoint.getLastMeasurements();
+            
+            if (measurements == null || measurements.isEmpty()) {
+                log("WARNING: No measurements found for mapPoint");
+                return "";
+            }
+
+            // Get the most recent measurement
+            MapPoints.LastMeasurement lastMeasurement = measurements.get(measurements.size() - 1);
+            if (lastMeasurement == null || lastMeasurement.getMeasurement() == null) {
+                return "";
+            }
+
+            Document measurement = lastMeasurement.getMeasurement();
+            
+            // Try to find distance (HC-SR04 sensor)
+            // Could be stored as "distance", "filllevel", or other names
+            Object distance = measurement.get("distance");
+            if (distance != null) {
+                return distance.toString();
+            }
+
+            return "";
+        } catch (Exception e) {
+            log("ERROR: Failed to retrieve distance: " + e.getMessage());
+            return "";
+        }
     }
 
     /**

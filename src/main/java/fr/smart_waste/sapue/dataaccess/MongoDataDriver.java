@@ -443,6 +443,57 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
+    @Override
+    public String getHexaIconByWasteBinType(String wasteBinType) {
+        if (wasteBinType == null || wasteBinType.isEmpty()) return "00"; // Default fallback
+
+        try {
+            // Trouver le chipset "oled ssd1306" qui contient les icônes
+            Chipsets oledChipset = chipsets.find(eq("name", "oled ssd1306")).first();
+            
+            if (oledChipset == null || oledChipset.getConfig() == null) {
+                System.err.println("[MongoDataDriver] oled ssd1306 chipset not found");
+                return "00"; // Default icon
+            }
+
+            // Mapper le wasteBinType vers la clé config correcte
+            String configKey = mapWasteBinTypeToConfigKey(wasteBinType);
+            
+            // Récupérer l'icône depuis config
+            String icon = oledChipset.getConfig().getString(configKey);
+            
+            if (icon == null || icon.isEmpty()) {
+                System.err.println("[MongoDataDriver] Icon not found for key: " + configKey);
+                return "00"; // Default icon
+            }
+            
+            return icon;
+
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error finding hexa icon: " + e.getMessage());
+            e.printStackTrace();
+            return "00"; // Default fallback
+        }
+    }
+
+    /**
+     * Mapper les types de déchets vers les clés de configuration
+     */
+    private String mapWasteBinTypeToConfigKey(String wasteBinType) {
+        switch (wasteBinType.toLowerCase()) {
+            case "jaune":
+                return "yellow_bin";
+            case "verte":
+                return "green_bin";
+            case "grise":
+                return "grey_bin";
+            case "marron":
+                return "brown_bin";
+            default:
+                return "grey_bin"; // Default
+        }
+    }
+
     // ========== Connection Management ==========
 
     @Override

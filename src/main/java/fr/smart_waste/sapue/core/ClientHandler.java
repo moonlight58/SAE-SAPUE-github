@@ -41,7 +41,7 @@ public class ClientHandler implements Runnable {
         this.server = server;
         this.mediaAnalysisClient = mediaAnalysisClient;
         this.running = true;
-        this.imageStreamHandler = new ImageStreamHandler(mediaAnalysisClient);
+        this.imageStreamHandler = new ImageStreamHandler(dataDriver, mediaAnalysisClient);
     }
 
     @Override
