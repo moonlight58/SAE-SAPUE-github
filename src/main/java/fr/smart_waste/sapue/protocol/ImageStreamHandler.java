@@ -111,9 +111,6 @@ public class ImageStreamHandler {
                 color = "VERTE";
                 break;
             case "marron":
-            case "compost":
-            case "organique":
-            case "biodechet":
                 color = "MARRON";
                 break;
             case "grise":
