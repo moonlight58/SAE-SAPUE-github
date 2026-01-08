@@ -10,70 +10,78 @@ import java.util.List;
  */
 public interface DataDriver {
 
-    // ========== Poubelles Operations ==========
+    // ========== MapPoints Operations (formerly Poubelles) ==========
 
     /**
-     * Insert a new poubelle
-     * @param poubelle Poubelles object to insert
-     * @return ObjectId of inserted poubelle, null if failed
+     * Insert a new MapPoint
+     * @param mapPoint MapPoints object to insert
+     * @return ObjectId of inserted MapPoint, null if failed
      */
-    ObjectId insertPoubelle(Poubelles poubelle);
+    ObjectId insertMapPoint(MapPoints mapPoint);
 
     /**
-     * Find poubelle by ID
-     * @param id Poubelles ObjectId
-     * @return Poubelles object or null if not found
+     * Find MapPoint by ID
+     * @param id MapPoints ObjectId
+     * @return MapPoints object or null if not found
      */
-    Poubelles findPoubelleById(ObjectId id);
+    MapPoints findMapPointById(ObjectId id);
 
     /**
-     * Find poubelle by module key
+     * Find MapPoints by type
+     * @param type MapPoint type string
+     * @return List of MapPoints
+     */
+    List<MapPoints> findMapPointsByType(String type);
+
+    /**
+     * Find MapPoints near a location
+     * @param longitude Longitude
+     * @param latitude Latitude
+     * @param maxDistanceMeters Maximum distance in meters
+     * @return List of nearby MapPoints
+     */
+    List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters);
+
+    /**
+     * Find MapPoint by module key
      * @param moduleKey Module key (UUID)
-     * @return Poubelles object or null if not found
+     * @return MapPoints object or null if not found
      */
-    Poubelles findPoubelleByModule(String moduleKey);
+    MapPoints findMapPointByModule(String moduleKey);
 
     /**
-     * Update an existing poubelle
-     * @param poubelle Poubelles object with updated fields
+     * Update an existing MapPoint
+     * @param mapPoint MapPoints object with updated fields
      * @return true if updated successfully, false otherwise
      */
-    boolean updatePoubelle(Poubelles poubelle);
+    boolean updateMapPoint(MapPoints mapPoint);
 
     /**
-     * Update last measurement for a poubelle
-     * @param id Poubelles ObjectId
-     * @param lastMeasurement LastMeasurement object
-     * @return true if updated successfully, false otherwise
+     * Add a new measurement to the history of a MapPoint
+     * @param mapPointId MapPoints ObjectId
+     * @param measurement LastMeasurement object to add
+     * @return true if added successfully, false otherwise
      */
-    boolean updateLastMeasurement(ObjectId id, Poubelles.LastMeasurement lastMeasurement);
+    boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement);
 
     /**
-     * Update active alerts for a poubelle
-     * @param id Poubelles ObjectId
-     * @param activeAlerts ActiveAlerts object
-     * @return true if updated successfully, false otherwise
-     */
-    boolean updateActiveAlerts(ObjectId id, Poubelles.ActiveAlerts activeAlerts);
-
-    /**
-     * Delete a poubelle by ID
-     * @param id Poubelles ObjectId
+     * Delete a MapPoint by ID
+     * @param id MapPoints ObjectId
      * @return true if deleted successfully, false otherwise
      */
-    boolean deletePoubelle(ObjectId id);
+    boolean deleteMapPoint(ObjectId id);
 
     /**
-     * Get all poubelles
-     * @return List of all poubelles
+     * Get all MapPoints
+     * @return List of all MapPoints
      */
-    List<Poubelles> findAllPoubelles();
+    List<MapPoints> findAllMapPoints();
 
     /**
-     * Find all poubelles with active alerts
-     * @return List of poubelles with hasIssue = true
+     * Find all MapPoints with active alerts
+     * @return List of MapPoints with hasIssue = true
      */
-    List<Poubelles> findPoubellesWithActiveAlerts();
+    List<MapPoints> findMapPointsWithActiveAlerts();
 
 
     // ========== Module Operations ==========
@@ -163,32 +171,101 @@ public interface DataDriver {
      */
     List<Chipsets> findAllChipsets();
 
-    // ==========================================
-    // Reports operations (formerly Signalements)
-    // ==========================================
 
+    // ========== Reports Operations (formerly Signalements) ==========
+
+    /**
+     * Insert a new report
+     * @param report Reports object to insert
+     * @return ObjectId of inserted report, null if failed
+     */
     ObjectId insertReport(Reports report);
+
+    /**
+     * Find report by ID
+     * @param id Reports ObjectId
+     * @return Reports object or null if not found
+     */
     Reports findReportById(ObjectId id);
+
+    /**
+     * Find reports by status
+     * @param status Status string
+     * @return List of reports
+     */
     List<Reports> findReportsByStatus(String status);
+
+    /**
+     * Find reports by MapPoint ID
+     * @param mapPointId MapPoints ObjectId
+     * @return List of reports
+     */
     List<Reports> findReportsByMapPoint(ObjectId mapPointId);
+
+    /**
+     * Update an existing report
+     * @param report Reports object with updated fields
+     * @return true if updated successfully, false otherwise
+     */
     boolean updateReport(Reports report);
+
+    /**
+     * Delete a report by ID
+     * @param id Reports ObjectId
+     * @return true if deleted successfully, false otherwise
+     */
     boolean deleteReport(ObjectId id);
+
+    /**
+     * Get all reports
+     * @return List of all reports
+     */
     List<Reports> findAllReports();
 
-    // ==========================================
-    // MapPoints operations (formerly Poubelles)
-    // ==========================================
 
-    ObjectId insertMapPoint(MapPoints mapPoint);
-    MapPoints findMapPointById(ObjectId id);
-    List<MapPoints> findMapPointsByType(String type);
-    List<MapPoints> findMapPointsNear(double longitude, double latitude, double maxDistanceMeters);
-    MapPoints findMapPointByModule(String moduleKey);
-    boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement);
-    boolean updateMapPoint(MapPoints mapPoint);
-    boolean deleteMapPoint(ObjectId id);
-    List<MapPoints> findAllMapPoints();
-    List<MapPoints> findMapPointsWithActiveAlerts();
+    // ========== Measurements Operations (formerly Releves) ==========
+
+    /**
+     * Insert a new measurement
+     * @param measurement Measurements object to insert
+     * @return ObjectId of inserted measurement, null if failed
+     */
+    ObjectId insertMeasurement(Measurements measurement);
+
+    /**
+     * Find measurement by ID
+     * @param id Measurements ObjectId
+     * @return Measurements object or null if not found
+     */
+    Measurements findMeasurementById(ObjectId id);
+
+    /**
+     * Find all measurements for a specific controller (Module)
+     * @param idController Modules ObjectId
+     * @return List of measurements
+     */
+    List<Measurements> findMeasurementsByController(ObjectId idController);
+
+    /**
+     * Update an existing measurement
+     * @param measurement Measurements object with updated fields
+     * @return true if updated successfully, false otherwise
+     */
+    boolean updateMeasurement(Measurements measurement);
+
+    /**
+     * Delete a measurement by ID
+     * @param id Measurements ObjectId
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteMeasurement(ObjectId id);
+
+    /**
+     * Get all measurements
+     * @return List of all measurements
+     */
+    List<Measurements> findAllMeasurements();
+
 
     // ========== Users Operations ==========
 
@@ -233,86 +310,6 @@ public interface DataDriver {
      */
     List<Users> findAllUsers();
 
-    // ========== Signalement Operations ==========
-
-    /**
-     * Insert a new signalement
-     * @param signalement Signalement object to insert
-     * @return ObjectId of inserted signalement, null if failed
-     */
-    ObjectId insertSignalements(Signalements signalement);
-
-    /**
-     * Find signalement by ID
-     * @param id Signalements ObjectId
-     * @return Signalements object or null if not found
-     */
-    Signalements findSignalementsById(ObjectId id);
-
-    /**
-     * Update an existing signalement
-     * @param signalement Signalements object with updated fields
-     * @return true if updated successfully, false otherwise
-     */
-    boolean updateSignalements(Signalements signalement);
-
-    /**
-     * Delete a signalement by ID
-     * @param id Signalements ObjectId
-     * @return true if deleted successfully, false otherwise
-     */
-    boolean deleteSignalements(ObjectId id);
-
-    /**
-     * Get all signalements
-     * @return List of all signalements
-     */
-    List<Signalements> findAllSignalements();
-
-
-    // ========== Releve Operations ==========
-
-    /**
-     * Insert a new releve (sensor reading)
-     * @param releves Releve object to insert
-     * @return ObjectId of inserted releve, null if failed
-     */
-    ObjectId insertReleve(Releves releves);
-
-    /**
-     * Find releve by ID
-     * @param id Releve ObjectId
-     * @return Releve object or null if not found
-     */
-    Releves findReleveById(ObjectId id);
-
-    /**
-     * Find all releves for a specific poubelle (changed from idControlleur to idPoubelle)
-     * @param idPoubelle Poubelle ObjectId
-     * @return List of releves
-     */
-    List<Releves> findRelevesByPoubelle(ObjectId idPoubelle);
-
-    /**
-     * Update an existing releve
-     * @param releves Releve object with updated fields
-     * @return true if updated successfully, false otherwise
-     */
-    boolean updateReleve(Releves releves);
-
-    /**
-     * Delete a releve by ID
-     * @param id Releve ObjectId
-     * @return true if deleted successfully, false otherwise
-     */
-    boolean deleteReleve(ObjectId id);
-
-    /**
-     * Get all releves
-     * @return List of all releves
-     */
-    List<Releves> findAllReleves();
-
 
     // ========== AnalyseMedia Operations ==========
 
@@ -344,10 +341,6 @@ public interface DataDriver {
      */
     boolean deleteAnalyseMedia(ObjectId id);
 
-    /**
-     * Get all analyse medias
-     * @return List of all analyse medias
-     */
     List<AnalyseMedia> findAllAnalyseMedias();
 
     // ========== Connection Management ==========

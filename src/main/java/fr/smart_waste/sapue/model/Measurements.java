@@ -4,29 +4,29 @@ import org.bson.types.ObjectId;
 import java.util.Date;
 
 /**
- * POJO for Relevés collection
+ * POJO for Measurements collection
  * Stores sensor measurements from smart bins
  */
-public class Releves {
+public class Measurements {
     private ObjectId id;
-    private ObjectId idPoubelle; // reference to Poubelles (changed from idControlleur)
-    private Date timestamp; // renamed from date for clarity
-    private Measurements measurements; // structured measurements object
+    private ObjectId id_Controller; // Lien vers Modules (microcontroleur)
+    private Date date;
+    private Measurement measurement; // structured measurements object
 
     // Constructors
-    public Releves() {
-        this.timestamp = new Date(); // default to current time
-        this.measurements = new Measurements();
+    public Measurements() {
+        this.date = new Date(); // default to current time
+        this.measurement = new Measurement();
     }
 
-    public Releves(ObjectId idPoubelle, Date timestamp, Measurements measurements) {
-        this.idPoubelle = idPoubelle;
-        this.timestamp = timestamp != null ? timestamp : new Date();
-        this.measurements = measurements;
+    public Measurements(ObjectId id_Controller, Date date, Measurement measurement) {
+        this.id_Controller = id_Controller;
+        this.date = date != null ? date : new Date();
+        this.measurement = measurement;
     }
 
-    // Nested Measurements class
-    public static class Measurements {
+    // Nested Measurement class
+    public static class Measurement {
         private Double fillLevel; // Niveau de remplissage en pourcentage
         private Double weight; // Poids en kilogrammes
         private Double temperature; // Température en degrés Celsius
@@ -37,10 +37,10 @@ public class Releves {
         private Double confidence; // Niveau de confiance de l'identification
 
         // Constructors
-        public Measurements() {
+        public Measurement() {
         }
 
-        public Measurements(Double fillLevel, Double weight, Double temperature,
+        public Measurement(Double fillLevel, Double weight, Double temperature,
                             Double humidity, Double airQuality, Double batteryLevel) {
             this.fillLevel = fillLevel;
             this.weight = weight;
@@ -117,7 +117,7 @@ public class Releves {
 
         @Override
         public String toString() {
-            return "measurements{" +
+            return "Measurement{" +
                     "fillLevel=" + fillLevel +
                     ", weight=" + weight +
                     ", temperature=" + temperature +
@@ -139,37 +139,37 @@ public class Releves {
         this.id = id;
     }
 
-    public ObjectId getIdPoubelle() {
-        return idPoubelle;
+    public ObjectId getId_Controller() {
+        return id_Controller;
     }
 
-    public void setIdPoubelle(ObjectId idPoubelle) {
-        this.idPoubelle = idPoubelle;
+    public void setId_Controller(ObjectId id_Controller) {
+        this.id_Controller = id_Controller;
     }
 
-    public Date getTimestamp() {
-        return timestamp;
+    public Date getDate() {
+        return date;
     }
 
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
-    public Measurements getMeasurements() {
-        return measurements;
+    public Measurement getMeasurement() {
+        return measurement;
     }
 
-    public void setMeasurements(Measurements measurements) {
-        this.measurements = measurements;
+    public void setMeasurement(Measurement measurement) {
+        this.measurement = measurement;
     }
 
     @Override
     public String toString() {
-        return "Releves{" +
+        return "Measurements{" +
                 "id=" + id +
-                ", idPoubelle=" + idPoubelle +
-                ", timestamp=" + timestamp +
-                ", measurements=" + measurements +
+                ", id_Controller=" + id_Controller +
+                ", date=" + date +
+                ", measurement=" + measurement +
                 '}';
     }
 }

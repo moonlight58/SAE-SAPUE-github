@@ -6,6 +6,7 @@ import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolParser;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
 import fr.smart_waste.sapue.protocol.ProtocolException;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -21,6 +22,7 @@ public class ClientHandler implements Runnable {
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final SmartWasteServer server;
+    private final MediaAnalysisClient mediaAnalysisClient;
 
     private BufferedReader in;
     private PrintWriter out;
@@ -29,12 +31,13 @@ public class ClientHandler implements Runnable {
 
     public ClientHandler(Socket clientSocket, DataDriver dataDriver,
                          ServerConfig config, ServerMetrics metrics,
-                         SmartWasteServer server) {
+                         SmartWasteServer server, MediaAnalysisClient mediaAnalysisClient) {
         this.clientSocket = clientSocket;
         this.dataDriver = dataDriver;
         this.config = config;
         this.metrics = metrics;
         this.server = server;
+        this.mediaAnalysisClient = mediaAnalysisClient;
         this.running = true;
     }
 
@@ -104,7 +107,7 @@ public class ClientHandler implements Runnable {
             ProtocolRequest parsedRequest = ProtocolParser.parse(request);
 
             // Execute command using CommandHandler
-            CommandHandler commandHandler = new CommandHandler(dataDriver, server);
+            CommandHandler commandHandler = new CommandHandler(dataDriver, server, mediaAnalysisClient);
             String response = commandHandler.execute(parsedRequest);
 
             // Register client ONLY after successful REGISTER command

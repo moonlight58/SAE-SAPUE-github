@@ -4,6 +4,7 @@ import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.protocol.CommandHandler;
 import fr.smart_waste.sapue.protocol.ProtocolRequest;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
 import io.cucumber.java.Before;
@@ -31,7 +32,7 @@ public class APICommunicationStepDefs {
     public void setup() {
         dataDriver = new MockDataDriver();
         server = new MockSmartWasteServer(new ServerConfig());
-        commandHandler = new CommandHandler(dataDriver, server);
+        commandHandler = new CommandHandler(dataDriver, server, new MediaAnalysisClient("localhost", 50060));
     }
 
     // ==========================================
@@ -108,8 +109,8 @@ public class APICommunicationStepDefs {
 
     @Then("le service de gestion enregistre l'alerte")
     public void leServiceDeGestionEnregistreLAlerte() {
-        assertNotNull(dataDriver.lastInsertedReleve);
-        assertEquals(Double.valueOf(150.0), dataDriver.lastInsertedReleve.getMeasurements().getAirQuality());
+        assertNotNull(dataDriver.lastInsertedMeasurement);
+        assertEquals(Double.valueOf(150.0), dataDriver.lastInsertedMeasurement.getMeasurement().getAirQuality());
     }
 
     @And("le système reçoit une confirmation de transmission")
@@ -143,6 +144,10 @@ public class APICommunicationStepDefs {
 
     @And("le niveau de confiance est de {int}%")
     public void leNiveauDeConfianceEstDe(int confidence) {
+        if (currentRequest == null) {
+            Map<String, String> params = new HashMap<>();
+            currentRequest = new ProtocolRequest("IMAGE_ANALYSE", "REF-DUMMY", params, "");
+        }
         currentRequest.getParameters().put("confidence", String.valueOf(confidence));
     }
 
@@ -307,7 +312,7 @@ public class APICommunicationStepDefs {
     
     @And("les données sont quand même conservées")
     public void lesDonneesSontQuandMemeConservees() {
-         assertNotNull(dataDriver.lastInsertedReleve);
+         assertNotNull(dataDriver.lastInsertedMeasurement);
     }
     
     @And("le système confirme la réussite de la sauvegarde à la poubelle")
@@ -325,14 +330,12 @@ public class APICommunicationStepDefs {
         module.setKey(ref);
         module.setId(new ObjectId());
         
-        Poubelles p = new Poubelles();
+        MapPoints p = new MapPoints();
         p.setId(new ObjectId());
-        Poubelles.HardwareConfig config = new Poubelles.HardwareConfig();
-        config.setMicrocontroller(Collections.singletonList(ref));
-        p.setHardwareConfig(config);
+        p.setModules(Collections.singletonList(module.getId()));
         
         dataDriver.addModule(module);
-        dataDriver.addPoubelle(p);
+        dataDriver.addMapPoint(p);
     }
     
     // ==========================================

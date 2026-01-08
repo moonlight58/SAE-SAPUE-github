@@ -1,5 +1,6 @@
 package fr.smart_waste.sapue;
 
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import fr.smart_waste.sapue.config.ServerConfig;
 import fr.smart_waste.sapue.core.SmartWasteServer;
 import fr.smart_waste.sapue.dataaccess.DataDriver;
@@ -23,8 +24,14 @@ public class Main {
                     config.getDatabaseName()
             );
 
+            // Initialize MediaAnalysisClient
+            MediaAnalysisClient mediaAnalysisClient = new MediaAnalysisClient(
+                    config.getMediaServerHost(),
+                    config.getMediaServerPort()
+            );
+
             // Create and start server
-            SmartWasteServer server = new SmartWasteServer(config, dataDriver);
+            SmartWasteServer server = new SmartWasteServer(config, dataDriver, mediaAnalysisClient);
             
             System.out.println("Server initialized on port " + config.getServerPort());
 

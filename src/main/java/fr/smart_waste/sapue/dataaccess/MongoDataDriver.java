@@ -2,7 +2,6 @@ package fr.smart_waste.sapue.dataaccess;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import fr.smart_waste.sapue.model.*;
@@ -12,9 +11,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
-import com.mongodb.client.result.UpdateResult;
 import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Sorts.*;
 
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
@@ -26,7 +23,6 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Updates.set;
 
 /**
  * MongoDB implementation of DataDriver interface
@@ -43,14 +39,12 @@ public class MongoDataDriver implements DataDriver {
     private MongoDatabase database;
 
     // Collections
-    private MongoCollection<Poubelles> poubelles;
     private MongoCollection<Modules> modules;
     private MongoCollection<Chipsets> chipsets;
     private MongoCollection<Users> users;
-    private MongoCollection<Signalements> signalements;
     private MongoCollection<Reports> reports;
     private MongoCollection<MapPoints> mapPoints;
-    private MongoCollection<Releves> releves;
+    private MongoCollection<Measurements> measurements;
     private MongoCollection<AnalyseMedia> analyseMedias;
 
     /**
@@ -83,14 +77,12 @@ public class MongoDataDriver implements DataDriver {
             database = mongoClient.getDatabase(databaseName).withCodecRegistry(pojoCodecRegistry);
 
             // Initialize all collections with POJO codec
-            poubelles = database.getCollection("poubelles", Poubelles.class);
             modules = database.getCollection("Modules", Modules.class);
             chipsets = database.getCollection("Chipsets", Chipsets.class);
             users = database.getCollection("Users", Users.class);
-            signalements = database.getCollection("signalements", Signalements.class);
             reports = database.getCollection("Reports", Reports.class);
             mapPoints = database.getCollection("MapPoints", MapPoints.class);
-            releves = database.getCollection("releves", Releves.class);
+            measurements = database.getCollection("Measurements", Measurements.class);
             analyseMedias = database.getCollection("analyseMedias", AnalyseMedia.class);
 
             System.out.println("[MongoDataDriver] Connected to database: " + databaseName);
@@ -103,116 +95,7 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-    // ========== Poubelles Operations ==========
 
-    @Override
-    public synchronized ObjectId insertPoubelle(Poubelles poubelle) {
-        if (poubelle == null) return null;
-        try {
-            InsertOneResult result = poubelles.insertOne(poubelle);
-            return result.getInsertedId() != null
-                    ? result.getInsertedId().asObjectId().getValue()
-                    : poubelle.getId();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error inserting poubelle: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public Poubelles findPoubelleById(ObjectId id) {
-        if (id == null) return null;
-        try {
-            return poubelles.find(eq("_id", id)).first();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding poubelle by ID: " + e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public Poubelles findPoubelleByModule(String moduleKey) {
-        if (moduleKey == null || moduleKey.isEmpty()) return null;
-        try {
-            return poubelles.find(eq("hardwareConfig.microcontroller", moduleKey)).first();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding poubelle by module: " + e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public boolean updatePoubelle(Poubelles poubelle) {
-        if (poubelle == null || poubelle.getId() == null) return false;
-        try {
-            return poubelles.replaceOne(eq("_id", poubelle.getId()), poubelle).getModifiedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating poubelle: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean updateLastMeasurement(ObjectId id, Poubelles.LastMeasurement lastMeasurement) {
-        if (id == null || lastMeasurement == null) return false;
-        try {
-            UpdateResult result = poubelles.updateOne(
-                    eq("_id", id),
-                    set("lastMeasurement", lastMeasurement)
-            );
-            return result.getModifiedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating last measurement: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean updateActiveAlerts(ObjectId id, Poubelles.ActiveAlerts activeAlerts) {
-        if (id == null || activeAlerts == null) return false;
-        try {
-            UpdateResult result = poubelles.updateOne(
-                    eq("_id", id),
-                    set("activeAlerts", activeAlerts)
-            );
-            return result.getModifiedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating active alerts: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean deletePoubelle(ObjectId id) {
-        if (id == null) return false;
-        try {
-            return poubelles.deleteOne(eq("_id", id)).getDeletedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting poubelle: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public List<Poubelles> findAllPoubelles() {
-        try {
-            return poubelles.find().into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding all poubelles: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    @Override
-    public List<Poubelles> findPoubellesWithActiveAlerts() {
-        try {
-            return poubelles.find(eq("activeAlerts.hasIssue", true)).into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding poubelles with active alerts: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
 
     // ========== Module Operations ==========
 
@@ -427,208 +310,76 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-    // ========== Signalement Operations ==========
+
+
+    // ========== Measurements Operations ==========
 
     @Override
-    public synchronized ObjectId insertSignalements(Signalements s) {
-        if (s == null) return null;
+    public synchronized ObjectId insertMeasurement(Measurements measurement) {
+        if (measurement == null) return null;
         try {
-            InsertOneResult result = signalements.insertOne(s);
+            InsertOneResult result = measurements.insertOne(measurement);
             return result.getInsertedId() != null
                     ? result.getInsertedId().asObjectId().getValue()
-                    : s.getId();
+                    : measurement.getId();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error inserting signalement: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error inserting measurement: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public Signalements findSignalementsById(ObjectId id) {
+    public Measurements findMeasurementById(ObjectId id) {
         if (id == null) return null;
         try {
-            return signalements.find(eq("_id", id)).first();
+            return measurements.find(eq("_id", id)).first();
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding signalement: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding measurement: " + e.getMessage());
             return null;
         }
     }
 
     @Override
-    public boolean updateSignalements(Signalements s) {
-        if (s == null || s.getId() == null) return false;
+    public List<Measurements> findMeasurementsByController(ObjectId idController) {
+        if (idController == null) return new ArrayList<>();
         try {
-            return signalements.replaceOne(eq("_id", s.getId()), s).getModifiedCount() > 0;
+            return measurements.find(eq("id_Controller", idController)).into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating signalement: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding measurements by controller: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public boolean updateMeasurement(Measurements measurement) {
+        if (measurement == null || measurement.getId() == null) return false;
+        try {
+            return measurements.replaceOne(eq("_id", measurement.getId()), measurement).getModifiedCount() > 0;
+        } catch (Exception e) {
+            System.err.println("[MongoDataDriver] Error updating measurement: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public boolean deleteSignalements(ObjectId id) {
+    public boolean deleteMeasurement(ObjectId id) {
         if (id == null) return false;
         try {
-            return signalements.deleteOne(eq("_id", id)).getDeletedCount() > 0;
+            return measurements.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting signalement: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error deleting measurement: " + e.getMessage());
             return false;
         }
     }
 
     @Override
-    public List<Signalements> findAllSignalements() {
+    public List<Measurements> findAllMeasurements() {
         try {
-            return signalements.find().into(new ArrayList<>());
+            return measurements.find().into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding all signalements: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding all measurements: " + e.getMessage());
             return new ArrayList<>();
-        }
-    }
-
-    // ========== Releve Operations ==========
-
-    @Override
-    public synchronized ObjectId insertReleve(Releves r) {
-        if (r == null) return null;
-        try {
-            InsertOneResult result = releves.insertOne(r);
-            return result.getInsertedId() != null
-                    ? result.getInsertedId().asObjectId().getValue()
-                    : r.getId();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error inserting releve: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public Releves findReleveById(ObjectId id) {
-        if (id == null) return null;
-        try {
-            return releves.find(eq("_id", id)).first();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding releve: " + e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public List<Releves> findRelevesByPoubelle(ObjectId idPoubelle) {
-        if (idPoubelle == null) return new ArrayList<>();
-        try {
-            return releves.find(eq("idPoubelle", idPoubelle)).into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding releves by poubelle: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Find recent releves for a poubelle
-     * @param idPoubelle Poubelle ObjectId
-     * @param limit Maximum number of results
-     * @return List of recent releves, sorted by timestamp descending
-     */
-    public List<Releves> findRecentRelevesByPoubelle(ObjectId idPoubelle, int limit) {
-        if (idPoubelle == null || limit <= 0) return new ArrayList<>();
-        try {
-            return releves.find(eq("idPoubelle", idPoubelle))
-                    .sort(new Document("timestamp", -1))
-                    .limit(limit)
-                    .into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding recent releves: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Find releves within date range for a poubelle
-     * @param idPoubelle Poubelle ObjectId
-     * @param startDate Start date
-     * @param endDate End date
-     * @return List of releves within the date range
-     */
-    public List<Releves> findRelevesByDateRange(ObjectId idPoubelle, Date startDate, Date endDate) {
-        if (idPoubelle == null || startDate == null || endDate == null) return new ArrayList<>();
-        try {
-            return releves.find(
-                    and(
-                            eq("idPoubelle", idPoubelle),
-                            gte("timestamp", startDate),
-                            lte("timestamp", endDate)
-                    )
-            ).into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding releves by date range: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Get latest releve for a poubelle
-     * @param idPoubelle Poubelle ObjectId
-     * @return Latest Releve or null
-     */
-    public Releves findLatestReleveByPoubelle(ObjectId idPoubelle) {
-        if (idPoubelle == null) return null;
-        try {
-            return releves.find(eq("idPoubelle", idPoubelle))
-                    .sort(new Document("timestamp", -1))
-                    .first();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding latest releve: " + e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public boolean updateReleve(Releves r) {
-        if (r == null || r.getId() == null) return false;
-        try {
-            return releves.replaceOne(eq("_id", r.getId()), r).getModifiedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating releve: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean deleteReleve(ObjectId id) {
-        if (id == null) return false;
-        try {
-            return releves.deleteOne(eq("_id", id)).getDeletedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting releve: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public List<Releves> findAllReleves() {
-        try {
-            return releves.find().into(new ArrayList<>());
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding all releves: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Delete old releves before a certain date (for data cleanup)
-     * @param beforeDate Delete releves before this date
-     * @return Number of deleted documents
-     */
-    public long deleteRelevesBefore(Date beforeDate) {
-        if (beforeDate == null) return 0;
-        try {
-            return releves.deleteMany(lt("timestamp", beforeDate)).getDeletedCount();
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error deleting old releves: " + e.getMessage());
-            return 0;
         }
     }
 
@@ -856,7 +607,7 @@ public class MongoDataDriver implements DataDriver {
             Modules module = findModuleByKey(moduleKey);
             if (module == null || module.getId() == null) return null;
             
-            return mapPoints.find(eq("hardwareConfig.modules", module.getId())).first();
+            return mapPoints.find(eq("modules", module.getId())).first();
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding map point by module: " + e.getMessage());
             return null;
@@ -864,13 +615,13 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean updateMapPointLastMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement lastMeasurement) {
-        if (mapPointId == null || lastMeasurement == null) return false;
+    public boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement) {
+        if (mapPointId == null || measurement == null) return false;
         try {
-            Document updateDoc = new Document("$set", new Document("lastMeasurement", lastMeasurement));
+            Document updateDoc = new Document("$push", new Document("lastMeasurements", measurement));
             return mapPoints.updateOne(eq("_id", mapPointId), updateDoc).getModifiedCount() > 0;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error updating map point last measurement: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error adding map point measurement: " + e.getMessage());
             return false;
         }
     }

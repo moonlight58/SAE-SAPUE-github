@@ -12,7 +12,7 @@ public class MockSmartWasteServer extends SmartWasteServer {
     private Set<String> registeredClients = new HashSet<>();
     
     public MockSmartWasteServer(ServerConfig config) {
-        super(config, null); // Pass null as we override methods that use it or don't use it
+        super(config, null, null); // Pass nulls as we override methods that use them
     }
     
     @Override

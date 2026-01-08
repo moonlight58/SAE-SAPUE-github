@@ -1,6 +1,7 @@
 package fr.smart_waste.sapue.core;
 
 import fr.smart_waste.sapue.config.ServerConfig;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import fr.smart_waste.sapue.dataaccess.DataDriver;
 import fr.smart_waste.sapue.dataaccess.MongoDataDriver;
 
@@ -20,6 +21,7 @@ public class SmartWasteServer {
     private final ServerConfig config;
     private final ServerMetrics metrics;
     private final DataDriver dataDriver;
+    private final MediaAnalysisClient mediaAnalysisClient;
 
     private ServerSocket serverSocket;
     private volatile boolean running;
@@ -31,12 +33,14 @@ public class SmartWasteServer {
      * Constructor
      * @param config Server configuration
      * @param dataDriver Data access driver
+     * @param mediaAnalysisClient Media analysis client
      */
-    public SmartWasteServer(ServerConfig config, DataDriver dataDriver) {
+    public SmartWasteServer(ServerConfig config, DataDriver dataDriver, MediaAnalysisClient mediaAnalysisClient) {
         this.config = config;
         this.metrics = new ServerMetrics();
         this.connectedClients = new ConcurrentHashMap<>();
         this.dataDriver = dataDriver;
+        this.mediaAnalysisClient = mediaAnalysisClient;
 
         log("Server initialized in " + config.getEnvironment() + " mode");
     }
@@ -82,7 +86,7 @@ public class SmartWasteServer {
 
                     // Create and start client handler thread
                     ClientHandler handler = new ClientHandler(
-                            clientSocket, dataDriver, config, metrics, this
+                            clientSocket, dataDriver, config, metrics, this, mediaAnalysisClient
                     );
                     Thread clientThread = new Thread(handler);
                     clientThread.setName("ClientHandler-" + clientSocket.getInetAddress().getHostAddress());
@@ -359,8 +363,14 @@ public class SmartWasteServer {
                     config.getDatabaseName()
             );
 
+            // Initialize MediaAnalysisClient
+            MediaAnalysisClient mediaAnalysisClient = new MediaAnalysisClient(
+                    config.getMediaServerHost(),
+                    config.getMediaServerPort()
+            );
+
             // Create and start server
-            SmartWasteServer server = new SmartWasteServer(config, dataDriver);
+            SmartWasteServer server = new SmartWasteServer(config, dataDriver, mediaAnalysisClient);
 
             // Add shutdown hook for graceful shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
