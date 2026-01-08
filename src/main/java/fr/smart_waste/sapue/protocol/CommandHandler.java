@@ -54,6 +54,9 @@ public class CommandHandler {
                 case "STATUS":
                     return handleStatus(request);
 
+                case "MEASUREMENT":
+                    return handleMeasurement(request);
+
                 case "IMAGE_DATABASE":
                     return handleImageDatabase(request);
 
@@ -431,6 +434,183 @@ public class CommandHandler {
 
         log("Status stored for " + reference + ": " + statusMeasurementData);
         return formatSuccessResponse(reference);
+    }
+
+    /**
+     * Handle MEASUREMENT command
+     * Retrieve measurements from database for a specific module
+     * Optionally filter by date range (startDate and endDate)
+     * Format: MEASUREMENT <reference> [startDate:<date>] [endDate:<date>]
+     */
+    private String handleMeasurement(ProtocolRequest request) {
+        String reference = request.getReference();
+
+        // Get Module from database
+        Modules module = dataDriver.findModuleByKey(reference);
+        if (module == null) {
+            return "ERR_DEVICE_NOT_FOUND";
+        }
+
+        log("Retrieving measurements for module: " + reference);
+
+        // Parse date parameters if provided
+        String startDateStr = request.getParameter("startDate");
+        String endDateStr = request.getParameter("endDate");
+
+        long startDate = 0;
+        long endDate = Long.MAX_VALUE;
+
+        // Parse startDate if provided
+        if (startDateStr != null && !startDateStr.isEmpty()) {
+            try {
+                startDate = parseISODateToMillis(startDateStr);
+                log("Start date: " + startDateStr + " (" + startDate + " ms)");
+            } catch (Exception e) {
+                log("ERROR: Invalid startDate format: " + startDateStr);
+                return "ERR_INVALID_VALUE";
+            }
+        }
+
+        // Parse endDate if provided
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            try {
+                endDate = parseISODateToMillis(endDateStr);
+                log("End date: " + endDateStr + " (" + endDate + " ms)");
+            } catch (Exception e) {
+                log("ERROR: Invalid endDate format: " + endDateStr);
+                return "ERR_INVALID_VALUE";
+            }
+        }
+
+        // Validate date range
+        if (startDate > endDate) {
+            log("ERROR: startDate cannot be after endDate");
+            return "ERR_INVALID_VALUE";
+        }
+
+        // Retrieve measurements from database
+        try {
+            java.util.List<Measurements> measurements = dataDriver.findMeasurementsByModuleId(
+                module.getId(), 
+                new Date(startDate), 
+                new Date(endDate)
+            );
+
+            if (measurements == null || measurements.isEmpty()) {
+                log("No measurements found for module " + reference);
+                return "ERR_NO_DATA";
+            }
+
+            log("Found " + measurements.size() + " measurements for " + reference);
+
+            // Format response: send measurements to media analysis server
+            return formatMeasurementsResponse(measurements, reference);
+
+        } catch (Exception e) {
+            log("ERROR: Failed to retrieve measurements: " + e.getMessage());
+            e.printStackTrace();
+            return "ERR_DATABASE_ERROR";
+        }
+    }
+
+    /**
+     * Format measurements response
+     * Returns JSON array of measurements for media analysis
+     */
+    private String formatMeasurementsResponse(java.util.List<Measurements> measurements, String reference) {
+        StringBuilder response = new StringBuilder();
+        response.append("OK\n");
+        response.append("[");
+
+        for (int i = 0; i < measurements.size(); i++) {
+            Measurements measurement = measurements.get(i);
+            
+            // Create JSON object for each measurement
+            response.append("{");
+            response.append("\"id\":\"").append(measurement.getId()).append("\",");
+            response.append("\"date\":\"").append(measurement.getDate()).append("\",");
+            response.append("\"sensorType\":\"").append(measurement.getMeasurement() != null ? "Unknown" : "").append("\",");
+
+            if (measurement.getMeasurement() != null) {
+                Measurements.Measurement m = measurement.getMeasurement();
+                response.append("\"data\":{");
+                
+                if (m.getFillLevel() != null) {
+                    response.append("\"fillLevel\":").append(m.getFillLevel()).append(",");
+                }
+                if (m.getWeight() != null) {
+                    response.append("\"weight\":").append(m.getWeight()).append(",");
+                }
+                if (m.getTemperature() != null) {
+                    response.append("\"temperature\":").append(m.getTemperature()).append(",");
+                }
+                if (m.getHumidity() != null) {
+                    response.append("\"humidity\":").append(m.getHumidity()).append(",");
+                }
+                if (m.getAirQuality() != null) {
+                    response.append("\"airQuality\":").append(m.getAirQuality()).append(",");
+                }
+                if (m.getBatteryLevel() != null) {
+                    response.append("\"batteryLevel\":").append(m.getBatteryLevel()).append(",");
+                }
+                if (m.getWasteType() != null) {
+                    response.append("\"wasteType\":\"").append(m.getWasteType()).append("\",");
+                }
+                
+                // Remove trailing comma if exists
+                if (response.charAt(response.length() - 1) == ',') {
+                    response.setLength(response.length() - 1);
+                }
+                response.append("}");
+            }
+
+            response.append("}");
+            
+            if (i < measurements.size() - 1) {
+                response.append(",");
+            }
+        }
+
+        response.append("]\n");
+        log("Measurements response formatted for " + reference);
+        return response.toString();
+    }
+
+    /**
+     * Parse ISO 8601 date string to milliseconds
+     * Supports formats: yyyy-MM-ddTHH:mm:ss or Unix timestamp
+     */
+    private long parseISODateToMillis(String dateStr) throws Exception {
+        // Check if it's a Unix timestamp
+        if (dateStr.matches("^\\d{10,13}$")) {
+            long timestamp = Long.parseLong(dateStr);
+            // If 10 digits, it's in seconds
+            if (dateStr.length() == 10) {
+                return timestamp * 1000;
+            }
+            return timestamp;
+        }
+
+        // Parse ISO 8601
+        String[] parts = dateStr.split("T");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid ISO 8601 format");
+        }
+
+        String[] dateParts = parts[0].split("-");
+        String[] timeParts = parts[1].split(":");
+
+        int year = Integer.parseInt(dateParts[0]);
+        int month = Integer.parseInt(dateParts[1]);
+        int day = Integer.parseInt(dateParts[2]);
+        int hour = Integer.parseInt(timeParts[0]);
+        int minute = Integer.parseInt(timeParts[1]);
+        int second = Integer.parseInt(timeParts[2].split("\\.")[0]);
+
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(year, month - 1, day, hour, minute, second);
+
+        return cal.getTimeInMillis();
     }
 
     /**

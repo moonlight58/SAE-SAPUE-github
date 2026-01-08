@@ -16,6 +16,13 @@ import java.util.regex.Pattern;
  * - CONFIG_GET <reference>
  * - CONFIG_UPDATE <reference> <key>:<value> [<key>:<value> ...]
  * - STATUS <reference> <key>:<value> [<key>:<value> ...]
+ * - MEASUREMENT <reference> [startDate:<date>] [endDate:<date>]
+ * - IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+ * - IMAGE UPDATE <cleanerId> <reportId> <image_base64>
+ * - IMAGE ANALYSE <image_base64>
+ * - PING <reference>
+ * - HELP [<command>]
+ * - DISCONNECT <reference>
  */
 public class ProtocolParser {
 
@@ -57,6 +64,9 @@ public class ProtocolParser {
 
             case "PING":
                 return parsePing(parts, rawRequest);
+
+            case "MEASUREMENT":
+                return parseMeasurement(parts, rawRequest);
 
             case "IMAGE":
                 // Check subcommand (DATABASE or UPDATE)
@@ -340,6 +350,166 @@ public class ProtocolParser {
         }
 
         return new ProtocolRequest("STATUS", reference, params, rawRequest);
+    }
+
+    /**
+     * Parse MEASUREMENT command
+     * Format: MEASUREMENT <reference> [startDate:<date>] [endDate:<date>]
+     * Dates format: ISO 8601 (yyyy-MM-ddTHH:mm:ss) or Unix timestamp (milliseconds)
+     * 
+     * Examples:
+     * - MEASUREMENT MC-001 (all measurements)
+     * - MEASUREMENT MC-001 startDate:2026-01-01T00:00:00 endDate:2026-01-31T23:59:59
+     * - MEASUREMENT MC-001 startDate:1735689600000 endDate:1738368000000
+     */
+    private static ProtocolRequest parseMeasurement(String[] parts, String rawRequest) throws ProtocolException {
+        if (parts.length < 2) {
+            throw new ProtocolException("ERR_MISSING_PARAMS", "MEASUREMENT requires: reference");
+        }
+
+        String reference = parts[1];
+
+        // Validate reference
+        if (!isValidReference(reference)) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reference format: " + reference);
+        }
+
+        // Parse optional date parameters
+        Map<String, String> params = new HashMap<>();
+        String startDate = null;
+        String endDate = null;
+
+        for (int i = 2; i < parts.length; i++) {
+            String part = parts[i];
+            
+            if (part.startsWith("startDate:")) {
+                startDate = part.substring("startDate:".length()).trim();
+                if (startDate.isEmpty()) {
+                    throw new ProtocolException("ERR_INVALID_VALUE", "startDate cannot be empty");
+                }
+                // Validate date format
+                if (!isValidDateFormat(startDate)) {
+                    throw new ProtocolException("ERR_INVALID_VALUE", "Invalid startDate format: " + startDate + " (expected ISO 8601 or Unix timestamp)");
+                }
+                params.put("startDate", startDate);
+            } else if (part.startsWith("endDate:")) {
+                endDate = part.substring("endDate:".length()).trim();
+                if (endDate.isEmpty()) {
+                    throw new ProtocolException("ERR_INVALID_VALUE", "endDate cannot be empty");
+                }
+                // Validate date format
+                if (!isValidDateFormat(endDate)) {
+                    throw new ProtocolException("ERR_INVALID_VALUE", "Invalid endDate format: " + endDate + " (expected ISO 8601 or Unix timestamp)");
+                }
+                params.put("endDate", endDate);
+            } else {
+                throw new ProtocolException("ERR_INVALID_FORMAT", "Unknown parameter: " + part + " (expected startDate: or endDate:)");
+            }
+        }
+
+        // Validate date range if both are provided
+        if (startDate != null && endDate != null) {
+            long startTime = parseDateToMillis(startDate);
+            long endTime = parseDateToMillis(endDate);
+            
+            if (startTime > endTime) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "startDate must be before endDate");
+            }
+        }
+
+        return new ProtocolRequest("MEASUREMENT", reference, params, rawRequest);
+    }
+
+    /**
+     * Validate date format (ISO 8601 or Unix timestamp)
+     */
+    private static boolean isValidDateFormat(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return false;
+        }
+
+        // Check if it's a Unix timestamp (all digits, 10-13 digits)
+        if (dateStr.matches("^\\d{10,13}$")) {
+            return true;
+        }
+
+        // Check if it's ISO 8601 format (yyyy-MM-ddTHH:mm:ss)
+        if (dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$")) {
+            return true;
+        }
+
+        // Check if it's ISO 8601 with milliseconds (yyyy-MM-ddTHH:mm:ss.SSS)
+        if (dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{1,3}$")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Parse date string to milliseconds
+     * Supports ISO 8601 and Unix timestamp formats
+     */
+    private static long parseDateToMillis(String dateStr) throws ProtocolException {
+        // If it's already a Unix timestamp
+        if (dateStr.matches("^\\d{10,13}$")) {
+            try {
+                long timestamp = Long.parseLong(dateStr);
+                // If 10 digits, it's in seconds, convert to millis
+                if (dateStr.length() == 10) {
+                    return timestamp * 1000;
+                }
+                return timestamp;
+            } catch (NumberFormatException e) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "Invalid timestamp: " + dateStr);
+            }
+        }
+
+        // If it's ISO 8601
+        try {
+            // Parse ISO 8601 string to Date
+            // Format: yyyy-MM-ddTHH:mm:ss or yyyy-MM-ddTHH:mm:ss.SSS
+            String[] parts = dateStr.split("T");
+            if (parts.length != 2) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "Invalid ISO 8601 format: " + dateStr);
+            }
+
+            String[] dateParts = parts[0].split("-");
+            String[] timeParts = parts[1].split(":");
+
+            if (dateParts.length != 3 || timeParts.length != 3) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "Invalid ISO 8601 format: " + dateStr);
+            }
+
+            int year = Integer.parseInt(dateParts[0]);
+            int month = Integer.parseInt(dateParts[1]);
+            int day = Integer.parseInt(dateParts[2]);
+            int hour = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
+            
+            String[] secondsMillis = timeParts[2].split("\\.");
+            int second = Integer.parseInt(secondsMillis[0]);
+            int millis = 0;
+            if (secondsMillis.length > 1) {
+                millis = Integer.parseInt(secondsMillis[1]);
+            }
+
+            // Simple validation
+            if (month < 1 || month > 12 || day < 1 || day > 31 || 
+                hour < 0 || hour > 23 || minute < 0 || minute > 59 || 
+                second < 0 || second > 59) {
+                throw new ProtocolException("ERR_INVALID_VALUE", "Invalid date/time values: " + dateStr);
+            }
+
+            // Create calendar and convert to millis
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.set(year, month - 1, day, hour, minute, second);
+            cal.set(java.util.Calendar.MILLISECOND, millis);
+
+            return cal.getTimeInMillis();
+        } catch (NumberFormatException e) {
+            throw new ProtocolException("ERR_INVALID_VALUE", "Invalid ISO 8601 date: " + dateStr);
+        }
     }
 
     /**
