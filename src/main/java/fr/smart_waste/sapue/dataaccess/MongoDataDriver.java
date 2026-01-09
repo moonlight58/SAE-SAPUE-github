@@ -49,7 +49,8 @@ public class MongoDataDriver implements DataDriver {
 
     /**
      * Constructor
-     * @param mongoURL MongoDB connection string
+     * 
+     * @param mongoURL     MongoDB connection string
      * @param databaseName Database name
      */
     public MongoDataDriver(String mongoURL, String databaseName) {
@@ -60,8 +61,7 @@ public class MongoDataDriver implements DataDriver {
         this.pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
         this.pojoCodecRegistry = fromRegistries(
                 getDefaultCodecRegistry(),
-                fromProviders(pojoCodecProvider)
-        );
+                fromProviders(pojoCodecProvider));
 
         // Initialize connection and collections
         init();
@@ -69,6 +69,7 @@ public class MongoDataDriver implements DataDriver {
 
     /**
      * Initialize MongoDB connection and collections
+     * 
      * @return true if successful, false otherwise
      */
     public boolean init() {
@@ -95,13 +96,12 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-
-
     // ========== Module Operations ==========
 
     @Override
     public synchronized ObjectId insertModule(Modules module) {
-        if (module == null) return null;
+        if (module == null)
+            return null;
         try {
             InsertOneResult result = modules.insertOne(module);
             return result.getInsertedId() != null
@@ -116,7 +116,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Modules findModuleById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return modules.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -127,18 +128,28 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Modules findModuleByKey(String key) {
-        if (key == null || key.isEmpty()) return null;
+        if (key == null || key.isEmpty())
+            return null;
         try {
-            return modules.find(eq("key", key)).first();
+            // Try explicit key first
+            Modules module = modules.find(eq("key", key)).first();
+
+            // If not found, try by name (fallback for legacy/simple devices)
+            if (module == null) {
+                module = modules.find(eq("name", key)).first();
+            }
+
+            return module;
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding module by key: " + e.getMessage());
+            System.err.println("[MongoDataDriver] Error finding module by key/name: " + e.getMessage());
             return null;
         }
     }
 
     @Override
     public boolean updateModule(Modules module) {
-        if (module == null || module.getId() == null) return false;
+        if (module == null || module.getId() == null)
+            return false;
         try {
             return modules.replaceOne(eq("_id", module.getId()), module).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -149,7 +160,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteModule(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return modules.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -172,7 +184,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public synchronized ObjectId insertChipset(Chipsets chipset) {
-        if (chipset == null) return null;
+        if (chipset == null)
+            return null;
         try {
             InsertOneResult result = chipsets.insertOne(chipset);
             return result.getInsertedId() != null
@@ -187,7 +200,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Chipsets findChipsetById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return chipsets.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -198,7 +212,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public List<Chipsets> findChipsetsByModuleId(ObjectId moduleId) {
-        if (moduleId == null) return new ArrayList<>();
+        if (moduleId == null)
+            return new ArrayList<>();
         try {
             return chipsets.find(eq("moduleID", moduleId)).into(new ArrayList<>());
         } catch (Exception e) {
@@ -209,7 +224,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateChipset(Chipsets chipset) {
-        if (chipset == null || chipset.getId() == null) return false;
+        if (chipset == null || chipset.getId() == null)
+            return false;
         try {
             return chipsets.replaceOne(eq("_id", chipset.getId()), chipset).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -220,7 +236,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteChipset(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return chipsets.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -243,7 +260,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Users findUserById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return users.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -254,7 +272,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Users findUserByMail(String mail) {
-        if (mail == null || mail.isEmpty()) return null;
+        if (mail == null || mail.isEmpty())
+            return null;
         try {
             return users.find(eq("mail", mail)).first();
         } catch (Exception e) {
@@ -265,7 +284,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public synchronized ObjectId insertUser(Users user) {
-        if (user == null) return null;
+        if (user == null)
+            return null;
         try {
             InsertOneResult result = users.insertOne(user);
             return result.getInsertedId() != null
@@ -280,7 +300,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateUser(Users user) {
-        if (user == null || user.getId() == null) return false;
+        if (user == null || user.getId() == null)
+            return false;
         try {
             return users.replaceOne(eq("_id", user.getId()), user).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -291,7 +312,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteUser(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return users.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -310,13 +332,12 @@ public class MongoDataDriver implements DataDriver {
         }
     }
 
-
-
     // ========== Measurements Operations ==========
 
     @Override
     public synchronized ObjectId insertMeasurement(Measurements measurement) {
-        if (measurement == null) return null;
+        if (measurement == null)
+            return null;
         try {
             InsertOneResult result = measurements.insertOne(measurement);
             return result.getInsertedId() != null
@@ -331,7 +352,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Measurements findMeasurementById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return measurements.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -342,7 +364,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public List<Measurements> findMeasurementsByController(ObjectId idController) {
-        if (idController == null) return new ArrayList<>();
+        if (idController == null)
+            return new ArrayList<>();
         try {
             return measurements.find(eq("id_Controller", idController)).into(new ArrayList<>());
         } catch (Exception e) {
@@ -352,38 +375,40 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public List<Measurements> findMeasurementsByModuleId(ObjectId idController, java.util.Date startDate, java.util.Date endDate) {
-        if (idController == null) return new ArrayList<>();
+    public List<Measurements> findMeasurementsByModuleId(ObjectId idController, java.util.Date startDate,
+            java.util.Date endDate) {
+        if (idController == null)
+            return new ArrayList<>();
         try {
             // Build filter: id_Controller + date range
             org.bson.conversions.Bson filter = com.mongodb.client.model.Filters.and(
-                eq("id_Controller", idController),
-                com.mongodb.client.model.Filters.gte("date", startDate),
-                com.mongodb.client.model.Filters.lte("date", endDate)
-            );
-            
+                    eq("id_Controller", idController),
+                    com.mongodb.client.model.Filters.gte("date", startDate),
+                    com.mongodb.client.model.Filters.lte("date", endDate));
+
             return measurements.find(filter)
-                .sort(com.mongodb.client.model.Sorts.descending("date"))
-                .into(new ArrayList<>());
+                    .sort(com.mongodb.client.model.Sorts.descending("date"))
+                    .into(new ArrayList<>());
         } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error finding measurements by module ID with date range: " + e.getMessage());
+            System.err.println(
+                    "[MongoDataDriver] Error finding measurements by module ID with date range: " + e.getMessage());
             return new ArrayList<>();
         }
     }
 
     @Override
     public List<Measurements> findMeasurementsByDateRange(java.util.Date startDate, java.util.Date endDate) {
-        if (startDate == null || endDate == null) return new ArrayList<>();
+        if (startDate == null || endDate == null)
+            return new ArrayList<>();
         try {
             // Build filter: date range only (no module filter - retrieves from ALL modules)
             org.bson.conversions.Bson filter = com.mongodb.client.model.Filters.and(
-                com.mongodb.client.model.Filters.gte("date", startDate),
-                com.mongodb.client.model.Filters.lte("date", endDate)
-            );
-            
+                    com.mongodb.client.model.Filters.gte("date", startDate),
+                    com.mongodb.client.model.Filters.lte("date", endDate));
+
             return measurements.find(filter)
-                .sort(com.mongodb.client.model.Sorts.descending("date"))
-                .into(new ArrayList<>());
+                    .sort(com.mongodb.client.model.Sorts.descending("date"))
+                    .into(new ArrayList<>());
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding measurements by date range: " + e.getMessage());
             return new ArrayList<>();
@@ -392,7 +417,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateMeasurement(Measurements measurement) {
-        if (measurement == null || measurement.getId() == null) return false;
+        if (measurement == null || measurement.getId() == null)
+            return false;
         try {
             return measurements.replaceOne(eq("_id", measurement.getId()), measurement).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -403,7 +429,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteMeasurement(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return measurements.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -426,7 +453,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public synchronized ObjectId insertAnalyseMedia(AnalyseMedia a) {
-        if (a == null) return null;
+        if (a == null)
+            return null;
         try {
             InsertOneResult result = analyseMedias.insertOne(a);
             return result.getInsertedId() != null
@@ -441,7 +469,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public AnalyseMedia findAnalyseMediaById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return analyseMedias.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -452,7 +481,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateAnalyseMedia(AnalyseMedia a) {
-        if (a == null || a.getId() == null) return false;
+        if (a == null || a.getId() == null)
+            return false;
         try {
             return analyseMedias.replaceOne(eq("_id", a.getId()), a).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -463,7 +493,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteAnalyseMedia(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return analyseMedias.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -484,12 +515,13 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public String getHexaIconByWasteBinType(String wasteBinType) {
-        if (wasteBinType == null || wasteBinType.isEmpty()) return "00"; // Default fallback
+        if (wasteBinType == null || wasteBinType.isEmpty())
+            return "00"; // Default fallback
 
         try {
             // Trouver le chipset "oled ssd1306" qui contient les icônes
             Chipsets oledChipset = chipsets.find(eq("name", "oled ssd1306")).first();
-            
+
             if (oledChipset == null || oledChipset.getConfig() == null) {
                 System.err.println("[MongoDataDriver] oled ssd1306 chipset not found");
                 return "00"; // Default icon
@@ -497,15 +529,15 @@ public class MongoDataDriver implements DataDriver {
 
             // Mapper le wasteBinType vers la clé config correcte
             String configKey = mapWasteBinTypeToConfigKey(wasteBinType);
-            
+
             // Récupérer l'icône depuis config
             String icon = oledChipset.getConfig().getString(configKey);
-            
+
             if (icon == null || icon.isEmpty()) {
                 System.err.println("[MongoDataDriver] Icon not found for key: " + configKey);
                 return "00"; // Default icon
             }
-            
+
             return icon;
 
         } catch (Exception e) {
@@ -552,7 +584,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public synchronized ObjectId insertReport(Reports report) {
-        if (report == null) return null;
+        if (report == null)
+            return null;
         try {
             InsertOneResult result = reports.insertOne(report);
             return result.getInsertedId() != null
@@ -567,7 +600,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public Reports findReportById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return reports.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -578,7 +612,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public List<Reports> findReportsByStatus(String status) {
-        if (status == null ||status.isEmpty()) return new ArrayList<>();
+        if (status == null || status.isEmpty())
+            return new ArrayList<>();
         try {
             return reports.find(eq("status", status)).into(new ArrayList<>());
         } catch (Exception e) {
@@ -589,7 +624,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public List<Reports> findReportsByMapPoint(ObjectId mapPointId) {
-        if (mapPointId == null) return new ArrayList<>();
+        if (mapPointId == null)
+            return new ArrayList<>();
         try {
             return reports.find(eq("mapPoint", mapPointId)).into(new ArrayList<>());
         } catch (Exception e) {
@@ -600,7 +636,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateReport(Reports report) {
-        if (report == null || report.getId() == null) return false;
+        if (report == null || report.getId() == null)
+            return false;
         try {
             return reports.replaceOne(eq("_id", report.getId()), report).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -611,7 +648,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteReport(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return reports.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {
@@ -636,7 +674,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public synchronized ObjectId insertMapPoint(MapPoints mapPoint) {
-        if (mapPoint == null) return null;
+        if (mapPoint == null)
+            return null;
         try {
             InsertOneResult result = mapPoints.insertOne(mapPoint);
             return result.getInsertedId() != null
@@ -651,7 +690,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public MapPoints findMapPointById(ObjectId id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         try {
             return mapPoints.find(eq("_id", id)).first();
         } catch (Exception e) {
@@ -662,7 +702,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public List<MapPoints> findMapPointsByType(String type) {
-        if (type == null || type.isEmpty()) return new ArrayList<>();
+        if (type == null || type.isEmpty())
+            return new ArrayList<>();
         try {
             return mapPoints.find(eq("type", type)).into(new ArrayList<>());
         } catch (Exception e) {
@@ -680,7 +721,7 @@ public class MongoDataDriver implements DataDriver {
                             new Document("type", "Point")
                                     .append("coordinates", Arrays.asList(longitude, latitude)))
                             .append("$maxDistance", maxDistanceMeters)));
-            
+
             return mapPoints.find(geoNearQuery).into(new ArrayList<>());
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding nearby map points: " + e.getMessage());
@@ -690,13 +731,16 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public MapPoints findMapPointByModule(String moduleKey) {
-        if (moduleKey == null || moduleKey.isEmpty()) return null;
+        if (moduleKey == null || moduleKey.isEmpty())
+            return null;
         try {
-            // Find MapPoint where hardwareConfig.modules array contains a module with this key
+            // Find MapPoint where hardwareConfig.modules array contains a module with this
+            // key
             // Note: This requires looking up the module ObjectId first
             Modules module = findModuleByKey(moduleKey);
-            if (module == null || module.getId() == null) return null;
-            
+            if (module == null || module.getId() == null)
+                return null;
+
             return mapPoints.find(eq("modules", module.getId())).first();
         } catch (Exception e) {
             System.err.println("[MongoDataDriver] Error finding map point by module: " + e.getMessage());
@@ -706,7 +750,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement) {
-        if (mapPointId == null || measurement == null) return false;
+        if (mapPointId == null || measurement == null)
+            return false;
         try {
             Document updateDoc = new Document("$push", new Document("lastMeasurements", measurement));
             return mapPoints.updateOne(eq("_id", mapPointId), updateDoc).getModifiedCount() > 0;
@@ -718,7 +763,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean updateMapPoint(MapPoints mapPoint) {
-        if (mapPoint == null || mapPoint.getId() == null) return false;
+        if (mapPoint == null || mapPoint.getId() == null)
+            return false;
         try {
             return mapPoints.replaceOne(eq("_id", mapPoint.getId()), mapPoint).getModifiedCount() > 0;
         } catch (Exception e) {
@@ -729,7 +775,8 @@ public class MongoDataDriver implements DataDriver {
 
     @Override
     public boolean deleteMapPoint(ObjectId id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         try {
             return mapPoints.deleteOne(eq("_id", id)).getDeletedCount() > 0;
         } catch (Exception e) {

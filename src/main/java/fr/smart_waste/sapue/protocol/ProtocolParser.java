@@ -17,7 +17,8 @@ import java.util.regex.Pattern;
  * - CONFIG_UPDATE <reference> <key>:<value> [<key>:<value> ...]
  * - STATUS <reference> <key>:<value> [<key>:<value> ...]
  * - MEASUREMENT <reference> [startDate:<date>] [endDate:<date>]
- * - IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+ * - IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data>
+ * <image_base64>
  * - IMAGE UPDATE <cleanerId> <reportId> <image_base64>
  * - IMAGE ANALYSE <image_base64>
  * - PING <reference>
@@ -28,6 +29,7 @@ public class ProtocolParser {
 
     /**
      * Parse raw request string into ProtocolRequest object
+     * 
      * @param rawRequest Raw request string
      * @return ProtocolRequest object
      * @throws ProtocolException if parsing fails
@@ -130,7 +132,8 @@ public class ProtocolParser {
      */
     private static ProtocolRequest parseData(String[] parts, String rawRequest) throws ProtocolException {
         if (parts.length < 3) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", "DATA requires: reference, and either sensorType + pairs OR sensor dictionaries");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "DATA requires: reference, and either sensorType + pairs OR sensor dictionaries");
         }
 
         String reference = parts[1];
@@ -147,7 +150,8 @@ public class ProtocolParser {
 
         // Traditional format: DATA <reference> <sensorType> <key>:<value> ...
         if (parts.length < 4) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", "Traditional DATA requires: sensorType, at least one data pair");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "Traditional DATA requires: sensorType, at least one data pair");
         }
 
         String sensorType = parts[2];
@@ -166,7 +170,8 @@ public class ProtocolParser {
             String[] keyValue = pair.split(":", 2);
 
             if (keyValue.length != 2) {
-                throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid data pair format: " + pair + " (expected key:value)");
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "Invalid data pair format: " + pair + " (expected key:value)");
             }
 
             String key = keyValue[0].trim();
@@ -188,69 +193,74 @@ public class ProtocolParser {
      */
     private static ProtocolRequest parseMultiSensorData(String reference, String rawRequest) throws ProtocolException {
         List<ProtocolRequest.SensorData> multiSensorData = new ArrayList<>();
-        
+
         // Find all blocks within curly braces
         Pattern pattern = Pattern.compile("\\{([^}]*)\\}");
         Matcher matcher = pattern.matcher(rawRequest);
-        
+
         while (matcher.find()) {
             String content = matcher.group(1).trim();
-            if (content.isEmpty()) continue;
-            
+            if (content.isEmpty())
+                continue;
+
             // Expected format: "SensorType": "key":val "key":val ...
             // or maybe just: "SensorType": key:val key:val ...
             // The user's example: {"BME280": "temperature":22.5 "humidity":65.0}
-            
+
             int firstColon = content.indexOf(':');
             if (firstColon == -1) {
-                throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid sensor block format: " + content + " (expected SensorType: data)");
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "Invalid sensor block format: " + content + " (expected SensorType: data)");
             }
-            
+
             String sensorType = content.substring(0, firstColon).trim();
             // Remove quotes if present
             if (sensorType.startsWith("\"") && sensorType.endsWith("\"") && sensorType.length() > 1) {
                 sensorType = sensorType.substring(1, sensorType.length() - 1);
             }
-            
+
             if (!isValidSensorType(sensorType)) {
-                 throw new ProtocolException("ERR_SENSOR_NOT_FOUND", "Unknown sensor type in block: " + sensorType);
+                throw new ProtocolException("ERR_SENSOR_NOT_FOUND", "Unknown sensor type in block: " + sensorType);
             }
-            
+
             String dataPart = content.substring(firstColon + 1).trim();
             Map<String, String> params = new HashMap<>();
-            
+
             // Split dataPart by space, but handle potential quotes?
             // For now assume spaces between key:value pairs as in example
             String[] pairs = dataPart.split("\\s+");
             for (String pair : pairs) {
-                if (pair.isEmpty()) continue;
-                
+                if (pair.isEmpty())
+                    continue;
+
                 String[] keyValue = pair.split(":", 2);
                 if (keyValue.length != 2) {
                     // Could be a quoted string with spaces, but protocol is usually simple
-                    continue; 
+                    continue;
                 }
-                
+
                 String key = keyValue[0].trim();
-                if (key.startsWith("\"") && key.endsWith("\"") && key.length() > 1) key = key.substring(1, key.length() - 1);
-                
+                if (key.startsWith("\"") && key.endsWith("\"") && key.length() > 1)
+                    key = key.substring(1, key.length() - 1);
+
                 String value = keyValue[1].trim();
-                if (value.startsWith("\"") && value.endsWith("\"") && value.length() > 1) value = value.substring(1, value.length() - 1);
-                
+                if (value.startsWith("\"") && value.endsWith("\"") && value.length() > 1)
+                    value = value.substring(1, value.length() - 1);
+
                 if (!key.isEmpty() && !value.isEmpty()) {
                     params.put(key, value);
                 }
             }
-            
+
             if (!params.isEmpty()) {
                 multiSensorData.add(new ProtocolRequest.SensorData(sensorType, params));
             }
         }
-        
+
         if (multiSensorData.isEmpty()) {
-             throw new ProtocolException("ERR_INVALID_FORMAT", "No valid sensor data found in blocks");
+            throw new ProtocolException("ERR_INVALID_FORMAT", "No valid sensor data found in blocks");
         }
-        
+
         return new ProtocolRequest("DATA", reference, new HashMap<>(), multiSensorData, rawRequest);
     }
 
@@ -279,7 +289,8 @@ public class ProtocolParser {
      */
     private static ProtocolRequest parseConfigUpdate(String[] parts, String rawRequest) throws ProtocolException {
         if (parts.length < 3) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", "CONFIG_UPDATE requires: reference, at least one config pair");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "CONFIG_UPDATE requires: reference, at least one config pair");
         }
 
         String reference = parts[1];
@@ -296,7 +307,8 @@ public class ProtocolParser {
             String[] keyValue = pair.split(":", 2);
 
             if (keyValue.length != 2) {
-                throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid config pair format: " + pair + " (expected key:value)");
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "Invalid config pair format: " + pair + " (expected key:value)");
             }
 
             String key = keyValue[0].trim();
@@ -336,7 +348,8 @@ public class ProtocolParser {
             String[] keyValue = pair.split(":", 2);
 
             if (keyValue.length != 2) {
-                throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid status pair format: " + pair + " (expected key:value)");
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "Invalid status pair format: " + pair + " (expected key:value)");
             }
 
             String key = keyValue[0].trim();
@@ -359,7 +372,8 @@ public class ProtocolParser {
      * 
      * Examples:
      * - MEASUREMENT MC-001 (all measurements)
-     * - MEASUREMENT MC-001 startDate:2026-01-01T00:00:00 endDate:2026-01-31T23:59:59
+     * - MEASUREMENT MC-001 startDate:2026-01-01T00:00:00
+     * endDate:2026-01-31T23:59:59
      * - MEASUREMENT MC-001 startDate:1735689600000 endDate:1738368000000
      */
     private static ProtocolRequest parseMeasurement(String[] parts, String rawRequest) throws ProtocolException {
@@ -381,7 +395,7 @@ public class ProtocolParser {
 
         for (int i = 2; i < parts.length; i++) {
             String part = parts[i];
-            
+
             if (part.startsWith("startDate:")) {
                 startDate = part.substring("startDate:".length()).trim();
                 if (startDate.isEmpty()) {
@@ -389,7 +403,8 @@ public class ProtocolParser {
                 }
                 // Validate date format
                 if (!isValidDateFormat(startDate)) {
-                    throw new ProtocolException("ERR_INVALID_VALUE", "Invalid startDate format: " + startDate + " (expected ISO 8601 or Unix timestamp)");
+                    throw new ProtocolException("ERR_INVALID_VALUE",
+                            "Invalid startDate format: " + startDate + " (expected ISO 8601 or Unix timestamp)");
                 }
                 params.put("startDate", startDate);
             } else if (part.startsWith("endDate:")) {
@@ -399,11 +414,13 @@ public class ProtocolParser {
                 }
                 // Validate date format
                 if (!isValidDateFormat(endDate)) {
-                    throw new ProtocolException("ERR_INVALID_VALUE", "Invalid endDate format: " + endDate + " (expected ISO 8601 or Unix timestamp)");
+                    throw new ProtocolException("ERR_INVALID_VALUE",
+                            "Invalid endDate format: " + endDate + " (expected ISO 8601 or Unix timestamp)");
                 }
                 params.put("endDate", endDate);
             } else {
-                throw new ProtocolException("ERR_INVALID_FORMAT", "Unknown parameter: " + part + " (expected startDate: or endDate:)");
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "Unknown parameter: " + part + " (expected startDate: or endDate:)");
             }
         }
 
@@ -411,7 +428,7 @@ public class ProtocolParser {
         if (startDate != null && endDate != null) {
             long startTime = parseDateToMillis(startDate);
             long endTime = parseDateToMillis(endDate);
-            
+
             if (startTime > endTime) {
                 throw new ProtocolException("ERR_INVALID_VALUE", "startDate must be before endDate");
             }
@@ -486,7 +503,7 @@ public class ProtocolParser {
             int day = Integer.parseInt(dateParts[2]);
             int hour = Integer.parseInt(timeParts[0]);
             int minute = Integer.parseInt(timeParts[1]);
-            
+
             String[] secondsMillis = timeParts[2].split("\\.");
             int second = Integer.parseInt(secondsMillis[0]);
             int millis = 0;
@@ -495,9 +512,9 @@ public class ProtocolParser {
             }
 
             // Simple validation
-            if (month < 1 || month > 12 || day < 1 || day > 31 || 
-                hour < 0 || hour > 23 || minute < 0 || minute > 59 || 
-                second < 0 || second > 59) {
+            if (month < 1 || month > 12 || day < 1 || day > 31 ||
+                    hour < 0 || hour > 23 || minute < 0 || minute > 59 ||
+                    second < 0 || second > 59) {
                 throw new ProtocolException("ERR_INVALID_VALUE", "Invalid date/time values: " + dateStr);
             }
 
@@ -514,13 +531,16 @@ public class ProtocolParser {
 
     /**
      * Parse IMAGE DATABASE command
-     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes>
+     * <bbox_data> <image_base64>
      * bbox_data format: x1,y1,x2,y2;x1,y1,x2,y2;...
      * 
-     * Example: IMAGE DATABASE 507f1f77bcf86cd799439011 6.0240:47.2378 2 100,150,200,250;300,350,400,450 /9j/4AAQ...
+     * Example: IMAGE DATABASE 507f1f77bcf86cd799439011 6.0240:47.2378 2
+     * 100,150,200,250;300,350,400,450 /9j/4AAQ...
      */
     private static ProtocolRequest parseImageDatabase(String[] parts, String rawRequest) throws ProtocolException {
-        // IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+        // IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data>
+        // <image_base64>
         // parts[0] = IMAGE
         // parts[1] = DATABASE
         // parts[2] = userId
@@ -528,35 +548,37 @@ public class ProtocolParser {
         // parts[4] = nb_bboxes
         // parts[5] = bbox_data
         // parts[6...] = image_base64 (peut contenir des espaces)
-        
+
         if (parts.length < 7) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", 
-                "IMAGE DATABASE requires: userId, longitude:latitude, nb_bboxes, bbox_data, image_base64");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "IMAGE DATABASE requires: userId, longitude:latitude, nb_bboxes, bbox_data, image_base64");
         }
 
         String userId = parts[2];
         String coordsStr = parts[3];
         String nbBboxesStr = parts[4];
         String bboxData = parts[5];
-        
+
         // Reconstruct image_base64 (can span multiple parts if contains spaces)
         StringBuilder imageBase64 = new StringBuilder();
         for (int i = 6; i < parts.length; i++) {
-            if (i > 6) imageBase64.append(" ");
+            if (i > 6)
+                imageBase64.append(" ");
             imageBase64.append(parts[i]);
         }
-        
+
         // Validate userId format (ObjectId = 24 hex chars)
         if (!isValidObjectId(userId)) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid userId format: " + userId);
         }
-        
+
         // Parse coordinates
         String[] coords = coordsStr.split(":");
         if (coords.length != 2) {
-            throw new ProtocolException("ERR_INVALID_FORMAT", "Invalid coordinates format: " + coordsStr + " (expected longitude:latitude)");
+            throw new ProtocolException("ERR_INVALID_FORMAT",
+                    "Invalid coordinates format: " + coordsStr + " (expected longitude:latitude)");
         }
-        
+
         double longitude, latitude;
         try {
             longitude = Double.parseDouble(coords[0]);
@@ -564,7 +586,7 @@ public class ProtocolParser {
         } catch (NumberFormatException e) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid coordinate values: " + coordsStr);
         }
-        
+
         // Parse nb_bboxes
         int nbBboxes;
         try {
@@ -575,21 +597,21 @@ public class ProtocolParser {
         } catch (NumberFormatException e) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid nb_bboxes: " + nbBboxesStr);
         }
-        
+
         // Validate bbox_data format
         if (nbBboxes > 0) {
             String[] bboxes = bboxData.split(";");
             if (bboxes.length != nbBboxes) {
-                throw new ProtocolException("ERR_INVALID_FORMAT", 
-                    "bbox_data mismatch: expected " + nbBboxes + " bboxes, got " + bboxes.length);
+                throw new ProtocolException("ERR_INVALID_FORMAT",
+                        "bbox_data mismatch: expected " + nbBboxes + " bboxes, got " + bboxes.length);
             }
-            
+
             // Validate each bbox format (x1,y1,x2,y2)
             for (String bbox : bboxes) {
                 String[] coords_bbox = bbox.split(",");
                 if (coords_bbox.length != 4) {
-                    throw new ProtocolException("ERR_INVALID_FORMAT", 
-                        "Invalid bbox format: " + bbox + " (expected x1,y1,x2,y2)");
+                    throw new ProtocolException("ERR_INVALID_FORMAT",
+                            "Invalid bbox format: " + bbox + " (expected x1,y1,x2,y2)");
                 }
                 // Validate that all are valid doubles
                 try {
@@ -601,13 +623,13 @@ public class ProtocolParser {
                 }
             }
         }
-        
+
         // Validate base64 (basic check - not empty and valid chars)
         String imageBase64Str = imageBase64.toString().trim();
         if (imageBase64Str.isEmpty()) {
             throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
         }
-        
+
         // Store in parameters
         Map<String, String> params = new HashMap<>();
         params.put("userId", userId);
@@ -616,7 +638,7 @@ public class ProtocolParser {
         params.put("nbBboxes", String.valueOf(nbBboxes));
         params.put("bboxData", bboxData);
         params.put("imageBase64", imageBase64Str);
-        
+
         return new ProtocolRequest("IMAGE_DATABASE", "", params, rawRequest);
     }
 
@@ -624,7 +646,8 @@ public class ProtocolParser {
      * Parse IMAGE UPDATE command
      * Format: IMAGE UPDATE <cleanerId> <reportId> <image_base64>
      * 
-     * Example: IMAGE UPDATE 507f1f77bcf86cd799439011 507f191e810c19729de860ea /9j/4AAQ...
+     * Example: IMAGE UPDATE 507f1f77bcf86cd799439011 507f191e810c19729de860ea
+     * /9j/4AAQ...
      */
     private static ProtocolRequest parseImageUpdate(String[] parts, String rawRequest) throws ProtocolException {
         // IMAGE UPDATE <cleanerId> <reportId> <image_base64>
@@ -633,44 +656,45 @@ public class ProtocolParser {
         // parts[2] = cleanerId
         // parts[3] = reportId
         // parts[4...] = image_base64 (peut contenir des espaces)
-        
+
         if (parts.length < 5) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", 
-                "IMAGE UPDATE requires: cleanerId, reportId, image_base64");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "IMAGE UPDATE requires: cleanerId, reportId, image_base64");
         }
 
         String cleanerId = parts[2];
         String reportId = parts[3];
-        
+
         // Reconstruct image_base64
         StringBuilder imageBase64 = new StringBuilder();
         for (int i = 4; i < parts.length; i++) {
-            if (i > 4) imageBase64.append(" ");
+            if (i > 4)
+                imageBase64.append(" ");
             imageBase64.append(parts[i]);
         }
-        
+
         // Validate cleanerId format (ObjectId)
         if (!isValidObjectId(cleanerId)) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid cleanerId format: " + cleanerId);
         }
-        
+
         // Validate reportId format (ObjectId)
         if (!isValidObjectId(reportId)) {
             throw new ProtocolException("ERR_INVALID_VALUE", "Invalid reportId format: " + reportId);
         }
-        
+
         // Validate base64
         String imageBase64Str = imageBase64.toString().trim();
         if (imageBase64Str.isEmpty()) {
             throw new ProtocolException("ERR_INVALID_VALUE", "image_base64 is empty");
         }
-        
+
         // Store in parameters
         Map<String, String> params = new HashMap<>();
         params.put("cleanerId", cleanerId);
         params.put("reportId", reportId);
         params.put("imageBase64", imageBase64Str);
-        
+
         return new ProtocolRequest("IMAGE_UPDATE", "", params, rawRequest);
     }
 
@@ -685,29 +709,30 @@ public class ProtocolParser {
         // parts[0] = IMAGE
         // parts[1] = ANALYSE
         // parts[2...] = image_base64 (may contain spaces)
-        
+
         if (parts.length < 3) {
-            throw new ProtocolException("ERR_MISSING_PARAMS", 
-                "IMAGE ANALYSE requires: image_base64");
+            throw new ProtocolException("ERR_MISSING_PARAMS",
+                    "IMAGE ANALYSE requires: image_base64");
         }
-        
+
         // Reconstruct image_base64 from all parts after 'ANALYSE'
         StringBuilder imageBase64 = new StringBuilder();
         for (int i = 2; i < parts.length; i++) {
-            if (i > 2) imageBase64.append(" ");
+            if (i > 2)
+                imageBase64.append(" ");
             imageBase64.append(parts[i]);
         }
-        
+
         // Validate base64
         String imageBase64Str = imageBase64.toString().trim();
         if (imageBase64Str.isEmpty()) {
             throw new ProtocolException("ERR_MISSING_PARAMS", "image_base64 is empty");
         }
-        
+
         // Store in parameters
         Map<String, String> params = new HashMap<>();
         params.put("imageBase64", imageBase64Str);
-        
+
         // Reference is not provided in command, use empty string
         return new ProtocolRequest("IMAGE_ANALYSE", "", params, rawRequest);
     }
@@ -825,24 +850,10 @@ public class ProtocolParser {
             return false;
         }
 
-        // List of supported sensor types
-        String[] validTypes = {
-                "BME280",      // Temperature, humidity, pressure
-                "HX711",       // Weight sensor
-                "HCSR04",      // Ultrasonic distance/proximity
-                "MQ135",       // Air quality sensor
-                "REED",        // Reed switch (door open/close)
-                "OV2640",      // Camera module
-                "DHT22",       // Temperature and humidity
-                "BATTERY"      // Battery level
-        };
-
-        for (String valid : validTypes) {
-            if (valid.equalsIgnoreCase(sensorType)) {
-                return true;
-            }
-        }
-
-        return false;
+        // Allow any alphanumeric sensor type (including hyphens and underscores)
+        // This relies on the database configuration to determine if a sensor is valid
+        // for a module
+        // instead of a hardcoded list in the server code.
+        return sensorType.matches("^[a-zA-Z0-9_-]+$");
     }
 }

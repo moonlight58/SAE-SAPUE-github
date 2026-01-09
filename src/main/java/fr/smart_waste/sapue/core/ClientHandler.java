@@ -32,8 +32,8 @@ public class ClientHandler implements Runnable {
     private final ImageStreamHandler imageStreamHandler;
 
     public ClientHandler(Socket clientSocket, DataDriver dataDriver,
-                         ServerConfig config, ServerMetrics metrics,
-                         SmartWasteServer server, MediaAnalysisClient mediaAnalysisClient) {
+            ServerConfig config, ServerMetrics metrics,
+            SmartWasteServer server, MediaAnalysisClient mediaAnalysisClient) {
         this.clientSocket = clientSocket;
         this.dataDriver = dataDriver;
         this.config = config;
@@ -50,7 +50,9 @@ public class ClientHandler implements Runnable {
 
         try {
             // Setup socket timeout
-            clientSocket.setSoTimeout(config.getSocketTimeout());
+            int timeout = config.getSocketTimeout();
+            clientSocket.setSoTimeout(timeout);
+            log("Socket timeout set to: " + timeout + "ms");
 
             // Initialize I/O streams
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -61,6 +63,9 @@ public class ClientHandler implements Runnable {
 
             // Main communication loop
             while (running && !clientSocket.isClosed()) {
+                if (config.isVerboseLogging()) {
+                    log("Waiting for data from " + clientAddress + "...");
+                }
                 String request = in.readLine();
 
                 if (request == null) {
@@ -73,20 +78,22 @@ public class ClientHandler implements Runnable {
                 metrics.addDataReceived(request.length());
 
                 if (config.isVerboseLogging()) {
-                    log("Received from " + clientAddress + ": " + (request.length() > 50 ? request.substring(0, 50) + "..." : request));
+                    log("Received from " + clientAddress + ": "
+                            + (request.length() > 50 ? request.substring(0, 50) + "..." : request));
                 }
 
                 // Handle image streaming
                 if (imageStreamHandler.isStreaming()) {
                     if (imageStreamHandler.appendLine(request)) {
                         // Stream finished, get analysis result
-                        String deviceRef = (microcontrollerReference != null) ? microcontrollerReference : "legacy-device";
+                        String deviceRef = (microcontrollerReference != null) ? microcontrollerReference
+                                : "legacy-device";
                         String response = imageStreamHandler.analyzeAndGetResponse(deviceRef);
-                        
+
                         out.print(response);
                         out.flush();
                         metrics.addDataSent(response.length());
-                        
+
                         if (config.isVerboseLogging()) {
                             log("Sent response to " + clientAddress + " (analysis result)");
                         }
@@ -125,6 +132,7 @@ public class ClientHandler implements Runnable {
 
     /**
      * Process incoming request using ProtocolParser and CommandHandler
+     * 
      * @param request Raw request string
      * @return Response string
      */
@@ -229,9 +237,12 @@ public class ClientHandler implements Runnable {
             }
 
             // Close streams
-            if (in != null) in.close();
-            if (out != null) out.close();
-            if (!clientSocket.isClosed()) clientSocket.close();
+            if (in != null)
+                in.close();
+            if (out != null)
+                out.close();
+            if (!clientSocket.isClosed())
+                clientSocket.close();
 
             metrics.decrementActiveConnections();
             log("Client disconnected: " + clientAddress);

@@ -31,6 +31,7 @@ public class Measurements {
         private Double weight; // Poids en kilogrammes
         private Double temperature; // Température en degrés Celsius
         private Double humidity; // Humidité en pourcentage
+        private Double pressure; // Pression en hPa
         private Double airQuality; // Qualité de l'air
         private Double batteryLevel; // Niveau de batterie en pourcentage
         private String wasteType; // Type de déchet identifié
@@ -41,11 +42,12 @@ public class Measurements {
         }
 
         public Measurement(Double fillLevel, Double weight, Double temperature,
-                            Double humidity, Double airQuality, Double batteryLevel) {
+                Double humidity, Double pressure, Double airQuality, Double batteryLevel) {
             this.fillLevel = fillLevel;
             this.weight = weight;
             this.temperature = temperature;
             this.humidity = humidity;
+            this.pressure = pressure;
             this.airQuality = airQuality;
             this.batteryLevel = batteryLevel;
         }
@@ -81,6 +83,14 @@ public class Measurements {
 
         public void setHumidity(Double humidity) {
             this.humidity = humidity;
+        }
+
+        public Double getPressure() {
+            return pressure;
+        }
+
+        public void setPressure(Double pressure) {
+            this.pressure = pressure;
         }
 
         public Double getAirQuality() {
@@ -122,6 +132,7 @@ public class Measurements {
                     ", weight=" + weight +
                     ", temperature=" + temperature +
                     ", humidity=" + humidity +
+                    ", pressure=" + pressure +
                     ", airQuality=" + airQuality +
                     ", batteryLevel=" + batteryLevel +
                     ", wasteType='" + wasteType + '\'' +

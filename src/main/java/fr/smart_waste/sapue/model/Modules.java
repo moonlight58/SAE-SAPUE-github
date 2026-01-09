@@ -11,62 +11,39 @@ import java.util.List;
  */
 public class Modules {
     private ObjectId id;
-    private String name;                    // required
-    private String key;                     // UUID unique identifier (required)
-    private String uc;                      // Microcontroller type
-    private List<ChipsetReference> chipsets; // Embedded chipset references
+    private String name; // required
+    private String key; // UUID unique identifier (required)
+    private String uc; // Microcontroller type
+    private List<ObjectId> chipsets; // Embedded chipset references (IDs)
     private String ipAddress;
     private String firmwareVersion;
     private Date commissioningDate;
     private Boolean isEnabled;
+    private Config config; // Configuration object
 
-    /**
-     * Nested class for embedded chipset references within Module
-     */
-    public static class ChipsetReference {
-        private ObjectId _id;
-        private String type;
-        private String links;
+    // Nested Config class
+    public static class Config {
+        private Integer measurementInterval;
 
-        public ChipsetReference() {
+        public Config() {
         }
 
-        public ChipsetReference(ObjectId _id, String type, String links) {
-            this._id = _id;
-            this.type = type;
-            this.links = links;
+        public Config(Integer measurementInterval) {
+            this.measurementInterval = measurementInterval;
         }
 
-        public ObjectId get_id() {
-            return _id;
+        public Integer getMeasurementInterval() {
+            return measurementInterval;
         }
 
-        public void set_id(ObjectId _id) {
-            this._id = _id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getLinks() {
-            return links;
-        }
-
-        public void setLinks(String links) {
-            this.links = links;
+        public void setMeasurementInterval(Integer measurementInterval) {
+            this.measurementInterval = measurementInterval;
         }
 
         @Override
         public String toString() {
-            return "ChipsetReference{" +
-                    "_id=" + _id +
-                    ", type='" + type + '\'' +
-                    ", links='" + links + '\'' +
+            return "Config{" +
+                    "measurementInterval=" + measurementInterval +
                     '}';
         }
     }
@@ -80,8 +57,8 @@ public class Modules {
         this.key = key;
     }
 
-    public Modules(String name, String key, String uc, List<ChipsetReference> chipsets, 
-                   String ipAddress, String firmwareVersion, Date commissioningDate, Boolean isEnabled) {
+    public Modules(String name, String key, String uc, List<ObjectId> chipsets,
+            String ipAddress, String firmwareVersion, Date commissioningDate, Boolean isEnabled, Config config) {
         this.name = name;
         this.key = key;
         this.uc = uc;
@@ -90,6 +67,7 @@ public class Modules {
         this.firmwareVersion = firmwareVersion;
         this.commissioningDate = commissioningDate;
         this.isEnabled = isEnabled;
+        this.config = config;
     }
 
     // Getters and Setters
@@ -125,11 +103,11 @@ public class Modules {
         this.uc = uc;
     }
 
-    public List<ChipsetReference> getChipsets() {
+    public List<ObjectId> getChipsets() {
         return chipsets;
     }
 
-    public void setChipsets(List<ChipsetReference> chipsets) {
+    public void setChipsets(List<ObjectId> chipsets) {
         this.chipsets = chipsets;
     }
 
@@ -165,6 +143,14 @@ public class Modules {
         this.isEnabled = isEnabled;
     }
 
+    public Config getConfig() {
+        return config;
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
+    }
+
     @Override
     public String toString() {
         return "Modules{" +
@@ -177,6 +163,7 @@ public class Modules {
                 ", firmwareVersion='" + firmwareVersion + '\'' +
                 ", commissioningDate=" + commissioningDate +
                 ", isEnabled=" + isEnabled +
+                ", config=" + config +
                 '}';
     }
 }

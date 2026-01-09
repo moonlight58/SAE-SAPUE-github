@@ -17,7 +17,7 @@ services:
       - MEDIA_SERVER_HOST=sapue-analyse-media
       - MEDIA_SERVER_PORT=50060
       - ENABLE_METRICS=true
-      - VERBOSE_LOGGING=false
+      - VERBOSE_LOGGING=true
 
 networks:
   sapue-network:

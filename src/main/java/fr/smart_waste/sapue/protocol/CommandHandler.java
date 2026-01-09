@@ -31,6 +31,7 @@ public class CommandHandler {
 
     /**
      * Execute a parsed protocol request
+     * 
      * @param request Parsed ProtocolRequest
      * @return Response string
      */
@@ -89,14 +90,34 @@ public class CommandHandler {
      * OK\n[interval]\nNAMES:Temp:Air:Dist:Poids
      * Note: trailing newline is added by ClientHandler.println()
      */
-    private String formatSuccessResponse(String reference) {
-        // Default values as per requirements
-        int samplingInterval = 300; 
-        
-        // In the future, this could be fetched from the database based on the reference
-        // For now, we use the values requested by the user
-        
-        return "OK\n" + samplingInterval + "\nNAMES:Temp:Air:Dist:Poids";
+    /**
+     * Format success response according to microcontroller requirements:
+     * OK\n[interval]\nNAMES:Name1:Name2:...
+     */
+    private String formatSuccessResponse(Modules module) {
+        // Default values
+        int samplingInterval = 300;
+
+        // Fetch sampling interval from module config if available
+        if (module != null && module.getConfig() != null && module.getConfig().getMeasurementInterval() != null) {
+            samplingInterval = module.getConfig().getMeasurementInterval();
+        }
+
+        StringBuilder namesBuilder = new StringBuilder("NAMES");
+
+        if (module != null && module.getChipsets() != null && !module.getChipsets().isEmpty()) {
+            for (ObjectId chipsetId : module.getChipsets()) {
+                Chipsets chipset = dataDriver.findChipsetById(chipsetId);
+                if (chipset != null && chipset.getName() != null) {
+                    namesBuilder.append(":").append(chipset.getName());
+                }
+            }
+        } else {
+            // Fallback if no chipsets found
+            namesBuilder.append(":Temp:Air:Dist:Poids");
+        }
+
+        return "OK\nSLEEP:" + samplingInterval + "\n" + namesBuilder.toString();
     }
 
     private String formatSuccessResponseAnalyse(String ColorPoubelle) {
@@ -115,10 +136,10 @@ public class CommandHandler {
         if (reference == null || !reference.matches("^[a-zA-Z0-9_-]+$")) {
             return "ERR_INVALID_VALUE";
         }
-        
+
         // Validate IP format
         if (ipAddress == null || !ipAddress.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) {
-             return "ERR_INVALID_VALUE";
+            return "ERR_INVALID_VALUE";
         }
 
         // Check if already connected
@@ -145,7 +166,7 @@ public class CommandHandler {
         }
 
         log("Registration successful: " + reference);
-        return formatSuccessResponse(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
@@ -155,16 +176,16 @@ public class CommandHandler {
      */
     private String handleData(ProtocolRequest request) {
         String reference = request.getReference();
-        
-        // Verify Module is registered
-        if (!server.isClientRegistered(reference)) {
-            return "ERR_DEVICE_NOT_REGISTERED";
-        }
 
         // Get Module from database
         Modules module = dataDriver.findModuleByKey(reference);
         if (module == null) {
             return "ERR_DEVICE_NOT_FOUND";
+        }
+
+        // Verify Module is registered (relaxed: allow if found in DB)
+        if (!server.isClientRegistered(reference)) {
+            log("Accepting data from implicitly identified device: " + reference);
         }
 
         // Find MapPoint by module key
@@ -177,12 +198,13 @@ public class CommandHandler {
         if (request.hasMultiSensorData()) {
             log("Processing multi-sensor data for " + reference);
             for (ProtocolRequest.SensorData sensorData : request.getMultiSensorData()) {
-                String result = processSensorData(module, mapPoint, sensorData.getSensorType(), sensorData.getParameters());
+                String result = processSensorData(module, mapPoint, sensorData.getSensorType(),
+                        sensorData.getParameters());
                 if (result.startsWith("ERR")) {
                     return result;
                 }
             }
-            return formatSuccessResponse(reference);
+            return formatSuccessResponse(module);
         } else {
             String sensorType = request.getParameter("sensorType");
             if (sensorType == null || sensorType.trim().isEmpty()) {
@@ -192,14 +214,15 @@ public class CommandHandler {
             if (result.startsWith("ERR")) {
                 return result;
             }
-            return formatSuccessResponse(reference);
+            return formatSuccessResponse(module);
         }
     }
 
     /**
      * Process data for a single sensor and update database
      */
-    private String processSensorData(Modules module, MapPoints mapPoint, String sensorType, Map<String, String> parameters) {
+    private String processSensorData(Modules module, MapPoints mapPoint, String sensorType,
+            Map<String, String> parameters) {
         String reference = module.getKey();
 
         // Build measurements object
@@ -209,7 +232,7 @@ public class CommandHandler {
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            
+
             if (key == null || key.trim().isEmpty()) {
                 return "ERR_INVALID_VALUE";
             }
@@ -220,7 +243,7 @@ public class CommandHandler {
             }
 
             String lowerKey = key.toLowerCase();
-            
+
             // Handle String values
             if (lowerKey.equals("wastetype") || lowerKey.equals("waste_type")) {
                 measurementData.setWasteType(value);
@@ -243,6 +266,9 @@ public class CommandHandler {
                         break;
                     case "humidity":
                         measurementData.setHumidity(doubleValue);
+                        break;
+                    case "pressure":
+                        measurementData.setPressure(doubleValue);
                         break;
                     case "airquality":
                     case "air_quality":
@@ -323,7 +349,7 @@ public class CommandHandler {
             return "ERR_DATABASE_ERROR";
         }
 
-        return formatSuccessResponse(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
@@ -347,7 +373,7 @@ public class CommandHandler {
 
         // Note: Configuration is now managed through Chipsets
         // For backward compatibility, return formatted config
-        return formatSuccessResponse(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
@@ -373,7 +399,7 @@ public class CommandHandler {
         // For backward compatibility, we'll skip configuration updates
         // TODO: Update this to modify Chipsets collection
         log("Config update received for " + reference + " (not applied - needs Chipsets integration)");
-        return formatSuccessResponse(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
@@ -433,7 +459,7 @@ public class CommandHandler {
         }
 
         log("Status stored for " + reference + ": " + statusMeasurementData);
-        return formatSuccessResponse(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
@@ -492,9 +518,8 @@ public class CommandHandler {
                 // Fetch ALL measurements within the date range
                 log("Fetching ALL measurements in date range");
                 measurements = dataDriver.findMeasurementsByDateRange(
-                    new Date(startDate), 
-                    new Date(endDate)
-                );
+                        new Date(startDate),
+                        new Date(endDate));
             } else {
                 // Fetch measurements for a specific module
                 Modules module = dataDriver.findModuleByKey(reference);
@@ -503,10 +528,9 @@ public class CommandHandler {
                 }
 
                 measurements = dataDriver.findMeasurementsByModuleId(
-                    module.getId(), 
-                    new Date(startDate), 
-                    new Date(endDate)
-                );
+                        module.getId(),
+                        new Date(startDate),
+                        new Date(endDate));
             }
 
             if (measurements == null || measurements.isEmpty()) {
@@ -537,17 +561,18 @@ public class CommandHandler {
 
         for (int i = 0; i < measurements.size(); i++) {
             Measurements measurement = measurements.get(i);
-            
+
             // Create JSON object for each measurement
             response.append("{");
             response.append("\"id\":\"").append(measurement.getId()).append("\",");
             response.append("\"date\":\"").append(measurement.getDate()).append("\",");
-            response.append("\"sensorType\":\"").append(measurement.getMeasurement() != null ? "Unknown" : "").append("\",");
+            response.append("\"sensorType\":\"").append(measurement.getMeasurement() != null ? "Unknown" : "")
+                    .append("\",");
 
             if (measurement.getMeasurement() != null) {
                 Measurements.Measurement m = measurement.getMeasurement();
                 response.append("\"data\":{");
-                
+
                 if (m.getFillLevel() != null) {
                     response.append("\"fillLevel\":").append(m.getFillLevel()).append(",");
                 }
@@ -569,7 +594,7 @@ public class CommandHandler {
                 if (m.getWasteType() != null) {
                     response.append("\"wasteType\":\"").append(m.getWasteType()).append("\",");
                 }
-                
+
                 // Remove trailing comma if exists
                 if (response.charAt(response.length() - 1) == ',') {
                     response.setLength(response.length() - 1);
@@ -578,7 +603,7 @@ public class CommandHandler {
             }
 
             response.append("}");
-            
+
             if (i < measurements.size() - 1) {
                 response.append(",");
             }
@@ -629,7 +654,8 @@ public class CommandHandler {
     /**
      * Handle IMAGE DATABASE command
      * Creates a new Report (DepotSauvage) with initial photo
-     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes> <bbox_data> <image_base64>
+     * Format: IMAGE DATABASE <userId> <longitude>:<latitude> <nb_bboxes>
+     * <bbox_data> <image_base64>
      */
     private String handleImageDatabase(ProtocolRequest request) {
         String userId = request.getParameter("userId");
@@ -639,7 +665,7 @@ public class CommandHandler {
         String bboxData = request.getParameter("bboxData");
         String imageBase64 = request.getParameter("imageBase64");
 
-        if (userId == null ) {
+        if (userId == null) {
             log("ERROR: Missing userId for IMAGE DATABASE");
             return "ERR_MISSING_PARAMS";
         }
@@ -876,7 +902,6 @@ public class CommandHandler {
         response.append(distance).append("\n");
         response.append(hexImage).append("\n");
 
-
         log("Image analysis successful. Response ready for " + reference);
         return response.toString();
     }
@@ -884,6 +909,7 @@ public class CommandHandler {
     /**
      * Extract bin color from media analysis result
      * Expected format: "OK JAUNE", "OK VERTE", "JAUNE", "VERTE", etc.
+     * 
      * @param analysisResult The result string from media analysis
      * @return The color name or null if not found
      */
@@ -900,16 +926,15 @@ public class CommandHandler {
         }
 
         // Validate that it's one of the known colors
-        if (result.equals("JAUNE") || result.equals("VERTE") || 
-            result.equals("MARRON") || result.equals("BRUN") || result.equals("BROWN") ||
-            result.equals("GRISE") || result.equals("GRIS") || 
-            result.equals("GREY") || result.equals("GRAY")) {
+        if (result.equals("JAUNE") || result.equals("VERTE") ||
+                result.equals("MARRON") || result.equals("BRUN") || result.equals("BROWN") ||
+                result.equals("GRISE") || result.equals("GRIS") ||
+                result.equals("GREY") || result.equals("GRAY")) {
             return result;
         }
 
         return null;
     }
-
 
     /**
      * Handle PING command
@@ -923,7 +948,8 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_REGISTERED";
         }
 
-        return formatSuccessResponse(reference);
+        Modules module = dataDriver.findModuleByKey(reference);
+        return formatSuccessResponse(module);
     }
 
     private String handleHelp(ProtocolRequest request) {
@@ -953,16 +979,15 @@ public class CommandHandler {
         }
 
         return "\nAvailable commands:\n" +
-            "REGISTER - Register the device with the server\n" +
-            "DATA - Send sensor data to the server collections\n" +
-            "CONFIG_GET - Retrieve current sensor configuration\n" +
-            "CONFIG_UPDATE - Update sensor configuration\n" +
-            "STATUS - Send device status information\n" +
-            "PING - Keep-alive signal\n" +
-            "DISCONNECT - Graceful disconnect from server\n" +
-            "HELP - Show this help message\n";
+                "REGISTER - Register the device with the server\n" +
+                "DATA - Send sensor data to the server collections\n" +
+                "CONFIG_GET - Retrieve current sensor configuration\n" +
+                "CONFIG_UPDATE - Update sensor configuration\n" +
+                "STATUS - Send device status information\n" +
+                "PING - Keep-alive signal\n" +
+                "DISCONNECT - Graceful disconnect from server\n" +
+                "HELP - Show this help message\n";
     }
-
 
     /**
      * Handle DISCONNECT command
@@ -972,12 +997,14 @@ public class CommandHandler {
         String reference = request.getReference();
 
         log("Disconnect requested by " + reference);
-        return formatSuccessResponse(reference);
+        Modules module = dataDriver.findModuleByKey(reference);
+        return formatSuccessResponse(module);
     }
 
     /**
      * Retrieve hexadecimal image for a bin color from OLED Chipset configuration
-     * @param module The module containing the chipsets
+     * 
+     * @param module   The module containing the chipsets
      * @param binColor The color of the bin (JAUNE, VERTE, MARRON, GRISE)
      * @return Hexadecimal image string or empty string if not found
      */
@@ -989,7 +1016,7 @@ public class CommandHandler {
         try {
             // Find all chipsets for this module
             java.util.List<Chipsets> chipsets = dataDriver.findChipsetsByModuleId(module.getId());
-            
+
             if (chipsets == null || chipsets.isEmpty()) {
                 log("WARNING: No chipsets found for module " + module.getKey());
                 return "";
@@ -1031,7 +1058,9 @@ public class CommandHandler {
 
     /**
      * Map bin color name to configuration key
-     * @param binColor The color name returned by media analysis (e.g., "JAUNE", "VERTE")
+     * 
+     * @param binColor The color name returned by media analysis (e.g., "JAUNE",
+     *                 "VERTE")
      * @return The configuration key (e.g., "yellow_bin", "green_bin")
      */
     private String mapColorToConfigKey(String binColor) {
@@ -1040,7 +1069,7 @@ public class CommandHandler {
         }
 
         String colorUpper = binColor.toUpperCase().trim();
-        
+
         switch (colorUpper) {
             case "JAUNE":
                 return "yellow_bin";
@@ -1062,6 +1091,7 @@ public class CommandHandler {
 
     /**
      * Get the config detection distance of the chipset camera HC-SR04 sensor
+     * 
      * @param the module µC name
      * @return The config detection distance as string, or empty string if not found
      */
@@ -1073,7 +1103,7 @@ public class CommandHandler {
         try {
             // Find all chipsets for this module
             java.util.List<Chipsets> chipsets = dataDriver.findChipsetsByModuleId(module.getId());
-            
+
             if (chipsets == null || chipsets.isEmpty()) {
                 log("WARNING: No chipsets found for module " + module.getKey());
                 return "";
