@@ -1,9 +1,13 @@
 package fr.smart_waste.sapue.protocol;
 
-import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.List;
+import org.bson.Document;
+import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import fr.smart_waste.sapue.dataaccess.DataDriver;
+import fr.smart_waste.sapue.model.Modules;
+import fr.smart_waste.sapue.model.Chipsets;
 
 /**
  * Gère la réception d'images en streaming depuis les µC legacy
@@ -37,6 +41,7 @@ public class ImageStreamHandler {
 
     /**
      * Ajoute une ligne de base64 au buffer
+     * 
      * @return true si stream terminé (ligne vide), false sinon
      */
     public boolean appendLine(String line) {
@@ -45,7 +50,7 @@ public class ImageStreamHandler {
         }
 
         String trimmed = line.trim();
-        
+
         // Ligne vide = fin du stream
         if (trimmed.isEmpty()) {
             streamingActive = false;
@@ -55,7 +60,13 @@ public class ImageStreamHandler {
 
         // Ajouter la ligne au buffer
         imageBuffer.append(trimmed);
-        return false;
+
+        // FIX: Arduino sends all data in one println(), so we finish immediately on
+        // receiving data
+        // to prevent deadlock waiting for an empty line that never comes.
+        streamingActive = false;
+        log("Image streaming completed (" + imageBuffer.length() + " bytes)");
+        return true;
     }
 
     /**
@@ -64,7 +75,7 @@ public class ImageStreamHandler {
      * Ligne 1: Type de déchet (JAUNE, VERT, GRIS, MARRON)
      * Ligne 2: Distance de détection (45)
      * Ligne 3: Icône hex (00)
-
+     * 
      */
     public String analyzeAndGetResponse(String deviceReference) {
         if (imageBuffer.length() == 0) {
@@ -72,57 +83,93 @@ public class ImageStreamHandler {
             return "ERREUR\n00\n00\n";
         }
 
+        // 1. Get Module Configuration (Distance)
+        String distance = "45"; // Default
+        try {
+            if (deviceReference != null && !deviceReference.equals("legacy-device")) {
+                Modules module = dataDriver.findModuleByKey(deviceReference);
+                if (module != null) {
+                    List<Chipsets> chipsets = dataDriver.findChipsetsByModuleId(module.getId());
+                    if (chipsets != null) {
+                        for (Chipsets chipset : chipsets) {
+                            // Check for HC-SR04 or DistanceSensor capability
+                            if (chipset.getName() != null && (chipset.getName().contains("HC-SR04")
+                                    || chipset.getName().contains("HCSR04"))) {
+                                if (chipset.getConfig() != null
+                                        && chipset.getConfig().containsKey("detection_distance")) {
+                                    Object distVal = chipset.getConfig().get("detection_distance");
+                                    if (distVal != null) {
+                                        distance = String.valueOf(distVal);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log("WARNING: Failed to fetch distance config: " + e.getMessage());
+        }
+
         String imageBase64 = imageBuffer.toString();
-        
-        // Analyser via le service d'analyse
+
+        // 2. Analyser via le service d'analyse
         String wasteBinType = mediaAnalysisClient.analyzeImage(imageBase64);
-        
+
         if (wasteBinType == null) {
             log("ERROR: Image analysis failed");
             return "ERREUR\n00\n00\n";
         }
 
-        // Mapper le type de déchet vers le format µC
-        String response = mapWasteBinTypeToResponse(wasteBinType);
-        log("Analysis result: " + response);
-        
+        // 3. Mapper le type de déchet vers le format µC
+        String response = mapWasteBinTypeToResponse(wasteBinType, distance);
+        log("Analysis result: " + response.trim());
+
         return response;
     }
 
     /**
      * Mappe les types de déchets du service d'analyse vers le format legacy
-     * @param wasteType Type retourné par le service (ex: "recyclage", "ordures_menageres")
-     * @return Réponse au format legacy (3 lignes)
+     * 
+     * @param wasteBinType Type retourné par le service
+     * @param distance     Distance configuration
+     * @return Réponse au format multi-line: COLOR\nDISTANCE\nICON
      */
-    private String mapWasteBinTypeToResponse(String wasteBinType) {
-        String distance = "45"; // Distance par défaut
-
+    private String mapWasteBinTypeToResponse(String wasteBinType, String distance) {
         String color;
         String icon;
 
-        // Normaliser le type de déchet (au cas où le service d'analyse renvoie différents formats)
+        // Normaliser le type de déchet
         String normalizedType = wasteBinType.toLowerCase().trim();
-        
+
+        // Handle "OK JAUNE" format if present
+        if (normalizedType.startsWith("ok ")) {
+            normalizedType = normalizedType.substring(3).trim();
+        }
+
         switch (normalizedType) {
             case "jaune":
                 color = "JAUNE";
                 break;
             case "verte":
+            case "vert":
                 color = "VERTE";
                 break;
             case "marron":
+            case "brun":
                 color = "MARRON";
                 break;
             case "grise":
+            case "gris":
             default:
                 color = "GRISE";
                 break;
         }
-        
-        // Récupérer l'icône depuis la BDD en utilisant la couleur normalisée
+
+        // Récupérer l'icône depuis la BDD
         icon = dataDriver.getHexaIconByWasteBinType(color.toLowerCase());
-        
-        // Format: COLOR\nDISTANCE\nICONE\n
+
+        // Format: COLOR\nDISTANCE\nICON
         return color + "\n" + distance + "\n" + icon + "\n";
     }
 
