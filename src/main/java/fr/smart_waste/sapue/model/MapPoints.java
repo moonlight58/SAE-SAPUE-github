@@ -17,7 +17,6 @@ public class MapPoints {
     private Location location;
     private String address;
     private List<ObjectId> modules;
-    private List<LastMeasurement> lastMeasurements;
     private ActiveAlerts activeAlerts;
 
     // Constructors
@@ -71,43 +70,6 @@ public class MapPoints {
             return "Location{" +
                     "type='" + type + '\'' +
                     ", coordinates=" + coordinates +
-                    '}';
-        }
-    }
-
-    public static class LastMeasurement {
-        private Date date;
-        private Document measurement; // Flexible structure from Measurements
-
-        public LastMeasurement() {
-        }
-
-        public LastMeasurement(Date date, Document measurement) {
-            this.date = date;
-            this.measurement = measurement;
-        }
-
-        public Date getDate() {
-            return date;
-        }
-
-        public void setDate(Date date) {
-            this.date = date;
-        }
-
-        public Document getMeasurement() {
-            return measurement;
-        }
-
-        public void setMeasurement(Document measurement) {
-            this.measurement = measurement;
-        }
-
-        @Override
-        public String toString() {
-            return "LastMeasurement{" +
-                    "date=" + date +
-                    ", measurement=" + measurement +
                     '}';
         }
     }
@@ -217,14 +179,6 @@ public class MapPoints {
         this.modules = modules;
     }
 
-    public List<LastMeasurement> getLastMeasurements() {
-        return lastMeasurements;
-    }
-
-    public void setLastMeasurements(List<LastMeasurement> lastMeasurements) {
-        this.lastMeasurements = lastMeasurements;
-    }
-
     public ActiveAlerts getActiveAlerts() {
         return activeAlerts;
     }
@@ -243,7 +197,6 @@ public class MapPoints {
                 ", location=" + location +
                 ", address='" + address + '\'' +
                 ", modules=" + modules +
-                ", lastMeasurements=" + lastMeasurements +
                 ", activeAlerts=" + activeAlerts +
                 '}';
     }
