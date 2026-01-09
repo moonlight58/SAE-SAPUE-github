@@ -840,13 +840,6 @@ public class CommandHandler {
             return "ERR_DEVICE_NOT_FOUND";
         }
 
-        // Find MapPoint by module key
-        MapPoints mapPoint = dataDriver.findMapPointByModule(reference);
-        if (mapPoint == null) {
-            log("ERROR: No MapPoint found for microcontroller " + reference);
-            return "ERR_DEVICE_NOT_FOUND";
-        }
-
         log("Performing image analysis for reference: " + reference);
         String analysisResult = mediaAnalysisClient.analyzeImage(imageBase64);
         log("Image analysis result: " + analysisResult);
@@ -874,7 +867,7 @@ public class CommandHandler {
         }
 
         // Get latest distance measurement
-        String distance = getLatestDistance(mapPoint);
+        String distance = getConfigDistance(module);
 
         // Build response: OK\n + couleur\n + distance\n + icon hexadécimale\n
         StringBuilder response = new StringBuilder();
@@ -1068,41 +1061,46 @@ public class CommandHandler {
     }
 
     /**
-     * Get the latest distance measurement from a MapPoint
-     * @param mapPoint The MapPoint to extract distance from
-     * @return The distance value or empty string if not found
+     * Get the config detection distance of the chipset camera HC-SR04 sensor
+     * @param the module µC name
+     * @return The config detection distance as string, or empty string if not found
      */
-    private String getLatestDistance(MapPoints mapPoint) {
-        if (mapPoint == null) {
+    private String getConfigDistance(Modules module) {
+        if (module == null) {
             return "";
         }
 
         try {
-            java.util.List<MapPoints.LastMeasurement> measurements = mapPoint.getLastMeasurements();
+            // Find all chipsets for this module
+            java.util.List<Chipsets> chipsets = dataDriver.findChipsetsByModuleId(module.getId());
             
-            if (measurements == null || measurements.isEmpty()) {
-                log("WARNING: No measurements found for mapPoint");
+            if (chipsets == null || chipsets.isEmpty()) {
+                log("WARNING: No chipsets found for module " + module.getKey());
                 return "";
             }
 
-            // Get the most recent measurement
-            MapPoints.LastMeasurement lastMeasurement = measurements.get(measurements.size() - 1);
-            if (lastMeasurement == null || lastMeasurement.getMeasurement() == null) {
-                return "";
+            // Look for HC-SR04 chipset (contains DistanceSensor capability)
+            for (Chipsets chipset : chipsets) {
+                if (chipset.getCaps() != null && chipset.getCaps().contains("DistanceSensor")) {
+                    Document config = chipset.getConfig();
+                    if (config == null) {
+                        log("WARNING: HC-SR04 chipset has no config");
+                        continue;
+                    }
+
+                    Double distance = config.getDouble("detection_distance");
+                    if (distance != null) {
+                        log("Found detection distance: " + distance);
+                        return distance.toString();
+                    }
+                }
             }
 
-            Document measurement = lastMeasurement.getMeasurement();
-            
-            // Try to find distance (HC-SR04 sensor)
-            // Could be stored as "distance", "filllevel", or other names
-            Object distance = measurement.get("distance");
-            if (distance != null) {
-                return distance.toString();
-            }
-
+            log("WARNING: No HC-SR04 chipset found for module " + module.getKey());
             return "";
         } catch (Exception e) {
-            log("ERROR: Failed to retrieve distance: " + e.getMessage());
+            log("ERROR: Failed to retrieve detection distance: " + e.getMessage());
+            e.printStackTrace();
             return "";
         }
     }
