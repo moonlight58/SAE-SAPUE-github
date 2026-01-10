@@ -440,6 +440,12 @@ public class MediaAnalysisServerStepDefs {
         server.registerClient("MEDIA_ANALYSIS_SERVICE", null);
     }
 
+    @Then("le système accepte la connexion")
+    public void leSystemeAccepteLaConnexion() {
+        assertTrue(connectionEstablished);
+        assertTrue(server.isClientRegistered("MEDIA_ANALYSIS_SERVICE"));
+    }
+
     @And("le système confirme que le service peut envoyer des résultats")
     public void leSystemeConfirmeQueLeServicePeutEnvoyerDesResultats() {
         serviceCanSendResults = true;
