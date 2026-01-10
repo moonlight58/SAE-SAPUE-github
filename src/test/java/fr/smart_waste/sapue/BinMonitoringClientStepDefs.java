@@ -53,7 +53,7 @@ public class BinMonitoringClientStepDefs {
             
             // Side effect: If REGISTER Success, we must register in Server Mock 
             // because in real app ClientHandler does this, but here we invoke CommandHandler directly.
-            if ("REGISTER".equalsIgnoreCase(request.getCommand()) && "OK".equals(lastResponse)) {
+            if ("REGISTER".equalsIgnoreCase(request.getCommand()) && lastResponse.startsWith("OK")) {
                 server.registerClient(request.getReference(), null);
             }
         } catch (ProtocolException e) {
@@ -244,7 +244,8 @@ public class BinMonitoringClientStepDefs {
 
     @Then("le système fournit l'intervalle de mesure")
     public void leSystemeFournitLIntervalleDeMesure() {
-        assertTrue(lastResponse.contains("samplingInterval") || lastResponse.contains("sensorType"));
+        // Response format: OK\nSLEEP:<interval>\nNAMES:...
+        assertTrue(lastResponse.contains("SLEEP:") || lastResponse.contains("NAMES:"));
     }
 
     @And("le système fournit le seuil d'alerte")
