@@ -26,6 +26,10 @@ public class MockDataDriver implements DataDriver {
         this.available = available;
     }
     
+    public boolean isAvailable() {
+        return available;
+    }
+    
     public void setFallbackAvailable(boolean fallbackAvailable) {
         this.fallbackAvailable = fallbackAvailable;
     }
@@ -92,17 +96,6 @@ public class MockDataDriver implements DataDriver {
     public boolean updateMapPoint(MapPoints mapPoint) {
         if (mapPoint == null || mapPoint.getId() == null) return false;
         mapPoints.put(mapPoint.getId(), mapPoint);
-        return true;
-    }
-
-    @Override
-    public boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement) {
-        MapPoints mp = mapPoints.get(mapPointId);
-        if (mp == null) return false;
-        if (mp.getLastMeasurements() == null) {
-            mp.setLastMeasurements(new ArrayList<>());
-        }
-        mp.getLastMeasurements().add(measurement);
         return true;
     }
 

@@ -309,46 +309,6 @@ public class CommandHandler {
 
         log("Data stored in Measurements for " + reference + " (" + sensorType + "): " + measurementData);
 
-        // ========== UPDATE MapPoint lastMeasurement ==========
-
-        // Build document for lastMeasurement
-        Document measurementDoc = new Document();
-        measurementDoc.append("sensorType", sensorType);
-
-        if (measurementData.getFillLevel() != null) {
-            measurementDoc.append("fillLevel", measurementData.getFillLevel());
-        }
-        if (measurementData.getWeight() != null) {
-            measurementDoc.append("weight", measurementData.getWeight());
-        }
-        if (measurementData.getTemperature() != null) {
-            measurementDoc.append("temperature", measurementData.getTemperature());
-        }
-        if (measurementData.getHumidity() != null) {
-            measurementDoc.append("humidity", measurementData.getHumidity());
-        }
-        if (measurementData.getAirQuality() != null) {
-            measurementDoc.append("airQuality", measurementData.getAirQuality());
-        }
-        if (measurementData.getBatteryLevel() != null) {
-            measurementDoc.append("batteryLevel", measurementData.getBatteryLevel());
-        }
-
-        // Create LastMeasurement object
-        MapPoints.LastMeasurement lastMeasurement = new MapPoints.LastMeasurement();
-        lastMeasurement.setDate(measurementDate);
-        lastMeasurement.setMeasurement(measurementDoc);
-
-        // Update MapPoint with last measurement
-        boolean updated = dataDriver.addMapPointMeasurement(mapPoint.getId(), lastMeasurement);
-
-        if (updated) {
-            log("Updated lastMeasurement in MapPoint for " + reference);
-        } else {
-            log("WARNING: Failed to update lastMeasurement in MapPoint for " + reference);
-            return "ERR_DATABASE_ERROR";
-        }
-
         return formatSuccessResponse(module);
     }
 

@@ -749,19 +749,6 @@ public class MongoDataDriver implements DataDriver {
     }
 
     @Override
-    public boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement) {
-        if (mapPointId == null || measurement == null)
-            return false;
-        try {
-            Document updateDoc = new Document("$push", new Document("lastMeasurements", measurement));
-            return mapPoints.updateOne(eq("_id", mapPointId), updateDoc).getModifiedCount() > 0;
-        } catch (Exception e) {
-            System.err.println("[MongoDataDriver] Error adding map point measurement: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
     public boolean updateMapPoint(MapPoints mapPoint) {
         if (mapPoint == null || mapPoint.getId() == null)
             return false;

@@ -57,14 +57,6 @@ public interface DataDriver {
     boolean updateMapPoint(MapPoints mapPoint);
 
     /**
-     * Add a new measurement to the history of a MapPoint
-     * @param mapPointId MapPoints ObjectId
-     * @param measurement LastMeasurement object to add
-     * @return true if added successfully, false otherwise
-     */
-    boolean addMapPointMeasurement(ObjectId mapPointId, MapPoints.LastMeasurement measurement);
-
-    /**
      * Delete a MapPoint by ID
      * @param id MapPoints ObjectId
      * @return true if deleted successfully, false otherwise
