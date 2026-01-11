@@ -1,0 +1,56 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m---------------< [0;36mfr.smart-waste.sapue:sapue-server-tcp[0;1m >----------------[m
+[[1;34mINFO[m] [1mBuilding sapue-server-tcp 1.0-SNAPSHOT[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:resources[m [1m(default-resources)[m @ [36msapue-server-tcp[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] skip non existing resourceDirectory /home/userdepinfo/Documents/SAE-SAPUE/src/main/resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.0:compile[m [1m(default-compile)[m @ [36msapue-server-tcp[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:testResources[m [1m(default-testResources)[m @ [36msapue-server-tcp[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] Copying 6 resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.0:testCompile[m [1m(default-testCompile)[m @ [36msapue-server-tcp[0;1m ---[m
+[[1;34mINFO[m] Recompiling the module because of [1mchanged source code[m.
+[[1;34mINFO[m] Compiling 9 source files with javac [debug release 17] to target/test-classes
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] COMPILATION ERROR : 
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[248,17] method etEnvoientEnMêmeTemps(java.lang.String,java.lang.String,java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[269,17] method unSeulClientEstAccepté() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[274,17] method lAutreReçoit(java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[280,17] method aucuneConditionDeCourseNeSeProduit() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[324,17] method leSystèmeAccepteAlphanumericValide() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[329,17] method leSystèmeAccepteRegexPermetHyphen() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[334,17] method leSystèmeAcceptePasDeRestriction() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[339,17] method unClientNonEnregistréEnvoie(java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;34mINFO[m] 8 errors 
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  2.820 s
+[[1;34mINFO[m] Finished at: 2026-01-11T15:37:04+01:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-compiler-plugin:3.14.0:testCompile[m [1m(default-testCompile)[m on project [36msapue-server-tcp[m: [1;31mCompilation failure[m: Compilation failure: 
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[248,17] method etEnvoientEnMêmeTemps(java.lang.String,java.lang.String,java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[269,17] method unSeulClientEstAccepté() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[274,17] method lAutreReçoit(java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[280,17] method aucuneConditionDeCourseNeSeProduit() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[324,17] method leSystèmeAccepteAlphanumericValide() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[329,17] method leSystèmeAccepteRegexPermetHyphen() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[334,17] method leSystèmeAcceptePasDeRestriction() is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] /home/userdepinfo/Documents/SAE-SAPUE/src/test/java/fr/smart_waste/sapue/ProtocolEdgeCasesStepDefs.java:[339,17] method unClientNonEnregistréEnvoie(java.lang.String) is already defined in class fr.smart_waste.sapue.ProtocolEdgeCasesStepDefs
+[[1;31mERROR[m] -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[0m
