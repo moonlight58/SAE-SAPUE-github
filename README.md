@@ -1,163 +1,32 @@
 # Smart Waste TCP Server - Documentation Complète
 
-## 📋 Table des matières
 
-1. [Vue d'ensemble](#vue-densemble)
-2. [Prérequis](#prérequis)
-3. [Installation et Configuration](#installation-et-configuration)
-4. [Build du Projet](#build-du-projet)
-5. [Lancer le Serveur](#lancer-le-serveur)
-6. [Utilisation du Serveur](#utilisation-du-serveur)
-7. [Protocole TCP](#protocole-tcp)
-8. [Configuration](#configuration)
-9. [Schéma MongoDB](#schéma-mongodb)
-10. [Déploiement Docker](#déploiement-docker)
-11. [Tests](#tests)
-12. [Dépannage](#dépannage)
+## Déploiement Docker
 
----
-
-## Vue d'ensemble
-
-**Smart Waste TCP Server** est un serveur TCP multi-threadé conçu pour centraliser la gestion des données de déchets intelligents. Il reçoit les connexions des microcontrôleurs (ESP32/ESP8266) et traite les mesures de capteurs.
-
-### Caractéristiques principales
-
-- ✅ **Architecture multi-threadée** : Modèle thread-par-client avec limites configurables
-- ✅ **Protocole texte** : Protocole TCP délimité par espaces avec codes d'erreur standardisés
-- ✅ **MongoDB** : Schéma complet avec validation et indexation
-- ✅ **Métriques en temps réel** : Suivi des connexions, requêtes, erreurs et transferts
-- ✅ **Mises à jour automatiques** : Synchronisation des `lastMeasurement` dans la collection Poubelles
-
-### 🚀 Quickstart (30 secondes)
-
+### 1. Build Docker Image
 ```bash
-# 1. Lancer MongoDB en Docker
-docker run -d --name mongodb -p 27017:27017 mongo:latest
-
-# 2. Compiler le projet
-mvn clean package -DskipTests
-
-# 3. Initialiser la base de données (voir section Installation)
-mongosh mongodb://localhost:27017 < init-db.js
-
-# 4. Lancer le serveur
-mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main"
-
-# 5. Tester la connexion dans un autre terminal
-echo "PING MC-001" | nc localhost 50010
-
-# ou avec telnet
-telnet localhost 50010
-
+docker build -t sapue-server-tcp:latest .
 ```
 
-Pour une setup complète et détaillée, continuez avec la section [Installation et Configuration](#installation-et-configuration).
-
----
-
-## Prérequis
-
-- **Java 17+** : [Télécharger Java](https://www.oracle.com/java/technologies/downloads/)
-- **MongoDB 4.4+** : [Télécharger MongoDB](https://www.mongodb.com/try/download/community)
-- **Maven 3.9+** : [Télécharger Maven](https://maven.apache.org/download.cgi)
-- **Git** (optionnel) : Pour cloner le projet
-
-**Vérifier les versions installées:**
+### 2. Run Container
 ```bash
-java -version
-mvn -version
-mongosh --version  # ou mongo --version pour les anciennes versions
+docker run --network sae -p 50010:50010 sapue-server-tcp:latest
 ```
 
----
+## Build & Lancer le Serveur
 
-## Build du Projet
-
-### Compiler avec Maven
+### Avec Maven (Développement)
 
 ```bash
-# Compiler le projet (télécharge les dépendances)
+# Compiler le projet
 mvn clean compile
 
-# Ou compiler + packager en JAR
-mvn clean package -DskipTests
-
-# Ou compiler + packager + lancer les tests
-mvn clean package
-```
-
-### Vérifier que le build est OK
-
-```bash
-# Lister les fichiers générés
-ls -la target/
-```
-
----
-
-## Lancer le Serveur
-
-### Méthode 1 : Avec Maven (Développement)
-
-```bash
 # Lancer avec la configuration par défaut (config.yml)
 mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main"
 
 # Ou avec une configuration personnalisée
 mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main" -Dexec.args="./config.yml"
 ```
-
-### Méthode 2 : Avec Docker (Production)
-
-```bash
-# Build l'image Docker
-docker build -t sapue-server:latest .
-
-# Lancer le serveur dans un conteneur
-docker run -d \
-  --name sapue-server \
-  -p 50010:50010 \
-  --link mongodb:mongodb \
-  -e MONGO_URI="mongodb://mongodb:27017" \
-  -e DB_NAME="smartwaste_dev" \
-  sapue-server:latest
-
-# Vérifier les logs
-docker logs sapue-server
-
-# Arrêter le serveur
-docker stop sapue-server
-docker rm sapue-server
-```
-
-### Méthode 3 : Avec Docker Compose (Recommandé)
-
-```bash
-# Lancer MongoDB + serveur
-docker-compose up -d
-
-# Arrêter les services
-docker-compose down
-
-# Voir les logs
-docker-compose logs -f sapue-server
-```
-
-### Vérifier que le serveur est actif
-
-```bash
-# Le serveur écoute sur le port 50010 (par défaut)
-netstat -an | grep 50010
-
-# Ou tester la connexion
-telnet localhost 50010
-
-# Ou avec nc (netcat)
-nc -zv localhost 50010
-```
-
----
 
 ## Utilisation du Serveur
 
@@ -481,30 +350,6 @@ IMAGE ANALYSE <imageData>
 
 ---
 
-## Déploiement Docker
-
-### Docker simple
-
-```bash
-docker build -t sapue-server .
-docker run -d \
-  --name sapue-server \
-  -p 50010:50010 \
-  -e MONGO_URI="mongodb://host.docker.internal:27017" \
-  -e DB_NAME="smartwaste_dev" \
-  sapue-server
-```
-
-### Docker Compose
-
-Voir `docker-compose.yml` pour un déploiement avec MongoDB intégré.
-
-```bash
-docker-compose up -d
-```
-
----
-
 ## Tests
 
 Les tests utilisent Cucumber (BDD) et JUnit.
@@ -534,34 +379,3 @@ mvn test -Dcucumber.features="src/test/resources/fr/smart_waste/sapue/<features 
 - `MongoDBManipulation.feature` : Opérations base de données
 
 ---
-
-## Dépannage
-
-### Le serveur ne démarre pas
-
-**Problème : "Port 50010 already in use"**
-```bash
-# Trouver quel processus utilise le port
-lsof -i :50010          # Linux/Mac
-netstat -ano | findstr :50010  # Windows
-
-# Tuer le processus (remplacer PID par le numéro)
-kill -9 <PID>           # Linux/Mac
-taskkill /PID <PID> /F  # Windows
-
-# Ou changer le port dans config.yml
-server:
-  port: 50011  # Changer le port
-```
-
-**Problème : "MongoDB connection refused"**
-```bash
-# Vérifier que MongoDB est lancé
-docker ps | grep mongodb
-
-# Ou relancer MongoDB
-docker run -d --name mongodb -p 27017:27017 mongo:latest
-
-# Vérifier la connexion
-mongosh mongodb://localhost:27017
-```
