@@ -5,7 +5,6 @@ import fr.smart_waste.sapue.mocks.MockDataDriver;
 import fr.smart_waste.sapue.mocks.MockSmartWasteServer;
 import fr.smart_waste.sapue.model.*;
 import fr.smart_waste.sapue.protocol.CommandHandler;
-import fr.smart_waste.sapue.protocol.ProtocolRequest;
 import fr.smart_waste.sapue.client.MediaAnalysisClient;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MongoDBManipulation {
+public class MongoDBManipulationStepDefs {
 
     private MockDataDriver dataDriver;
     private MockSmartWasteServer server;
