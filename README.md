@@ -34,6 +34,8 @@ mvn exec:java -Dexec.mainClass="fr.smart_waste.sapue.Main" -Dexec.args="./config
 
 Une fois le serveur lancé, vous pouvez communiquer avec lui via TCP sur le port 50010 :
 
+Pour pouvoir tester pleinement les commandes, il faut d'abord lancer la base de données MongoDB, veuillez vous référer au DOCKER.md de la base de données.
+
 #### Via netcat (Linux/Mac)
 
 ```bash
