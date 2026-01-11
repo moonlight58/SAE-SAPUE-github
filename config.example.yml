@@ -1,0 +1,82 @@
+# ============================================================================
+# Smart Waste TCP Server Configuration
+# ============================================================================
+# 
+# INSTRUCTIONS:
+# 1. Copiez ce fichier: cp config.example.yml config.yml
+# 2. Modifiez les paramètres selon votre environnement
+# 3. Lancez le serveur: mvn exec:java -Dexec.mainClass="com.smawt.server.Main"
+#
+# ============================================================================
+
+# SERVEUR TCP
+server:
+  # Port d'écoute du serveur TCP
+  # Par défaut: 50010
+  port: 50010
+  
+  # Nombre maximum de clients simultanés
+  # Adapter selon les ressources du serveur
+  # Par défaut: 100
+  maxConnections: 100
+  
+  # Délai d'expiration socket en millisecondes
+  # Requête inactif pendant ce délai → déconnexion forcée
+  # Par défaut: 30000 (30 secondes)
+  socketTimeout: 30000
+
+# MONGODB
+mongodb:
+  # URL de connexion MongoDB
+  # Local: mongodb://localhost:27017
+  # Docker: mongodb://mongodb:27017  (avec Docker Compose)
+  # Cloud: mongodb+srv://user:password@cluster.mongodb.net
+  connectionString: "mongodb://localhost:27017"
+  
+  # Nom de la base de données
+  # Par défaut: sae_db
+  databaseName: "sae_db"
+  
+  # Environnement: "dev" ou "prod"
+  # Affecte les schémas de validation et les données par défaut
+  # Par défaut: dev
+  environment: "dev"
+
+# LOGGING
+logging:
+  # Activer les métriques en temps réel
+  # Affiche les statistiques de connexions, requêtes, erreurs
+  # Par défaut: true
+  enableMetrics: true
+  
+  # Mode verbeux (logs détaillés)
+  # Affiche chaque requête et réponse TCP
+  # À utiliser pour le débogage uniquement
+  # Par défaut: false
+  verbose: false
+
+# ============================================================================
+# EXEMPLES DE CONFIGURATION
+# ============================================================================
+
+# Configuration de développement LOCAL
+# server:
+#   port: 50010
+# mongodb:
+#   connectionString: "mongodb://localhost:27017"
+#   databaseName: "sae_db"
+#   environment: "dev"
+
+# Configuration de production avec DOCKER COMPOSE
+# server:
+#   port: 50010
+#   maxConnections: 500
+# mongodb:
+#   connectionString: "mongodb://mongodb:27017"
+#   databaseName: "sae_db"
+#   environment: "prod"
+
+# Configuration avec MONGODB ATLAS (Cloud)
+# mongodb:
+#   connectionString: "mongodb+srv://user:password@cluster0.mongodb.net/sae_db"
+#   databaseName: "sae_db"
