@@ -74,7 +74,7 @@ Feature: Le système central reçoit et traite les résultats d'analyse multimé
     And la raison est "image trop floue"
     Then le système enregistre cet échec
     And le système marque le signalement comme "nécessite nouvelle photo"
-    And le système transmet cette information au service de gestion
+    And le système transmet cet échec d'analyse au service de gestion
 
   Scenario: Le service d'analyse se connecte au système
     When le service d'analyse établit une connexion

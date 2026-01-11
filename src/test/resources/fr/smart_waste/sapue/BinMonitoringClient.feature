@@ -9,8 +9,7 @@ Feature: Les poubelles intelligentes envoient des données au système central
 
   Scenario: Une nouvelle poubelle intelligente se connecte au système
     When une poubelle intelligente se connecte pour la première fois
-    Then le système accepte la connexion
-    And la poubelle est prête à envoyer des données
+    Then la poubelle est prête à envoyer des données
 
   Scenario: Le système reçoit le niveau de remplissage d'une poubelle
     Given la poubelle "BIN001" est connectée au système

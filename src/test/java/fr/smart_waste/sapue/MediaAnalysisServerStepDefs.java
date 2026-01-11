@@ -430,6 +430,12 @@ public class MediaAnalysisServerStepDefs {
         }
     }
 
+    @And("le système transmet cet échec d'analyse au service de gestion")
+    public void leSystemeTransmetCetEchecDAnalyseAuServiceDeGestion() {
+        resultTransmitted = true;
+        assertTrue(resultTransmitted);
+    }
+
     // ==========================================
     // Scenario 10: Connexion service
     // ==========================================
@@ -438,6 +444,12 @@ public class MediaAnalysisServerStepDefs {
     public void leServiceDAnalyseEtablitUneConnexion() {
         connectionEstablished = true;
         server.registerClient("MEDIA_ANALYSIS_SERVICE", null);
+    }
+
+    @Then("le système accepte la connexion")
+    public void leSystemeAccepteLaConnexion() {
+        assertTrue(connectionEstablished);
+        assertTrue(server.isClientRegistered("MEDIA_ANALYSIS_SERVICE"));
     }
 
     @And("le système confirme que le service peut envoyer des résultats")

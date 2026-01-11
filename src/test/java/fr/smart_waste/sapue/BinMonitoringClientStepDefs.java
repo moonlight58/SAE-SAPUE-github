@@ -79,11 +79,6 @@ public class BinMonitoringClientStepDefs {
         activeBinRef = "BIN-NEW";
     }
 
-    @Then("le système accepte la connexion")
-    public void leSystemeAccepteLaConnexion() {
-        assertTrue(server.isClientRegistered(activeBinRef));
-    }
-
     @And("la poubelle est prête à envoyer des données")
     public void laPoubelleEstPreteAEnvoyerDesDonnees() {
         assertTrue(server.isClientRegistered(activeBinRef));
